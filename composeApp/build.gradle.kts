@@ -48,6 +48,9 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
 
+            api(libs.moko.mvvm.core)
+            api(libs.moko.mvvm.compose)
+
             // Librerías de Ktor y Serialización
             implementation("io.ktor:ktor-client-core:3.4.0")
             implementation("io.ktor:ktor-client-content-negotiation:3.4.0")
@@ -55,6 +58,7 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+
         }
     }
 }

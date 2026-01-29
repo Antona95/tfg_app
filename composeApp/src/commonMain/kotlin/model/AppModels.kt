@@ -10,6 +10,8 @@ import kotlinx.serialization.Serializable
 data class Persona(
     @SerialName("_id") // Viene como "_id" de Mongo, pero aquí lo usamos como idUsuario
     val idUsuario: String,
+    val nombre: String,
+    val apellidos: String,
     val dni: String,
     val nombreCompleto: String,
     // val contrasena: String,  <-- OJO: La API normalmente NO devuelve la contraseña por seguridad.
@@ -67,3 +69,11 @@ enum class TipoAgrupacion {
     TRISERIE,
     CIRCUITO
 }
+
+// esta clase empaqueta el dni y contraseña del usuario del login p,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,ara enviarlos
+
+@Serializable
+data class LoginRequest(
+    val dni: String,
+    val contrasena: String
+)
