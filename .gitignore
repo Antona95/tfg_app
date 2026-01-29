@@ -17,3 +17,14 @@ captures
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
 node_modules/
+# Logs
+*.log
+
+# Kotlin Native cache
+konan/
+
+# Windows system files
+Thumbs.db
+*.exe
+*.bat
+*.cmd
