@@ -8,14 +8,20 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Persona(
-    @SerialName("_id") // Viene como "_id" de Mongo, pero aquí lo usamos como idUsuario
-    val idUsuario: String,
-    val nombre: String,
-    val apellidos: String,
-    val dni: String,
-    val nombreCompleto: String,
-    // val contrasena: String,  <-- OJO: La API normalmente NO devuelve la contraseña por seguridad.
-    val rol: RolUsuario
+    // MongoDB devuelve "_id", pero tu API a veces devuelve "id".
+    // Ponemos los dos por si acaso para que no falle.
+    @SerialName("_id") val mongoId: String? = null,
+    val id: String? = null,
+
+    // Datos del usuario (Todos opcionales para evitar CRASH)
+    val dni: String? = null,
+    val nombre: String? = null,
+    val apellidos: String? = null,
+    val rol: String? = null,
+    val nombreCompleto: String? = null,
+
+    // Si tu login devuelve un token, recógelo aquí
+    val token: String? = null
 )
 
 @Serializable

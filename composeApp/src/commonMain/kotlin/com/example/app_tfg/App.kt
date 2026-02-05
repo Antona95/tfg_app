@@ -2,47 +2,65 @@ package com.example.app_tfg
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import ui.login.LoginScreen // Importamos la pantalla de login
-import ui.home.HomeScreen
-import androidx.compose.runtime.collectAsState // Importante
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import dev.icerock.moko.mvvm.compose.getViewModel // Importante (Moko)
-import dev.icerock.moko.mvvm.compose.viewModelFactory // Importante (Moko)
+import androidx.compose.runtime.remember
+import dev.icerock.moko.mvvm.compose.getViewModel
+import dev.icerock.moko.mvvm.compose.viewModelFactory
+import network.createHttpClient       // Asegúrate de importar esto
+import network.EntrenamientoRepository // Asegúrate de importar esto
 import viewmodel.LoginViewModel
-
+import ui.home.HomeScreen
+import ui.login.LoginScreen
 
 @Composable
 fun App() {
     MaterialTheme {
-        // 1. CREAMOS EL VIEWMODEL
-        // Esto crea el cerebro y hace que sobreviva si giras la pantalla
+        // ---------------------------------------------------------
+        // PASO 0: PREPARAR LAS HERRAMIENTAS (LO QUE TE FALTABA)
+        // ---------------------------------------------------------
+
+        // 1. Creamos el cliente HTTP con la configuración "flexible" que acabas de hacer
+        val client = remember { createHttpClient() }
+
+        // 2. Creamos el Repositorio y le damos el cliente
+        val repository = remember { EntrenamientoRepository(client) }
+
+
+        // ---------------------------------------------------------
+        // PASO 1: CREAR EL CEREBRO (VIEWMODEL)
+        // ---------------------------------------------------------
         val loginViewModel = getViewModel(
             key = "login-screen",
-            factory = viewModelFactory { LoginViewModel() }
+            factory = viewModelFactory {
+                // AQUI ESTA LA CLAVE: Le pasamos el 'repository' al ViewModel
+                LoginViewModel(repository)
+            }
         )
 
-        // 2. ESCUCHAMOS EL ESTADO
-        // 'state' se actualizará automáticamente cuando cambie algo en el ViewModel
+        // ---------------------------------------------------------
+        // PASO 2: UI (Esto ya lo tenías bien)
+        // ---------------------------------------------------------
         val state by loginViewModel.uiState.collectAsState()
 
         if (state.usuarioLogueado != null) {
-            // SI YA HEMOS ENTRADO (state tiene datos) -> Mostramos la pantalla HOME
-            // El '!!' es seguro aquí porque el if ya comprobó que no es null
-            HomeScreen(usuario = state.usuarioLogueado!!)
-
+            HomeScreen(
+                usuario = state.usuarioLogueado!!,
+                onLogoutClick = {
+                    println("APP: El usuario quiere salir")
+                    // loginViewModel.cerrarSesion()
+                }
+            )
         } else {
-            // SI NO HEMOS ENTRADO (es null) -> Mostramos la pantalla LOGIN
             LoginScreen(
                 onLoginClick = { dni, pass ->
                     loginViewModel.onLoginClick(dni, pass)
                 }
             )
 
-            // ver errores por consola mientras pruebas
             if (state.error != null) {
-                println("Error de Login: ${state.error}")
+                println("APP - Error detectado: ${state.error}")
             }
         }
     }
 }
-

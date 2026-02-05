@@ -26,16 +26,17 @@ class EntrenamientoRepository(private val client: HttpClient) {
             val datosLogin = LoginRequest(dni = dni, contrasena = pass)
 
             // Enviamos la petición POST
-            val respuesta = client.post("$baseUrl/api/login") { // Ajusta la ruta a la de tu API (/api/login, /auth/login...)
-                contentType(ContentType.Application.Json) // Avisamos que enviamos JSON
-                setBody(datosLogin) // Metemos el sobre dentro
+            // ESTA ES LA RUTA CORRECTA (Casi seguro):
+            val respuesta = client.post("$baseUrl/api/usuarios/login") { // <--- Fíjate en el /usuarios
+                contentType(ContentType.Application.Json)
+                setBody(datosLogin)
             }
 
             // Si todo va bien, el servidor devuelve los datos de la Persona
             respuesta.body<Persona>()
         } catch (e: Exception) {
-            println("Error en Login: ${e.message}")
-            // Aquí podrías diferenciar si es error de contraseña (401) o de servidor (500)
+            println("APP: Error en Login: ${e.message}")
+            e.printStackTrace() // Esto ayuda a ver más detalles en el Logcat
             null
         }
     }

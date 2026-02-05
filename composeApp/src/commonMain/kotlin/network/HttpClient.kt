@@ -16,7 +16,8 @@ fun createHttpClient(): HttpClient {
                 isLenient = true
                 // CRUCIAL: Si tu API de Mongo devuelve campos que no tienes en tu clase Kotlin,
                 // esto evita que la app se rompa.
-                ignoreUnknownKeys = true
+                ignoreUnknownKeys = true  // Si el servidor manda basura extra (__v), la ignora
+                coerceInputValues = true  // Si viene un null y esperamos default, lo arregla
             })
         }
     }

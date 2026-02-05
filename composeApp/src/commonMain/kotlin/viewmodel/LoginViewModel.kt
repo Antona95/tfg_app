@@ -15,10 +15,7 @@ data class LoginUiState(
     val usuarioLogueado: Persona? = null // ¿Éxito?
 )
 
-class LoginViewModel : ViewModel() {
-
-    // Inicializamos el repositorio (nuestro "cartero")
-    private val repository = EntrenamientoRepository(createHttpClient())
+class LoginViewModel(private val repository: EntrenamientoRepository) : ViewModel() {
 
     // Estado interno (modificable)
     private val _uiState = MutableStateFlow(LoginUiState())

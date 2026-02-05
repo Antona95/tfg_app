@@ -32,10 +32,10 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.activity.compose)
-            implementation("io.ktor:ktor-client-okhttp:3.4.0")
+            implementation("io.ktor:ktor-client-okhttp:2.3.12")
         }
         iosMain.dependencies {
-            implementation("io.ktor:ktor-client-darwin:3.4.0")
+            implementation("io.ktor:ktor-client-darwin:2.3.12")
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
@@ -52,44 +52,43 @@ kotlin {
             api(libs.moko.mvvm.compose)
 
             // Librerías de Ktor y Serialización
-            implementation("io.ktor:ktor-client-core:3.4.0")
-            implementation("io.ktor:ktor-client-content-negotiation:3.4.0")
-            implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.7")
-        }
-        commonTest.dependencies {
-            implementation(libs.kotlin.test)
+            implementation("io.ktor:ktor-client-core:2.3.12")
+            implementation("io.ktor:ktor-client-content-negotiation:2.3.12")
+            implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.12")
+            implementation("io.ktor:ktor-client-logging:2.3.12")
 
-        }
-    }
-}
 
-android {
-    namespace = "com.example.app_tfg"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
+            commonTest.dependencies {
+                implementation(libs.kotlin.test)
 
-    defaultConfig {
-        applicationId = "com.example.app_tfg"
-        minSdk = libs.versions.android.minSdk.get().toInt()
-        targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "1.0"
-    }
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            }
         }
     }
-    buildTypes {
-        getByName("release") {
-            isMinifyEnabled = false
+
+    android {
+        namespace = "com.example.app_tfg"
+        compileSdk = libs.versions.android.compileSdk.get().toInt()
+
+        defaultConfig {
+            applicationId = "com.example.app_tfg"
+            minSdk = libs.versions.android.minSdk.get().toInt()
+            targetSdk = libs.versions.android.targetSdk.get().toInt()
+            versionCode = 1
+            versionName = "1.0"
+        }
+        packaging {
+            resources {
+                excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            }
+        }
+        buildTypes {
+            getByName("release") {
+                isMinifyEnabled = false
+            }
+        }
+        compileOptions {
+            sourceCompatibility = JavaVersion.VERSION_11
+            targetCompatibility = JavaVersion.VERSION_11
         }
     }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-}
-
-dependencies {
-    debugImplementation(libs.compose.uiTooling)
 }
