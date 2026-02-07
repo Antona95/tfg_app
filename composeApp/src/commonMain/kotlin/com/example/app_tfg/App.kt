@@ -59,12 +59,12 @@ fun App() {
                     loginViewModel.onLoginClick(nickname, pass)
                 },
 
-                // 2. NUEVO: Lo que pasa cuando pulsan "Registrarse"
+                // 2. Lo que pasa cuando pulsan "Registrarse"
                 onRegistroClick = { nickname, pass, nombre, apellidos ->
                     loginViewModel.onRegistroClick(nickname, pass, nombre, apellidos)
                 },
 
-                // 3. NUEVO: Le pasamos el mensaje de éxito si existe en el estado
+                // 3. Le pasamos el mensaje de éxito si existe en el estado
                 mensajeExito = state.mensajeExito
             )
         }

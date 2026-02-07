@@ -69,6 +69,7 @@ class EntrenamientoRepository(private val client: HttpClient) {
                 contrasena = pass,
                 nombre = nombre,
                 apellidos = apellidos
+
             )
 
             val respuesta = client.post("$baseUrl/api/usuarios") { // Ruta de crear usuario

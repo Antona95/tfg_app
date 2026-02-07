@@ -17,6 +17,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app_tfg.composeapp.generated.resources.Res
 import app_tfg.composeapp.generated.resources.imagen_inicial
 import org.jetbrains.compose.resources.painterResource
@@ -42,7 +43,6 @@ fun LoginScreen(
 
             if (isLandscape) {
                 // --- DISEÑO HORIZONTAL (LANDSCAPE) ---
-                // Ponemos la imagen a la izquierda y el formulario a la derecha
                 Row(modifier = Modifier.fillMaxSize()) {
 
                     // 1. PANEL IZQUIERDO (IMAGEN)
@@ -57,7 +57,7 @@ fun LoginScreen(
                             painter = painterResource(Res.drawable.imagen_inicial),
                             contentDescription = "Logo Gym",
                             modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Fit // Se ve entera sin cortarse
+                            contentScale = ContentScale.Fit
                         )
                     }
 
@@ -67,18 +67,16 @@ fun LoginScreen(
                             .weight(0.6f) // Ocupa el 60% del ancho restante
                             .fillMaxHeight()
                             .padding(horizontal = 32.dp)
-                            .verticalScroll(rememberScrollState()), // Permite scroll si el teclado tapa campos
+                            .verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // Llamamos al componente del formulario pasándole todos los datos
                         FormularioAuth(onLoginClick, onRegistroClick, mensajeExito)
                     }
                 }
 
             } else {
                 // --- DISEÑO VERTICAL (PORTRAIT) ---
-                // Imagen arriba y formulario abajo
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -93,7 +91,7 @@ fun LoginScreen(
                             .fillMaxWidth()
                             .height(250.dp)
                             .padding(bottom = 24.dp),
-                        contentScale = ContentScale.Crop // Recorta la imagen para llenar el ancho
+                        contentScale = ContentScale.Crop
                     )
 
                     // 2. Formulario abajo
@@ -110,42 +108,48 @@ fun LoginScreen(
 }
 
 /**
- * Componente reutilizable que contiene los campos de texto y botones.
- * Cambia dinámicamente entre modo "Login" y modo "Registro".
+ * 🎓 APUNTES DE COMPOSE:
+ * Esta función es un COMPONENTE (@Composable).
+ * Piensa en ella como una pieza de Lego que se dibuja en la pantalla.
+ * Recibe "lambdas" (funciones) para avisar al padre cuando pasa algo (onClick).
  */
 @Composable
 fun FormularioAuth(
     onLoginClick: (String, String) -> Unit,
     onRegistroClick: (String, String, String, String) -> Unit,
-    mensajeExito: String?
+    mensajeExito: String? // Dato que viene de fuera (del ViewModel)
 ) {
-    // --- ESTADOS DE LA INTERFAZ ---
-
-    // Controla si estamos en modo Registro (true) o Login (false)
-    var isRegistering by remember { mutableStateOf(false) }
-
-    // Campos de texto comunes
-    var nickname by remember { mutableStateOf("") }
+    // ---------------------------------------------------------
+    // EL CEREBRO (ESTADO)
+    // ---------------------------------------------------------
+    var isRegistering by remember { mutableStateOf(false) } // ¿Estamos registrando o logueando?
+    var nickname by remember { mutableStateOf("") }         // Lo que escribe el usuario
     var password by remember { mutableStateOf("") }
 
-    // Campos extra (Solo para registro)
+    // Estos solo se usan si isRegistering es true
     var nombre by remember { mutableStateOf("") }
     var apellidos by remember { mutableStateOf("") }
 
-    // Estado visual (Password oculta/visible y errores)
-    var passwordVisible by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var passwordVisible by remember { mutableStateOf(false) } // ¿Se ven los puntitos o las letras?
+    var errorMessage by remember { mutableStateOf<String?>(null) } // Errores locales
 
-    // --- EFECTO SECUNDARIO: ÉXITO ---
-    // Si recibimos un mensaje de éxito (cuenta creada), volvemos automáticamente al modo Login
+    // ---------------------------------------------------------
+    // EFECTOS SECUNDARIOS (LÓGICA PURA)
+    // ---------------------------------------------------------
+    // LaunchedEffect: Código que NO DIBUJA, solo PIENSA.
     LaunchedEffect(mensajeExito) {
         if (mensajeExito != null) {
+            // LÓGICA: Si hay éxito, cambiamos el modo automáticamente.
             isRegistering = false
-            errorMessage = null // Limpiamos errores antiguos
+            errorMessage = null
         }
     }
 
-    // --- TÍTULO ---
+    // ---------------------------------------------------------
+    // EL DIBUJO (UI)
+    // ---------------------------------------------------------
+
+    // 1. TÍTULO DINÁMICO
     Text(
         text = if (isRegistering) "Crear Cuenta" else "Bienvenido",
         style = MaterialTheme.typography.headlineLarge,
@@ -154,8 +158,7 @@ fun FormularioAuth(
 
     Spacer(modifier = Modifier.height(24.dp))
 
-    // --- CAMPOS EXTRA (SOLO EN MODO REGISTRO) ---
-    // Si isRegistering es true, mostramos Nombre y Apellidos primero
+    // 2. CAMPOS EXTRA (Solo se dibujan si estamos registrando)
     if (isRegistering) {
         OutlinedTextField(
             value = nombre,
@@ -178,7 +181,7 @@ fun FormularioAuth(
         Spacer(modifier = Modifier.height(16.dp))
     }
 
-    // --- CAMPO NICKNAME (COMÚN) ---
+    // 3. CAMPOS COMUNES
     OutlinedTextField(
         value = nickname,
         onValueChange = { nickname = it },
@@ -190,7 +193,6 @@ fun FormularioAuth(
 
     Spacer(modifier = Modifier.height(16.dp))
 
-    // --- CAMPO CONTRASEÑA (COMÚN) ---
     OutlinedTextField(
         value = password,
         onValueChange = { password = it },
@@ -198,39 +200,28 @@ fun FormularioAuth(
         modifier = Modifier.fillMaxWidth(),
         singleLine = true,
         shape = MaterialTheme.shapes.medium,
-
-        // Lógica visual: Puntos o Texto normal según el estado
         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-
-        // Icono del ojo para mostrar/ocultar contraseña
         trailingIcon = {
             val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
-            val description = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
-
             IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                Icon(imageVector = image, contentDescription = description)
+                Icon(imageVector = image, contentDescription = "Ojo contraseña")
             }
         }
     )
 
     Spacer(modifier = Modifier.height(32.dp))
 
-    // --- BOTÓN PRINCIPAL (ACCIÓN) ---
-    // El texto y la acción cambian según el modo
+    // 4. EL BOTÓN GORDO (ACCIÓN)
     Button(
         onClick = {
             if (isRegistering) {
-                // --- LÓGICA DE REGISTRO ---
-                // Validamos que los 4 campos tengan datos
                 if (nickname.isNotEmpty() && password.isNotEmpty() && nombre.isNotEmpty() && apellidos.isNotEmpty()) {
                     onRegistroClick(nickname, password, nombre, apellidos)
                 } else {
                     errorMessage = "Por favor, rellena todos los campos"
                 }
             } else {
-                // --- LÓGICA DE LOGIN ---
-                // Validamos solo los 2 campos básicos
                 if (nickname.isNotEmpty() && password.isNotEmpty()) {
                     onLoginClick(nickname, password)
                 } else {
@@ -238,38 +229,37 @@ fun FormularioAuth(
                 }
             }
         },
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(50.dp),
+        modifier = Modifier.fillMaxWidth().height(50.dp),
         shape = MaterialTheme.shapes.medium
     ) {
         Text(if (isRegistering) "REGISTRARSE" else "INICIAR SESIÓN")
     }
 
-    // --- MENSAJES DE ERROR O ÉXITO ---
+    // 5. MENSAJES DE AVISO (ERROR O ÉXITO)
     if (errorMessage != null) {
         Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = errorMessage!!,
-            color = MaterialTheme.colorScheme.error
-        )
+        Text(text = errorMessage!!, color = MaterialTheme.colorScheme.error)
     }
 
+    // Mensaje de éxito (Estilizado)
     if (mensajeExito != null) {
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = mensajeExito,
-            color = MaterialTheme.colorScheme.primary // Usamos color primario para éxito
+            color = androidx.compose.ui.graphics.Color(0xFF2E7D32),
+            fontSize = 18.sp,
+            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
         )
     }
 
     Spacer(modifier = Modifier.height(16.dp))
 
-    // --- BOTÓN PARA CAMBIAR DE MODO ---
-    // Permite al usuario alternar entre Login y Registro
+    // 6. BOTÓN PARA CAMBIAR MODO
     TextButton(onClick = {
-        isRegistering = !isRegistering // Invertimos el valor (true <-> false)
-        errorMessage = null // Limpiamos errores al cambiar de pantalla
+        isRegistering = !isRegistering
+        errorMessage = null
     }) {
         Text(if (isRegistering) "¿Ya tienes cuenta? Inicia Sesión" else "¿No tienes cuenta? Regístrate")
     }

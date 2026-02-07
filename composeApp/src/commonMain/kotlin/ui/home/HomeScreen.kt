@@ -1,32 +1,10 @@
 package ui.home
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,12 +13,30 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import model.Persona
 
-@OptIn(ExperimentalMaterial3Api::class)
+// ---------------------------------------------------------
+// 1. EL CEREBRO (Decide qué pantalla mostrar)
+// ---------------------------------------------------------
 @Composable
 fun HomeScreen(
     usuario: Persona,
-    onLogoutClick: () -> Unit // Añadimos esto para poder cerrar sesión luego
+    onLogoutClick: () -> Unit
 ) {
+    // Normalizamos el rol a mayúsculas para evitar errores (ej: "Entrenador" vs "ENTRENADOR")
+    val rol = usuario.rol?.uppercase() ?: "USUARIO"
+
+    if (rol == "ENTRENADOR") {
+        VistaEntrenador(usuario, onLogoutClick)
+    } else {
+        VistaCliente(usuario, onLogoutClick)
+    }
+}
+
+// ---------------------------------------------------------
+// 2. VISTA CLIENTE (Tu código original)
+// ---------------------------------------------------------
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun VistaCliente(usuario: Persona, onLogoutClick: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -58,63 +54,92 @@ fun HomeScreen(
         }
     ) { padding ->
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
+            modifier = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // 1. BIENVENIDA
+            // Cabecera
             item {
                 Text(
                     text = "Hola, ${usuario.nombre} 👋",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold
                 )
-                Text(
-                    text = "Rol: ${usuario.rol}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.secondary
-                )
+                Text("Tu objetivo está cerca.", style = MaterialTheme.typography.bodyMedium)
             }
 
-            // 2. TARJETAS DE MENÚ
+            // Tarjetas de Cliente
             item {
-                DashboardCard(
-                    titulo = "Mi Rutina",
-                    subtitulo = "Ver ejercicios de hoy",
-                    icono = Icons.Default.DateRange,
-                    onClick = { /* Navegar a rutina */ }
-                )
+                DashboardCard("Mi Rutina", "Ver ejercicios de hoy", Icons.Default.DateRange) { /* TODO */ }
             }
-
             item {
-                DashboardCard(
-                    titulo = "Mi Perfil",
-                    subtitulo = "Datos físicos y progresos",
-                    icono = Icons.Default.Person,
-                    onClick = { /* Navegar a perfil */ }
-                )
-            }
-
-            // 3. BOTÓN GRANDE DE SALIR
-            item {
-                Spacer(modifier = Modifier.height(20.dp))
-                Button(
-                    onClick = onLogoutClick,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Cerrar Sesión")
-                }
+                DashboardCard("Mi Perfil", "Datos físicos y progresos", Icons.Default.Person) { /* TODO */ }
             }
         }
     }
 }
 
-// Componente auxiliar para diseñar las tarjetas
+// ---------------------------------------------------------
+// 3. VISTA ENTRENADOR (Nueva pantalla para el Jefe)
+// ---------------------------------------------------------
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun VistaEntrenador(usuario: Persona, onLogoutClick: () -> Unit) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Panel Entrenador") }, // Título diferente
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer, // Color diferente para diferenciar
+                    titleContentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                ),
+                actions = {
+                    IconButton(onClick = onLogoutClick) {
+                        Icon(Icons.Default.ExitToApp, contentDescription = "Cerrar Sesión")
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Cabecera Entrenador
+            item {
+                Text(
+                    text = "Coach ${usuario.nombre} 💪",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text("Gestión de gimnasio", style = MaterialTheme.typography.bodyMedium)
+            }
+
+            // Tarjetas de Entrenador (Diferentes a las del cliente)
+            item {
+                DashboardCard(
+                    titulo = "Mis Alumnos",
+                    subtitulo = "Gestionar usuarios y asignar rutinas",
+                    icono = Icons.Default.Group, // Icono de grupo
+                    onClick = { /* Aquí navegaremos a la lista de alumnos */ }
+                )
+            }
+            item {
+                DashboardCard(
+                    titulo = "Crear Rutina",
+                    subtitulo = "Diseñar nuevos entrenamientos",
+                    icono = Icons.Default.Edit,
+                    onClick = { /* Aquí crearemos rutinas */ }
+                )
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------
+// 4. COMPONENTE COMPARTIDO (Reutilizable para ambos)
+// ---------------------------------------------------------
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardCard(
@@ -125,15 +150,11 @@ fun DashboardCard(
 ) {
     Card(
         onClick = onClick,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-        ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier
-                .padding(20.dp)
-                .fillMaxWidth(),
+            modifier = Modifier.padding(20.dp).fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -143,15 +164,8 @@ fun DashboardCard(
                 tint = MaterialTheme.colorScheme.primary
             )
             Column(modifier = Modifier.padding(start = 16.dp)) {
-                Text(
-                    text = titulo,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = subtitulo,
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                Text(text = titulo, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(text = subtitulo, style = MaterialTheme.typography.bodyMedium)
             }
         }
     }
