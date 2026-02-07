@@ -54,19 +54,19 @@ fun App() {
         } else {
             // SI NO HEMOS ENTRADO (LoginScreen)
             LoginScreen(
-                onLoginClick = { nick, pass ->
-                    loginViewModel.onLoginClick(nick, pass)
+                // 1. Lo que pasa cuando pulsan "Iniciar Sesión"
+                onLoginClick = { nickname, pass ->
+                    loginViewModel.onLoginClick(nickname, pass)
                 },
-                // CONECTAMOS EL NUEVO CABLE DE REGISTRO
-                onRegistroClick = { nick, pass, nombre, apellidos ->
-                    loginViewModel.onRegistroClick(nick, pass, nombre, apellidos)
+
+                // 2. NUEVO: Lo que pasa cuando pulsan "Registrarse"
+                onRegistroClick = { nickname, pass, nombre, apellidos ->
+                    loginViewModel.onRegistroClick(nickname, pass, nombre, apellidos)
                 },
-                // PASAMOS EL MENSAJE DE ÉXITO SI LO HAY
 
-
-            if (state.error != null) {
-                println("APP - Error detectado: ${state.error}")
-            }
+                // 3. NUEVO: Le pasamos el mensaje de éxito si existe en el estado
+                mensajeExito = state.mensajeExito
+            )
         }
     }
 }
