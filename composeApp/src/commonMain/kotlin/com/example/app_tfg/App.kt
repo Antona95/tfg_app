@@ -39,7 +39,7 @@ fun App() {
         )
 
         // ---------------------------------------------------------
-        // PASO 2: UI (Esto ya lo tenías bien)
+        // PASO 2: UI (PANTALLA)
         // ---------------------------------------------------------
         val state by loginViewModel.uiState.collectAsState()
 
@@ -52,11 +52,17 @@ fun App() {
                 }
             )
         } else {
+            // SI NO HEMOS ENTRADO (LoginScreen)
             LoginScreen(
-                onLoginClick = { dni, pass ->
-                    loginViewModel.onLoginClick(dni, pass)
-                }
-            )
+                onLoginClick = { nick, pass ->
+                    loginViewModel.onLoginClick(nick, pass)
+                },
+                // CONECTAMOS EL NUEVO CABLE DE REGISTRO
+                onRegistroClick = { nick, pass, nombre, apellidos ->
+                    loginViewModel.onRegistroClick(nick, pass, nombre, apellidos)
+                },
+                // PASAMOS EL MENSAJE DE ÉXITO SI LO HAY
+
 
             if (state.error != null) {
                 println("APP - Error detectado: ${state.error}")

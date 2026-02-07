@@ -14,11 +14,10 @@ data class Persona(
     val id: String? = null,
 
     // Datos del usuario (Todos opcionales para evitar CRASH)
-    val dni: String? = null,
+    val nickname: String? = null,
     val nombre: String? = null,
     val apellidos: String? = null,
     val rol: String? = null,
-    val nombreCompleto: String? = null,
 
     // Si tu login devuelve un token, recógelo aquí
     val token: String? = null
