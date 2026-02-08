@@ -84,9 +84,21 @@ class EntrenamientoRepository(private val client: HttpClient) {
             false
         }
     }
+    suspend fun obtenerTodosLosUsuarios(): List<Persona> {
+        return try {
+            // 1. Llamamos al servidor (GET /api/usuarios)
+            val respuesta = client.get("http://10.0.2.2:8080/api/usuarios").body<List<Persona>>()
+
+            // 2. Filtramos para que NO salga el propio Entrenador en la lista (opcional)
+            respuesta.filter { it.rol != "ENTRENADOR" }
+
+        } catch (e: Exception) {
+            println("Error obteniendo usuarios: ${e.message}")
+            emptyList() // Si falla, devolvemos lista vacía para que no se rompa la app
+        }
+    }
 
     // Función para obtener la sesión de hoy de un usuario
-    // AHORA ESTÁ DENTRO DE LA CLASE (antes estaba fuera y daba error)
     suspend fun obtenerSesionHoy(idUsuario: String): SesionEntrenamiento? {
         return try {
             // Hacemos la petición GET a tu API

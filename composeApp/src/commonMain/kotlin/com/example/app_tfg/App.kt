@@ -46,6 +46,7 @@ fun App() {
         if (state.usuarioLogueado != null) {
             HomeScreen(
                 usuario = state.usuarioLogueado!!,
+                repository = repository,
                 onLogoutClick = {
                     println("APP: El usuario quiere salir")
                     // loginViewModel.cerrarSesion()

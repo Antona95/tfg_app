@@ -1,38 +1,162 @@
 package ui.home
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import network.EntrenamientoRepository
 import model.Persona
+import viewmodel.CoachViewModel
 
 // ---------------------------------------------------------
-// 1. EL CEREBRO (Decide qué pantalla mostrar)
+// 1. EL CEREBRO PRINCIPAL
 // ---------------------------------------------------------
 @Composable
 fun HomeScreen(
     usuario: Persona,
+    repository: EntrenamientoRepository,
     onLogoutClick: () -> Unit
 ) {
-    // Normalizamos el rol a mayúsculas para evitar errores (ej: "Entrenador" vs "ENTRENADOR")
     val rol = usuario.rol?.uppercase() ?: "USUARIO"
 
     if (rol == "ENTRENADOR") {
-        VistaEntrenador(usuario, onLogoutClick)
+        VistaEntrenador(usuario, repository, onLogoutClick)
     } else {
         VistaCliente(usuario, onLogoutClick)
     }
 }
 
 // ---------------------------------------------------------
-// 2. VISTA CLIENTE (Tu código original)
+// 2. VISTA ENTRENADOR
+// ---------------------------------------------------------
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun VistaEntrenador(
+    usuario: Persona,
+    repository: EntrenamientoRepository,
+    onLogoutClick: () -> Unit
+) {
+    val viewModel = remember { CoachViewModel(repository) }
+    val listaAlumnos by viewModel.alumnos.collectAsState()
+    val cargando by viewModel.isLoading.collectAsState()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Panel Entrenador") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                ),
+                actions = {
+                    IconButton(onClick = onLogoutClick) {
+                        Icon(Icons.Default.ExitToApp, contentDescription = "Salir")
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(16.dp)
+        ) {
+            Text(
+                text = "Mis Alumnos (${listaAlumnos.size})",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (cargando) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else if (listaAlumnos.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("No tienes alumnos asignados aún")
+                }
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(listaAlumnos) { alumno ->
+                        AlumnoCard(alumno)
+                    }
+                }
+            }
+        }
+    }
+}
+// ---------------------------------------------------------
+// 3. TARJETA DE ALUMNO
+// ---------------------------------------------------------
+@Composable
+fun AlumnoCard(alumno: Persona) {
+    Card(
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(50.dp)
+                    .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                val nombreSeguro = alumno.nombre ?: "?"
+                val inicial = if (nombreSeguro.isNotEmpty()) nombreSeguro.take(1).uppercase() else "?"
+
+                Text(
+                    text = inicial,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "${alumno.nombre ?: "Sin Nombre"} ${alumno.apellidos ?: ""}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "@${alumno.nickname ?: "anonimo"}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray
+                )
+            }
+
+            Icon(Icons.Default.ChevronRight, contentDescription = "Ver detalles")
+        }
+    }
+}
+
+// ---------------------------------------------------------
+// 4. VISTA CLIENTE
 // ---------------------------------------------------------
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,83 +178,40 @@ fun VistaCliente(usuario: Persona, onLogoutClick: () -> Unit) {
         }
     ) { padding ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Cabecera
             item {
                 Text(
-                    text = "Hola, ${usuario.nombre} 👋",
+                    text = "Hola, ${usuario.nombre}",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold
                 )
-                Text("Tu objetivo está cerca.", style = MaterialTheme.typography.bodyMedium)
-            }
-
-            // Tarjetas de Cliente
-            item {
-                DashboardCard("Mi Rutina", "Ver ejercicios de hoy", Icons.Default.DateRange) { /* TODO */ }
-            }
-            item {
-                DashboardCard("Mi Perfil", "Datos físicos y progresos", Icons.Default.Person) { /* TODO */ }
-            }
-        }
-    }
-}
-
-// ---------------------------------------------------------
-// 3. VISTA ENTRENADOR (Nueva pantalla para el Jefe)
-// ---------------------------------------------------------
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun VistaEntrenador(usuario: Persona, onLogoutClick: () -> Unit) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Panel Entrenador") }, // Título diferente
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer, // Color diferente para diferenciar
-                    titleContentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                ),
-                actions = {
-                    IconButton(onClick = onLogoutClick) {
-                        Icon(Icons.Default.ExitToApp, contentDescription = "Cerrar Sesión")
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Cabecera Entrenador
-            item {
                 Text(
-                    text = "Coach ${usuario.nombre} 💪",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
+                    text = "Rol: ${usuario.rol}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.secondary
                 )
-                Text("Gestión de gimnasio", style = MaterialTheme.typography.bodyMedium)
             }
 
-            // Tarjetas de Entrenador (Diferentes a las del cliente)
             item {
                 DashboardCard(
-                    titulo = "Mis Alumnos",
-                    subtitulo = "Gestionar usuarios y asignar rutinas",
-                    icono = Icons.Default.Group, // Icono de grupo
-                    onClick = { /* Aquí navegaremos a la lista de alumnos */ }
+                    titulo = "Mi Rutina",
+                    subtitulo = "Ver ejercicios de hoy",
+                    icono = Icons.Default.DateRange,
+                    onClick = { /* Navegar a rutina */ }
                 )
             }
+
             item {
                 DashboardCard(
-                    titulo = "Crear Rutina",
-                    subtitulo = "Diseñar nuevos entrenamientos",
-                    icono = Icons.Default.Edit,
-                    onClick = { /* Aquí crearemos rutinas */ }
+                    titulo = "Mi Perfil",
+                    subtitulo = "Datos físicos y progresos",
+                    icono = Icons.Default.Person,
+                    onClick = { /* Navegar a perfil */ }
                 )
             }
         }
@@ -138,7 +219,7 @@ fun VistaEntrenador(usuario: Persona, onLogoutClick: () -> Unit) {
 }
 
 // ---------------------------------------------------------
-// 4. COMPONENTE COMPARTIDO (Reutilizable para ambos)
+// 5. COMPONENTE COMPARTIDO (DASHBOARD)
 // ---------------------------------------------------------
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -150,11 +231,15 @@ fun DashboardCard(
 ) {
     Card(
         onClick = onClick,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+        ),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier.padding(20.dp).fillMaxWidth(),
+            modifier = Modifier
+                .padding(20.dp)
+                .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -164,8 +249,15 @@ fun DashboardCard(
                 tint = MaterialTheme.colorScheme.primary
             )
             Column(modifier = Modifier.padding(start = 16.dp)) {
-                Text(text = titulo, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text(text = subtitulo, style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    text = titulo,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = subtitulo,
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
         }
     }
