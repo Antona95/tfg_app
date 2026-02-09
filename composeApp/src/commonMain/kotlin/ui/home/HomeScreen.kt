@@ -39,7 +39,7 @@ fun HomeScreen(
 }
 
 // ---------------------------------------------------------
-// 2. VISTA ENTRENADOR
+// 2. VISTA ENTRENADOR (CON NAVEGACIÓN)
 // ---------------------------------------------------------
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,62 +52,85 @@ fun VistaEntrenador(
     val listaAlumnos by viewModel.alumnos.collectAsState()
     val cargando by viewModel.isLoading.collectAsState()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Panel Entrenador") },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                ),
-                actions = {
-                    IconButton(onClick = onLogoutClick) {
-                        Icon(Icons.Default.ExitToApp, contentDescription = "Salir")
+    // ESTADO: ¿Qué alumno estamos mirando? (null = viendo la lista)
+    var alumnoSeleccionado by remember { mutableStateOf<Persona?>(null) }
+
+    // DECISIÓN DE NAVEGACIÓN
+    if (alumnoSeleccionado != null) {
+        // -> PANTALLA DE DETALLE (Si hemos pulsado en alguien)
+        VistaDetalleAlumno(
+            alumno = alumnoSeleccionado!!,
+            onVolver = { alumnoSeleccionado = null } // Botón atrás: borra la selección
+        )
+    } else {
+        // -> PANTALLA DE LISTA (La normal)
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Panel Entrenador") },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        titleContentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                    ),
+                    actions = {
+                        IconButton(onClick = onLogoutClick) {
+                            Icon(Icons.Default.ExitToApp, contentDescription = "Salir")
+                        }
                     }
-                }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp)
-        ) {
-            Text(
-                text = "Mis Alumnos (${listaAlumnos.size})",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
+                )
+            }
+        ) { padding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = "Mis Alumnos (${listaAlumnos.size})",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            if (cargando) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            } else if (listaAlumnos.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No tienes alumnos asignados aún")
-                }
-            } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(listaAlumnos) { alumno ->
-                        AlumnoCard(alumno)
+                if (cargando) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                } else if (listaAlumnos.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("No tienes alumnos asignados aún")
+                    }
+                } else {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(listaAlumnos) { alumno ->
+                            // Pasamos la acción de click
+                            AlumnoCard(
+                                alumno = alumno,
+                                onClick = { alumnoSeleccionado = alumno }
+                            )
+                        }
                     }
                 }
             }
         }
     }
 }
+
 // ---------------------------------------------------------
-// 3. TARJETA DE ALUMNO
+// 3. TARJETA DE ALUMNO (CLICABLE)
 // ---------------------------------------------------------
+@OptIn(ExperimentalMaterial3Api::class) // Necesario para el onClick de Card
 @Composable
-fun AlumnoCard(alumno: Persona) {
+fun AlumnoCard(
+    alumno: Persona,
+    onClick: () -> Unit
+) {
     Card(
+        onClick = onClick, // <--- CONECTAMOS EL CLIC
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier.fillMaxWidth()
@@ -154,7 +177,6 @@ fun AlumnoCard(alumno: Persona) {
         }
     }
 }
-
 // ---------------------------------------------------------
 // 4. VISTA CLIENTE
 // ---------------------------------------------------------
@@ -262,3 +284,80 @@ fun DashboardCard(
         }
     }
 }
+// ---------------------------------------------------------
+// 6. PANTALLA DE DETALLE DEL ALUMNO (NUEVA) 📝
+// ---------------------------------------------------------
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun VistaDetalleAlumno(
+        alumno: Persona,
+        onVolver: () -> Unit
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(alumno.nombre ?: "Alumno") },
+                    navigationIcon = {
+                        IconButton(onClick = onVolver) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                        }
+                    }
+                )
+            }
+        ) { padding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // FOTO GRANDE
+                Box(
+                    modifier = Modifier
+                        .size(100.dp)
+                        .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = (alumno.nombre ?: "?").take(1).uppercase(),
+                        fontSize = 40.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "${alumno.nombre} ${alumno.apellidos}",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(text = "Cliente desde 2024", color = Color.Gray)
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // BOTONES DE ACCIÓN (LO QUE HAREMOS LUEGO)
+                Button(
+                    onClick = { /* TODO: Crear Rutina */ },
+                    modifier = Modifier.fillMaxWidth().height(50.dp)
+                ) {
+                    Icon(Icons.Default.Edit, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Asignar Nueva Rutina")
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedButton(
+                    onClick = { /* TODO: Ver estadísticas */ },
+                    modifier = Modifier.fillMaxWidth().height(50.dp)
+                ) {
+                    Icon(Icons.Default.Info, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Ver Progreso")
+                }
+            }
+        }
+    }
+

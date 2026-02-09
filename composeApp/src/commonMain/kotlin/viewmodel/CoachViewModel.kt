@@ -27,9 +27,11 @@ class CoachViewModel(private val repository: EntrenamientoRepository) : ViewMode
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                // Llamamos al repositorio
                 val lista = repository.obtenerTodosLosUsuarios()
-                _alumnos.value = lista
+
+                // CAMBIO AQUÍ: Filtramos para ver SOLO a los alumnos
+                _alumnos.value = lista.filter { it.rol == "USUARIO" }
+
             } catch (e: Exception) {
                 println("Error cargando alumnos: ${e.message}")
             } finally {

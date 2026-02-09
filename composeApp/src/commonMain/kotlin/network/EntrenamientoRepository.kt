@@ -32,7 +32,7 @@ class EntrenamientoRepository(private val client: HttpClient) {
 
     // URL base de tu API (esto cambiará cuando despliegues la API real)
     // Nota: Para el emulador de Android, "localhost" es "10.0.2.2"
-    private val baseUrl = "http://10.0.2.2:8080"
+    private val baseUrl = "http://10.0.2.2:3005"
     // private val baseUrl = "http://192.168.1.XX:3000" // Si pruebas en un móvil físico, usa la IP de tu PC
 
     // Función de Login
@@ -42,8 +42,7 @@ class EntrenamientoRepository(private val client: HttpClient) {
             val datosLogin = LoginRequest(nickname = nickname, contrasena = pass)
 
             // Enviamos la petición POST
-            // ESTA ES LA RUTA CORRECTA (Casi seguro):
-            val respuesta = client.post("$baseUrl/api/usuarios/login") { // <--- Fíjate en el /usuarios
+            val respuesta = client.post("$baseUrl/api/usuarios/login") {
                 contentType(ContentType.Application.Json)
                 setBody(datosLogin)
             }
@@ -76,7 +75,7 @@ class EntrenamientoRepository(private val client: HttpClient) {
                 contentType(ContentType.Application.Json)
                 setBody(datosRegistro)
             }
-
+            println("Respuesta Registro: ${respuesta.status}")
             // Si devuelve 200 o 201, es que se creó bien
             respuesta.status.value == 200 || respuesta.status.value == 201
         } catch (e: Exception) {
@@ -87,7 +86,7 @@ class EntrenamientoRepository(private val client: HttpClient) {
     suspend fun obtenerTodosLosUsuarios(): List<Persona> {
         return try {
             // 1. Llamamos al servidor (GET /api/usuarios)
-            val respuesta = client.get("http://10.0.2.2:8080/api/usuarios").body<List<Persona>>()
+            val respuesta = client.get("$baseUrl/api/usuarios").body<List<Persona>>()
 
             // 2. Filtramos para que NO salga el propio Entrenador en la lista (opcional)
             respuesta.filter { it.rol != "ENTRENADOR" }
