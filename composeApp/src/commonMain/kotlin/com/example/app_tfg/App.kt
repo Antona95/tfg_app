@@ -17,145 +17,95 @@ import ui.coach.CoachScreen
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import ui.coach.UserOptionsScreen
+import ui.coach.NuevaSesionScreen // <--- ASEGÚRATE DE IMPORTAR ESTO
 
 @Composable
 fun App() {
     MaterialTheme {
-        // ---------------------------------------------------------
-        // 1. CONFIGURACIÓN DE LA CAPA DE DATOS (HERRAMIENTAS)
-        // ---------------------------------------------------------
-
-        // Creamos el cliente HTTP una sola vez usando 'remember'.
-        // Esto evita que se cree un cliente nuevo cada vez que la pantalla se redibuja.
+        // 1. CONFIGURACIÓN (Igual que antes)
         val client = remember { createHttpClient() }
-
-        // Inicializamos el Repositorio, que es quien sabe hablar con el Backend.
-        // Le pasamos el cliente HTTP para que pueda hacer las peticiones.
         val repository = remember { EntrenamientoRepository(client) }
 
-
-        // ---------------------------------------------------------
-        // 2. VIEWMODEL PRINCIPAL (LOGIN Y ESTADO GLOBAL)
-        // ---------------------------------------------------------
-
-        // Usamos getViewModel con una 'factory' para poder pasarle el repositorio
-        // al constructor del LoginViewModel.
+        // 2. VIEWMODEL LOGIN (Igual que antes)
         val loginViewModel = getViewModel(
             key = "login-screen",
-            factory = viewModelFactory {
-                LoginViewModel(repository)
-            }
+            factory = viewModelFactory { LoginViewModel(repository) }
         )
 
-        // ---------------------------------------------------------
-        // 3. OBSERVAMOS EL ESTADO (UI STATE)
-        // ---------------------------------------------------------
-
-        // collectAsState convierte el flujo de datos del ViewModel en un Estado de Compose.
-        // Cada vez que 'uiState' cambie, esta función App() se volverá a ejecutar (recomposición)
-        // para mostrar la pantalla correcta.
+        // 3. ESTADO (Igual que antes)
         val state by loginViewModel.uiState.collectAsState()
 
-
-        // ---------------------------------------------------------
-        // 4. LÓGICA DE NAVEGACIÓN Y ROLES
-        // ---------------------------------------------------------
-
-        // PRIMERA COMPROBACIÓN: ¿Tenemos un usuario logueado en memoria?
+        // 4. LÓGICA DE NAVEGACIÓN
         if (state.usuarioLogueado != null) {
-
-            // Forzamos el desempaquetado (!!) porque ya comprobamos que no es nulo arriba
             val usuario = state.usuarioLogueado!!
 
-            // SEGUNDA COMPROBACIÓN: ¿Qué ROL tiene este usuario?
+            // CASO ENTRENADOR
             if (usuario.rol == "ENTRENADOR") {
-// A) CASO ENTRENADOR: NAVEGACIÓN INTERNA
 
-                // Variable de estado local para controlar la navegación dentro del perfil de entrenador.
-                // Si es null, mostramos la lista de todos los alumnos.
-                // Si tiene valor, mostramos la pantalla de opciones de ese alumno específico.
+                // VAR 1: ¿Qué alumno hemos elegido?
                 var usuarioSeleccionado by remember { mutableStateOf<model.Persona?>(null) }
 
-                if (usuarioSeleccionado == null) {
-                    // --- SUB-PANTALLA 1: LISTA DE ALUMNOS ---
+                // VAR 2 (NUEVO): ¿Estamos en la pantalla de crear sesión?
+                var creandoSesion by remember { mutableStateOf(false) }
 
-                    // Instanciamos el ViewModel específico para el Entrenador.
-                    val coachViewModel = getViewModel(
-                        key = "coach-screen",
-                        factory = viewModelFactory {
-                            CoachViewModel(repository)
+                // --- LÓGICA DE PANTALLAS (ESCALERA DE IFs) ---
+
+                if (creandoSesion && usuarioSeleccionado != null) {
+                    // PANTALLA 3: FORMULARIO DE NUEVA SESIÓN
+                    // (Se muestra si le dimos al botón y tenemos un usuario)
+                    NuevaSesionScreen(
+                        idUsuario = usuarioSeleccionado!!.id ?: "", // Pasamos el ID del alumno
+                        repository = repository,
+                        onNavigateBack = {
+                            // AL VOLVER: Apagamos el interruptor y volvemos al menú de opciones
+                            creandoSesion = false
                         }
                     )
 
-                    CoachScreen(
-                        viewModel = coachViewModel,
-                        onLogoutClick = {
-                            // Aquí iría la lógica para cerrar sesión
-                            // loginViewModel.cerrarSesion()
+                } else if (usuarioSeleccionado != null) {
+                    // PANTALLA 2: OPCIONES DEL USUARIO (Menú de 3 botones)
+                    UserOptionsScreen(
+                        usuario = usuarioSeleccionado!!,
+                        onBack = { usuarioSeleccionado = null }, // Volver a la lista
+
+                        onNuevaSesion = {
+                            // AQUÍ ESTÁ LA CLAVE: Activamos el interruptor
+                            creandoSesion = true
                         },
-                        onAlumnoClick = { alumno ->
-                            // AL HACER CLIC EN UN ALUMNO:
-                            // Guardamos el alumno en la variable de estado 'usuarioSeleccionado'.
-                            // Esto provocará una recomposición y entrará en el bloque 'else' de abajo.
-                            usuarioSeleccionado = alumno
-                        }
+
+                        onDuplicarSesion = { /* TODO */ },
+                        onVerHistorial = { /* TODO */ }
                     )
 
                 } else {
-                    // --- SUB-PANTALLA 2: OPCIONES DEL USUARIO SELECCIONADO ---
-
-                    // Mostramos la pantalla de gestión con las opciones (Nueva sesión, Duplicar, Historial)
-                    UserOptionsScreen(
-                        usuario = usuarioSeleccionado!!,
-
-                        onBack = {
-                            // AL VOLVER ATRÁS:
-                            // Ponemos la variable a null para regresar a la lista de alumnos.
-                            usuarioSeleccionado = null
-                        },
-
-                        onNuevaSesion = {
-                            println("Navegación: Crear Sesión desde cero para ${usuarioSeleccionado!!.nombre}")
-                            // TODO: Implementar navegación a pantalla de creación de sesión
-                        },
-
-                        onDuplicarSesion = {
-                            println("Navegación: Duplicar última sesión de ${usuarioSeleccionado!!.nombre}")
-                            // TODO: Implementar lógica de duplicado
-                        },
-
-                        onVerHistorial = {
-                            println("Navegación: Ver historial de ${usuarioSeleccionado!!.nombre}")
-                            // TODO: Implementar pantalla de historial
+                    // PANTALLA 1: LISTA DE ALUMNOS (Por defecto)
+                    val coachViewModel = getViewModel(
+                        key = "coach-screen",
+                        factory = viewModelFactory { CoachViewModel(repository) }
+                    )
+                    CoachScreen(
+                        viewModel = coachViewModel,
+                        onLogoutClick = { /* loginViewModel.cerrarSesion() */ },
+                        onAlumnoClick = { alumno ->
+                            usuarioSeleccionado = alumno
                         }
                     )
                 }
 
             } else {
-
-                // B) CASO USUARIO NORMAL: Mostramos la pantalla de sus rutinas
+                // CASO USUARIO NORMAL (Igual que antes)
                 HomeScreen(
                     usuario = usuario,
                     repository = repository,
-                    onLogoutClick = {
-                        println("APP: El usuario quiere salir")
-                        // loginViewModel.cerrarSesion()
-                    }
+                    onLogoutClick = { /* logout */ }
                 )
             }
 
         } else {
-
-            // C) CASO NO LOGUEADO: Mostramos la pantalla de Login/Registro
+            // CASO LOGIN (Igual que antes)
             LoginScreen(
-                onLoginClick = { nickname, pass ->
-                    // Delegamos la lógica al ViewModel
-                    loginViewModel.onLoginClick(nickname, pass)
-                },
-                onRegistroClick = { nickname, pass, nombre, apellidos ->
-                    // Delegamos el registro al ViewModel
-                    loginViewModel.onRegistroClick(nickname, pass, nombre, apellidos)
-                },
+                onLoginClick = { nick, pass -> loginViewModel.onLoginClick(nick, pass) },
+                onRegistroClick = { nick, pass, nom, ape -> loginViewModel.onRegistroClick(nick, pass, nom, ape) },
                 mensajeExito = state.mensajeExito
             )
         }
