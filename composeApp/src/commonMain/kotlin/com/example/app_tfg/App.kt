@@ -12,9 +12,11 @@ import network.EntrenamientoRepository
 import viewmodel.LoginViewModel
 import ui.home.HomeScreen
 import ui.login.LoginScreen
-// Importamos los componentes del Entrenador que acabamos de crear
 import viewmodel.CoachViewModel
 import ui.coach.CoachScreen
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import ui.coach.UserOptionsScreen
 
 @Composable
 fun App() {
@@ -67,35 +69,67 @@ fun App() {
 
             // SEGUNDA COMPROBACIÓN: ¿Qué ROL tiene este usuario?
             if (usuario.rol == "ENTRENADOR") {
+// A) CASO ENTRENADOR: NAVEGACIÓN INTERNA
 
-                // A) CASO ENTRENADOR: Mostramos el Panel de Gestión
+                // Variable de estado local para controlar la navegación dentro del perfil de entrenador.
+                // Si es null, mostramos la lista de todos los alumnos.
+                // Si tiene valor, mostramos la pantalla de opciones de ese alumno específico.
+                var usuarioSeleccionado by remember { mutableStateOf<model.Persona?>(null) }
 
-                // 1. Instanciamos el ViewModel específico para el Entrenador.
-                // Es importante usar una 'key' diferente ("coach-screen") para que no se mezcle.
-                val coachViewModel = getViewModel(
-                    key = "coach-screen",
-                    factory = viewModelFactory {
-                        CoachViewModel(repository)
-                    }
-                )
+                if (usuarioSeleccionado == null) {
+                    // --- SUB-PANTALLA 1: LISTA DE ALUMNOS ---
 
-                // 2. Mostramos la pantalla visual (CoachScreen).
-                // Conectamos los eventos (clics) con la lógica.
-                CoachScreen(
-                    viewModel = coachViewModel,
+                    // Instanciamos el ViewModel específico para el Entrenador.
+                    val coachViewModel = getViewModel(
+                        key = "coach-screen",
+                        factory = viewModelFactory {
+                            CoachViewModel(repository)
+                        }
+                    )
 
-                    onLogoutClick = {
-                        // Aquí iría la lógica para cerrar sesión (limpiar estado)
-                        // loginViewModel.cerrarSesion()
-                    },
+                    CoachScreen(
+                        viewModel = coachViewModel,
+                        onLogoutClick = {
+                            // Aquí iría la lógica para cerrar sesión
+                            // loginViewModel.cerrarSesion()
+                        },
+                        onAlumnoClick = { alumno ->
+                            // AL HACER CLIC EN UN ALUMNO:
+                            // Guardamos el alumno en la variable de estado 'usuarioSeleccionado'.
+                            // Esto provocará una recomposición y entrará en el bloque 'else' de abajo.
+                            usuarioSeleccionado = alumno
+                        }
+                    )
 
-                    onAlumnoClick = { alumnoSeleccionado ->
-                        // Este bloque se ejecuta cuando tocas una tarjeta de alumno.
-                        // Imprimimos por consola para verificar que funciona.
-                        // En el futuro, aquí navegaremos a la pantalla de "Crear Rutina".
-                        println("Navegación: Has seleccionado al alumno ${alumnoSeleccionado.nombre} (ID: ${alumnoSeleccionado.id})")
-                    }
-                )
+                } else {
+                    // --- SUB-PANTALLA 2: OPCIONES DEL USUARIO SELECCIONADO ---
+
+                    // Mostramos la pantalla de gestión con las opciones (Nueva sesión, Duplicar, Historial)
+                    UserOptionsScreen(
+                        usuario = usuarioSeleccionado!!,
+
+                        onBack = {
+                            // AL VOLVER ATRÁS:
+                            // Ponemos la variable a null para regresar a la lista de alumnos.
+                            usuarioSeleccionado = null
+                        },
+
+                        onNuevaSesion = {
+                            println("Navegación: Crear Sesión desde cero para ${usuarioSeleccionado!!.nombre}")
+                            // TODO: Implementar navegación a pantalla de creación de sesión
+                        },
+
+                        onDuplicarSesion = {
+                            println("Navegación: Duplicar última sesión de ${usuarioSeleccionado!!.nombre}")
+                            // TODO: Implementar lógica de duplicado
+                        },
+
+                        onVerHistorial = {
+                            println("Navegación: Ver historial de ${usuarioSeleccionado!!.nombre}")
+                            // TODO: Implementar pantalla de historial
+                        }
+                    )
+                }
 
             } else {
 

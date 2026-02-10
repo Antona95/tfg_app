@@ -3,19 +3,21 @@ package network
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
-import io.ktor.client.request.post // Importante: POST
-import io.ktor.client.request.setBody // Para meter datos en la petición
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.serialization.Serializable
 import model.Persona
 import model.SesionEntrenamiento
+import model.EjercicioDraft // Asegúrate de que esta clase existe en tu paquete model
 
-// Definimos la estructura de datos para el Login aquí mismo
+// --- MODELOS DE PETICIÓN (AUTH) ---
+
 @Serializable
 data class LoginRequest(
     val nickname: String,
-    val contrasena: String //sin Ñ para que coincida con la API
+    val contrasena: String
 )
 
 @Serializable
@@ -24,30 +26,27 @@ data class RegistroRequest(
     val contrasena: String,
     val nombre: String,
     val apellidos: String,
-    val rol: String = "USUARIO" // Por defecto siempre será USUARIO desde la app
+    val rol: String = "USUARIO"
 )
 
+// --- CLASE PRINCIPAL ---
 
 class EntrenamientoRepository(private val client: HttpClient) {
 
-    // URL base de tu API (esto cambiará cuando despliegues la API real)
-    // Nota: Para el emulador de Android, "localhost" es "10.0.2.2"
+    // URL base de la API. Recuerda: 10.0.2.2 es el localhost del emulador Android.
     private val baseUrl = "http://10.0.2.2:3005"
-    // private val baseUrl = "http://192.168.1.XX:3000" // Si pruebas en un móvil físico, usa la IP de tu PC
 
-    // Función de Login
+    // --- FUNCIONES DE AUTENTICACIÓN ---
+
     suspend fun login(nickname: String, pass: String): Persona? {
         return try {
-            // Empaquetamos los datos
             val datosLogin = LoginRequest(nickname = nickname, contrasena = pass)
 
-            // Enviamos la petición POST
             val respuesta = client.post("$baseUrl/api/usuarios/login") {
                 contentType(ContentType.Application.Json)
                 setBody(datosLogin)
             }
 
-            // Verificamos si la respuesta es exitosa (200 OK o 201 Created)
             if (respuesta.status.value == 200 || respuesta.status.value == 201) {
                 respuesta.body<Persona>()
             } else {
@@ -68,49 +67,120 @@ class EntrenamientoRepository(private val client: HttpClient) {
                 contrasena = pass,
                 nombre = nombre,
                 apellidos = apellidos
-
             )
 
-            val respuesta = client.post("$baseUrl/api/usuarios") { // Ruta de crear usuario
+            val respuesta = client.post("$baseUrl/api/usuarios") {
                 contentType(ContentType.Application.Json)
                 setBody(datosRegistro)
             }
             println("Respuesta Registro: ${respuesta.status}")
-            // Si devuelve 200 o 201, es que se creó bien
+
             respuesta.status.value == 200 || respuesta.status.value == 201
         } catch (e: Exception) {
             println("Error al registrar: ${e.message}")
             false
         }
     }
+
+    // --- FUNCIONES DE LECTURA DE DATOS ---
+
     suspend fun obtenerTodosLosUsuarios(): List<Persona> {
         return try {
-            // 1. Llamamos al servidor (GET /api/usuarios)
             val respuesta = client.get("$baseUrl/api/usuarios").body<List<Persona>>()
-
-            // 2. Filtramos para que NO salga el propio Entrenador en la lista (opcional)
+            // Filtro la lista para excluir a los entrenadores y ver solo alumnos
             respuesta.filter { it.rol != "ENTRENADOR" }
-
         } catch (e: Exception) {
             println("Error obteniendo usuarios: ${e.message}")
-            emptyList() // Si falla, devolvemos lista vacía para que no se rompa la app
+            emptyList()
         }
     }
 
-    // Función para obtener la sesión de hoy de un usuario
     suspend fun obtenerSesionHoy(idUsuario: String): SesionEntrenamiento? {
         return try {
-            // Hacemos la petición GET a tu API
-            // Ejemplo: GET http://10.0.2.2:8080/api/sesiones/hoy/usuario123
-            // Asegúrate de que esta ruta coincida con tu API Express (quizás sea /api/sesiones/...)
             val respuesta = client.get("$baseUrl/api/sesiones/hoy/$idUsuario")
-
-            // Convertimos el JSON de respuesta a tu objeto Kotlin automáticamente
             respuesta.body<SesionEntrenamiento>()
         } catch (e: Exception) {
-            // Si falla (no hay internet, error de servidor), imprimimos el error
             println("Error al obtener sesión: ${e.message}")
             null
         }
     }
+
+    // --- FUNCIONES DE CREACIÓN (ENTRENADOR) ---
+
+    /*
+     * Esta es la función nueva encargada de crear una sesión.
+     * Recibo el ID del alumno, el título de la sesión y la lista de borradores (Draft)
+     * que vienen de la pantalla de creación.
+     */
+    suspend fun crearSesion(
+        idUsuario: String,
+        titulo: String,
+        listaDraft: List<EjercicioDraft>
+    ): Boolean {
+        return try {
+            // 1. Transformación de datos
+            // Recorro la lista de borradores (Strings) y la convierto en una lista de objetos
+            // preparados para la API (enteros y dobles), evitando errores de conversión.
+            val ejerciciosParaEnviar = listaDraft.map { borrador ->
+                CrearEjercicioRequest(
+                    nombreEjercicio = borrador.nombre,
+                    // Si el usuario deja vacío o escribe texto, asigno 0 por seguridad
+                    seriesObjetivo = borrador.series.toIntOrNull() ?: 0,
+                    repeticionesObjetivo = borrador.repeticiones,
+                    // Convierto el peso a Double, o null si está vacío
+                    pesoObjetivo = borrador.peso.toDoubleOrNull()
+                )
+            }
+
+            // 2. Preparación del paquete
+            // Empaqueto toda la información en el objeto de solicitud principal.
+            val peticion = CrearSesionRequest(
+                idUsuario = idUsuario,
+                titulo = titulo,
+                fechaProgramada = "2026-02-10", // De momento uso una fecha fija o la actual
+                ejercicios = ejerciciosParaEnviar
+            )
+
+            // 3. Envío al servidor
+            val respuesta = client.post("$baseUrl/api/sesiones") {
+                contentType(ContentType.Application.Json)
+                setBody(peticion)
+            }
+
+            // 4. Verificación
+            val esExito = respuesta.status.value == 200 || respuesta.status.value == 201
+
+            if (esExito) {
+                println("REPO: Sesión creada con éxito.")
+            } else {
+                println("REPO: Error al crear sesión. Código: ${respuesta.status}")
+            }
+
+            return esExito
+
+        } catch (e: Exception) {
+            println("REPO: Error técnico al crear sesión: ${e.message}")
+            return false
+        }
+    }
 }
+
+// --- MODELOS DE PETICIÓN NUEVOS (DTOs) ---
+// Los coloco aquí para que estén accesibles dentro del repositorio
+
+@Serializable
+data class CrearSesionRequest(
+    val idUsuario: String,
+    val titulo: String,
+    val fechaProgramada: String,
+    val ejercicios: List<CrearEjercicioRequest>
+)
+
+@Serializable
+data class CrearEjercicioRequest(
+    val nombreEjercicio: String,
+    val seriesObjetivo: Int,
+    val repeticionesObjetivo: String,
+    val pesoObjetivo: Double? = null,
+    val notas: String? = null
+)
