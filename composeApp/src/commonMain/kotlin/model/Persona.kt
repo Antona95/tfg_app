@@ -1,13 +1,11 @@
 package model
 
-import kotlinx.serialization.SerialName
+
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class Persona(
-    // Mapeamos "_id" de Mongo a "id" de Kotlin automáticamente
-    @SerialName("_id")
-    val id: String? = null,
+    val id: String,
 
     val nickname: String,
     val nombre: String,

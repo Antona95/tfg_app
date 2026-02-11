@@ -20,20 +20,15 @@ data class SesionEntrenamiento(
 
 @Serializable
 data class DetalleSesion(
-    val idDetalle: String,
-    val ejercicio: Ejercicio, // Objeto anidado
-    val seriesObjetivo: Int,
-    val repeticionesObjetivo: String,
-    val pesoObjetivo: Double? = null,
-
-    // Lógica avanzada (Biseries, etc.)
-    val tipoAgrupacion: TipoAgrupacion = TipoAgrupacion.SERIE_NORMAL,
-
-    // Inputs reales del usuario
-    val rirReal: Int? = null,
-    val rpeReal: Int? = null
+    val idDetalle: String? = null,
+    val nombre: String? = null, // Para guardar el nombre directamente
+    val id_ejercicio: String? = null,
+    val series: Int,
+    val repeticiones: String,
+    val peso: Double? = null,
+    val bloque: Int = 0, // <--- AÑADE ESTO: 0 = normal, 1...N = grupos
+    val observaciones: String? = null
 )
-
 @Serializable
 enum class TipoAgrupacion {
     SERIE_NORMAL,

@@ -41,19 +41,12 @@ data class CrearSesionRequest(
 
 @Serializable
 data class CrearEjercicioRequest(
-    val nombreEjercicio: String,
-
-    // IMPORTANTE: @SerialName traduce "seriesObjetivo" a "series" para el JSON
-    @SerialName("series")
-    val seriesObjetivo: Int,
-
-    @SerialName("repeticiones")
-    val repeticionesObjetivo: String, // String para permitir "10-12"
-
-    @SerialName("peso")
-    val pesoObjetivo: Double? = null,
-
-    val notas: String? = null
+    @SerialName("nombre") val nombreEjercicio: String,
+    @SerialName("series") val seriesObjetivo: Int,
+    @SerialName("repeticiones") val repeticionesObjetivo: String,
+    @SerialName("peso") val pesoObjetivo: Double? = null,
+    @SerialName("bloque") val bloque: Int = 0, // <--- Nuevo campo
+    @SerialName("observaciones") val notas: String? = null
 )
 
 // --- CLASE REPOSITORIO ---

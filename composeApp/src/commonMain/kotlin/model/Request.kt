@@ -25,6 +25,7 @@ data class CrearEjercicioRequest(
     val seriesObjetivo: Int,     // El servidor espera un número entero
     val repeticionesObjetivo: String, // String por si pongo rangos (ej: "10-12")
     val pesoObjetivo: Double? = null, // Puede ser nulo si no asigno peso
+    val bloque: Int= 0,
     val notas: String? = null
 )
 /**
@@ -34,17 +35,18 @@ data class CrearEjercicioRequest(
  * No lleva @Serializable porque nunca se envía al servidor directamente;
  * el Repositorio la convierte primero a CrearEjercicioRequest.
  */
+@Serializable
 data class EjercicioDraft(
 // Esto genera un número aleatorio único para usar como clave en la lista.
     val id: String = Random.nextLong().toString(),
-
     // Uso var (variables) porque el usuario va a escribir y modificar estos datos.
     // Uso String en todo porque los campos de texto (TextField) devuelven texto.
     // Luego el repositorio se encarga de pasar "10" (texto) a 10 (entero).
     var nombre: String = "",
     var series: String = "",
     var repeticiones: String = "",
-    var peso: String = ""
+    var peso: String = "",
+    val bloque: Int = 0
 )
 
 /**

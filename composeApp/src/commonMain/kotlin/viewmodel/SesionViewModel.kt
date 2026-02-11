@@ -9,28 +9,27 @@ import kotlinx.coroutines.launch
 import network.EntrenamientoRepository
 import network.CrearSesionRequest
 import network.CrearEjercicioRequest
-import model.EjercicioDraft // Asegúrate de importar tu clase de borrador
+import model.EjercicioDraft
 
-// 1. DEFINIMOS LOS ESTADOS DE LA PANTALLA
-// Esto nos ayuda a saber si mostrar el formulario, un spinner de carga o un mensaje de éxito.
 sealed class SesionUiState {
-    object Idle : SesionUiState()      // Estado inicial (esperando)
-    object Loading : SesionUiState()   // Cargando (enviando datos)
-    object Success : SesionUiState()   // ¡Guardado con éxito!
-    data class Error(val mensaje: String) : SesionUiState() // Hubo un problema
+    object Idle : SesionUiState()
+    object Loading : SesionUiState()
+    object Success : SesionUiState()
+    data class Error(val mensaje: String) : SesionUiState()
 }
 
 class SesionViewModel(
     private val repository: EntrenamientoRepository
 ) : ViewModel() {
 
-    // Estado observable para la UI (Compose)
     private val _uiState = MutableStateFlow<SesionUiState>(SesionUiState.Idle)
     val uiState: StateFlow<SesionUiState> = _uiState
 
+    // --- NUEVO: Contador para generar IDs de bloque únicos en esta sesión ---
+    private var ultimoBloqueId = 0
+
     /**
-     * Función principal que llama el botón "Guardar".
-     * Recibe los datos crudos de la UI y los prepara para el servidor.
+     * Envía la sesión al servidor mapeando los borradores a la petición final.
      */
     fun guardarSesion(
         idUsuario: String,
@@ -38,32 +37,22 @@ class SesionViewModel(
         fecha: String,
         listaDrafts: List<EjercicioDraft>
     ) {
-        // Lanzamos una corrutina para no bloquear la pantalla principal
         viewModelScope.launch {
             try {
-                // 1. Ponemos estado de carga
                 _uiState.value = SesionUiState.Loading
 
-                // 2. MAPEO DE DATOS (Transformación)
-                // Convertimos la lista de "Borradores" (UI) a "Peticiones" (API)
                 val ejerciciosParaEnviar = listaDrafts.map { borrador ->
                     CrearEjercicioRequest(
                         nombreEjercicio = borrador.nombre,
-
-                        // Convertimos String -> Int. Si falla o es vacío, ponemos 0.
                         seriesObjetivo = borrador.series.toIntOrNull() ?: 0,
-
-                        // Repeticiones se queda como String ("10-12")
                         repeticionesObjetivo = borrador.repeticiones,
-
-                        // Convertimos String -> Double. Si falla, es null.
                         pesoObjetivo = borrador.peso.toDoubleOrNull(),
-
-                        notas = null // O borrador.notas si lo tienes en el draft
+                        // --- CORRECCIÓN: Ahora enviamos el bloque guardado en el draft ---
+                        bloque = borrador.bloque,
+                        notas = null
                     )
                 }
 
-                // 3. Creamos el objeto final
                 val request = CrearSesionRequest(
                     idUsuario = idUsuario,
                     titulo = titulo,
@@ -71,37 +60,54 @@ class SesionViewModel(
                     ejercicios = ejerciciosParaEnviar
                 )
 
-                // 4. Llamamos al repositorio
                 val exito = repository.crearSesion(request)
 
-                // 5. Actualizamos el estado según el resultado
                 if (exito) {
                     _uiState.value = SesionUiState.Success
+                    ultimoBloqueId = 0 // Reiniciamos contador tras éxito
                 } else {
-                    _uiState.value = SesionUiState.Error("No se pudo guardar la sesión. Revisa la conexión.")
+                    _uiState.value = SesionUiState.Error("No se pudo guardar la sesión.")
                 }
 
             } catch (e: Exception) {
-                // Capturamos errores inesperados
                 _uiState.value = SesionUiState.Error("Error técnico: ${e.message}")
             }
         }
     }
 
-    // Función para reiniciar el estado (útil si quieres crear otra sesión seguida)
+    // --- NUEVA FUNCIÓN: Lógica para agrupar ejercicios en biseries/circuitos ---
+    /**
+     * Esta función devuelve una NUEVA lista de borradores con los últimos N ejercicios
+     * marcados con un mismo ID de bloque.
+     * Uso: listaEjercicios = viewModel.agruparUltimosEnDrafts(listaEjercicios, 2)
+     */
+    fun agruparUltimosEnDrafts(
+        listaActual: List<EjercicioDraft>,
+        cantidad: Int
+    ): List<EjercicioDraft> {
+        if (listaActual.size < cantidad) return listaActual
+
+        ultimoBloqueId++ // Cada vez que agrupamos, usamos un ID nuevo para el color
+
+        return listaActual.mapIndexed { index, draft ->
+            // Si el ejercicio está dentro de los últimos 'N' de la lista
+            if (index >= listaActual.size - cantidad) {
+                draft.copy(bloque = ultimoBloqueId)
+            } else {
+                draft
+            }
+        }
+    }
+
     fun resetState() {
         _uiState.value = SesionUiState.Idle
+        ultimoBloqueId = 0
     }
 }
 
-// --- FACTORY (Necesario si no usas Hilt/Koin) ---
-// Copia esto también al final del archivo. Sirve para poder pasarle el repositorio al ViewModel.
 class SesionViewModelFactory(private val repository: EntrenamientoRepository) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(SesionViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return SesionViewModel(repository) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: kotlin.reflect.KClass<T>, extras: androidx.lifecycle.viewmodel.CreationExtras): T {
+        return SesionViewModel(repository) as T
     }
 }
