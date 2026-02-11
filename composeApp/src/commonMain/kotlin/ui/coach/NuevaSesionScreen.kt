@@ -44,9 +44,8 @@ fun NuevaSesionScreen(
     val viewModel: SesionViewModel = viewModel(factory = SesionViewModelFactory(repository))
     val uiState by viewModel.uiState.collectAsState()
 
-    // Estado para el Snackbar (sustituye al Toast)
+    // Estado para el Snackbar (sustituye al Toast para KMP)
     val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
 
     var tituloSesion by remember { mutableStateOf("") }
     var listaEjercicios by remember { mutableStateOf(listOf<EjercicioDraft>()) }
@@ -119,7 +118,7 @@ fun NuevaSesionScreen(
                 ) { Text("Triserie") }
             }
 
-            Divider(modifier = Modifier.padding(vertical = 8.dp))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
             // --- LISTA DE EJERCICIOS ---
             LazyColumn(
@@ -148,7 +147,13 @@ fun NuevaSesionScreen(
                 item {
                     TextButton(
                         onClick = {
-                            listaEjercicios = listaEjercicios + EjercicioDraft("", "", "10", "", "", 0)
+                            listaEjercicios = listaEjercicios + EjercicioDraft(
+                                nombre = "",
+                                series = "3",
+                                repeticiones = "10",
+                                peso = "",
+                                bloque = 0
+                            )
                         },
                         modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
                     ) {
