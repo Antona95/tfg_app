@@ -1,108 +1,99 @@
 package com.example.app_tfg
 
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import dev.icerock.moko.mvvm.compose.getViewModel
 import dev.icerock.moko.mvvm.compose.viewModelFactory
 import network.createHttpClient
 import network.EntrenamientoRepository
 import viewmodel.LoginViewModel
-import ui.home.HomeScreen
 import ui.login.LoginScreen
 import viewmodel.CoachViewModel
 import ui.coach.CoachScreen
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import ui.coach.UserOptionsScreen
-import ui.coach.NuevaSesionScreen // <--- ASEGÚRATE DE IMPORTAR ESTO
+import ui.coach.NuevaSesionScreen
+import ui.user.HoyScreen // Importamos la pantalla del alumno
+import model.Persona
 
 @Composable
 fun App() {
     MaterialTheme {
-        // 1. CONFIGURACIÓN (Igual que antes)
+        // 1. CONFIGURACIÓN INICIAL
         val client = remember { createHttpClient() }
         val repository = remember { EntrenamientoRepository(client) }
 
-        // 2. VIEWMODEL LOGIN (Igual que antes)
+        // 2. VIEWMODEL LOGIN (Estado global de la sesión)
         val loginViewModel = getViewModel(
             key = "login-screen",
             factory = viewModelFactory { LoginViewModel(repository) }
         )
 
-        // 3. ESTADO (Igual que antes)
         val state by loginViewModel.uiState.collectAsState()
 
-        // 4. LÓGICA DE NAVEGACIÓN
+        // 3. LÓGICA DE NAVEGACIÓN PRINCIPAL
         if (state.usuarioLogueado != null) {
             val usuario = state.usuarioLogueado!!
 
-            // CASO ENTRENADOR
+            // --- CASO A: EL USUARIO ES UN ENTRENADOR ---
             if (usuario.rol == "ENTRENADOR") {
 
-                // VAR 1: ¿Qué alumno hemos elegido?
-                var usuarioSeleccionado by remember { mutableStateOf<model.Persona?>(null) }
+                // Estado para saber qué alumno estamos gestionando
+                var usuarioSeleccionado by remember { mutableStateOf<Persona?>(null) }
 
-                // VAR 2 (NUEVO): ¿Estamos en la pantalla de crear sesión?
+                // Estado para saber si estamos dentro del formulario de creación
                 var creandoSesion by remember { mutableStateOf(false) }
 
-                // --- LÓGICA DE PANTALLAS (ESCALERA DE IFs) ---
+                when {
+                    // PANTALLA: FORMULARIO DE NUEVA SESIÓN
+                    creandoSesion && usuarioSeleccionado != null -> {
+                        NuevaSesionScreen(
+                            idUsuario = usuarioSeleccionado!!.id, // Usamos .id de tu modelo Persona
+                            repository = repository,
+                            onNavigateBack = { creandoSesion = false }
+                        )
+                    }
 
-                if (creandoSesion && usuarioSeleccionado != null) {
-                    // PANTALLA 3: FORMULARIO DE NUEVA SESIÓN
-                    // (Se muestra si le dimos al botón y tenemos un usuario)
-                    NuevaSesionScreen(
-                        idUsuario = usuarioSeleccionado!!.id ?: "", // Pasamos el ID del alumno
-                        repository = repository,
-                        onNavigateBack = {
-                            // AL VOLVER: Apagamos el interruptor y volvemos al menú de opciones
-                            creandoSesion = false
-                        }
-                    )
+                    // PANTALLA: MENÚ DE OPCIONES DEL ALUMNO (Botonera)
+                    usuarioSeleccionado != null -> {
+                        UserOptionsScreen(
+                            usuario = usuarioSeleccionado!!,
+                            onBack = { usuarioSeleccionado = null },
+                            onNuevaSesion = { creandoSesion = true },
+                            onDuplicarSesion = { /* TODO */ },
+                            onVerHistorial = { /* TODO */ }
+                        )
+                    }
 
-                } else if (usuarioSeleccionado != null) {
-                    // PANTALLA 2: OPCIONES DEL USUARIO (Menú de 3 botones)
-                    UserOptionsScreen(
-                        usuario = usuarioSeleccionado!!,
-                        onBack = { usuarioSeleccionado = null }, // Volver a la lista
-
-                        onNuevaSesion = {
-                            // AQUÍ ESTÁ LA CLAVE: Activamos el interruptor
-                            creandoSesion = true
-                        },
-
-                        onDuplicarSesion = { /* TODO */ },
-                        onVerHistorial = { /* TODO */ }
-                    )
-
-                } else {
-                    // PANTALLA 1: LISTA DE ALUMNOS (Por defecto)
-                    val coachViewModel = getViewModel(
-                        key = "coach-screen",
-                        factory = viewModelFactory { CoachViewModel(repository) }
-                    )
-                    CoachScreen(
-                        viewModel = coachViewModel,
-                        onLogoutClick = { /* loginViewModel.cerrarSesion() */ },
-                        onAlumnoClick = { alumno ->
-                            usuarioSeleccionado = alumno
-                        }
-                    )
+                    // PANTALLA: LISTADO DE TODOS LOS ALUMNOS
+                    else -> {
+                        val coachViewModel = getViewModel(
+                            key = "coach-screen",
+                            factory = viewModelFactory { CoachViewModel(repository) }
+                        )
+                        CoachScreen(
+                            viewModel = coachViewModel,
+                            onLogoutClick = { loginViewModel.cerrarSesion() },
+                            onAlumnoClick = { alumno ->
+                                usuarioSeleccionado = alumno
+                            }
+                        )
+                    }
                 }
 
             } else {
-                // CASO USUARIO NORMAL (Igual que antes)
-                HomeScreen(
-                    usuario = usuario,
+                // --- CASO B: EL USUARIO ES UN DEPORTISTA / USUARIO ---
+                // Aquí usamos la nueva pantalla HoyScreen
+                HoyScreen(
+                    idUsuario = usuario.id, // Usamos .id de tu modelo Persona
                     repository = repository,
-                    onLogoutClick = { /* logout */ }
+                    onNavigateBack = { loginViewModel.cerrarSesion() }
                 )
             }
 
         } else {
-            // CASO LOGIN (Igual que antes)
+            // --- CASO C: NADIE LOGUEADO ---
             LoginScreen(
                 onLoginClick = { nick, pass -> loginViewModel.onLoginClick(nick, pass) },
                 onRegistroClick = { nick, pass, nom, ape -> loginViewModel.onRegistroClick(nick, pass, nom, ape) },

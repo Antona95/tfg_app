@@ -126,4 +126,17 @@ class EntrenamientoRepository(private val client: HttpClient) {
             false
         }
     }
+    suspend fun finalizarSesion(idSesion: String): Boolean {
+        return try {
+            // Asumiendo que tu API usa una ruta como /api/sesiones/finalizar/{id}
+            // o un PATCH a /api/sesiones/{id}
+            val respuesta = client.post("$baseUrl/api/sesiones/finalizar/$idSesion") {
+                contentType(ContentType.Application.Json)
+            }
+            respuesta.status.value in 200..299
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
 }
