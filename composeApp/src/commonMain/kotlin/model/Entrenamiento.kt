@@ -13,7 +13,7 @@ data class Ejercicio(
 data class SesionEntrenamiento(
     @SerialName("id") val idSesion: String, // Mongo devuelve 'id' tras el mapper
     @SerialName("id_plan") val idPlan: String,
-    val fechaProgramada: String,
+    @SerialName("fecha") val fechaProgramada: String,
     val finalizada: Boolean = false,
     val ejercicios: List<DetalleSesion> = emptyList()
 )
@@ -22,12 +22,12 @@ data class SesionEntrenamiento(
 data class DetalleSesion(
     val idDetalle: String? = null,
     val idEjercicio: String? = null,
-    @SerialName("nombreEjercicio") val nombre: String? = null, // De BD 'nombreEjercicio' a Kotlin 'nombre'
+    @SerialName("nombre") val nombre: String? = null, // De BD 'nombreEjercicio' a Kotlin 'nombre'
     val series: Int,
     val repeticiones: String,
     val peso: Double? = null,
     val bloque: Int = 0,
-    @SerialName("notas") val observaciones: String? = null // De BD 'notas' a Kotlin 'observaciones'
+    val observaciones: String? = null // De BD 'notas' a Kotlin 'observaciones'
 )
 
 @Serializable
