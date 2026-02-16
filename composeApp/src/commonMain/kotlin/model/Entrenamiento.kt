@@ -5,14 +5,14 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Ejercicio(
-    @SerialName("_id") val idEjercicio: String,
+    val idEjercicio: String,
     val nombre: String,
 )
 
 @Serializable
 data class SesionEntrenamiento(
-    @SerialName("_id") val idSesion: String,
-    val idPlan: String,
+    @SerialName("id") val idSesion: String, // Mongo devuelve 'id' tras el mapper
+    @SerialName("id_plan") val idPlan: String,
     val fechaProgramada: String,
     val finalizada: Boolean = false,
     val ejercicios: List<DetalleSesion> = emptyList()
@@ -21,14 +21,15 @@ data class SesionEntrenamiento(
 @Serializable
 data class DetalleSesion(
     val idDetalle: String? = null,
-    val nombre: String? = null, // Para guardar el nombre directamente
-    val id_ejercicio: String? = null,
+    val idEjercicio: String? = null,
+    @SerialName("nombreEjercicio") val nombre: String? = null, // De BD 'nombreEjercicio' a Kotlin 'nombre'
     val series: Int,
     val repeticiones: String,
     val peso: Double? = null,
-    val bloque: Int = 0, // <--- AÑADE ESTO: 0 = normal, 1...N = grupos
-    val observaciones: String? = null
+    val bloque: Int = 0,
+    @SerialName("notas") val observaciones: String? = null // De BD 'notas' a Kotlin 'observaciones'
 )
+
 @Serializable
 enum class TipoAgrupacion {
     SERIE_NORMAL,

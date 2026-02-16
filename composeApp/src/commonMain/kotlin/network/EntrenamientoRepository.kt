@@ -7,57 +7,17 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 import model.Persona
 import model.SesionEntrenamiento
+import model.LoginRequest
+import model.RegistroRequest
+import model.CrearSesionRequest
 
-// --- MODELOS DE PETICIÓN (DTOs) ---
-// Estos modelos definen CÓMO viajan los datos por internet.
-// Usamos @SerialName para asegurar que coinciden con el Backend.
-
-@Serializable
-data class LoginRequest(
-    val nickname: String,
-    val contrasena: String
-)
-
-@Serializable
-data class RegistroRequest(
-    val nickname: String,
-    val contrasena: String,
-    val nombre: String,
-    val apellidos: String,
-    val rol: String = "USUARIO"
-)
-
-@Serializable
-data class CrearSesionRequest(
-    val idUsuario: String,
-    val titulo: String,
-    val fechaProgramada: String,
-    val ejercicios: List<CrearEjercicioRequest>
-)
-
-@Serializable
-data class CrearEjercicioRequest(
-    @SerialName("nombre") val nombreEjercicio: String,
-    @SerialName("series") val seriesObjetivo: Int,
-    @SerialName("repeticiones") val repeticionesObjetivo: String,
-    @SerialName("peso") val pesoObjetivo: Double? = null,
-    @SerialName("bloque") val bloque: Int = 0, // <--- Nuevo campo
-    @SerialName("observaciones") val notas: String? = null
-)
-
-// --- CLASE REPOSITORIO ---
-
-class EntrenamientoRepository(private val client: HttpClient) {
-
-    // Asegúrate de que este puerto es el correcto de tu backend (3000, 3005, etc.)
-    private val baseUrl = "http://10.0.2.2:3005"
-
+class EntrenamientoRepository(
+    private val client: HttpClient,
+    private val baseUrl: String = "http://10.0.2.2:3005" // IP por defecto para emulador
+) {
     // --- AUTENTICACIÓN ---
-
     suspend fun login(nickname: String, pass: String): Persona? {
         return try {
             val respuesta = client.post("$baseUrl/api/usuarios/login") {
@@ -79,58 +39,57 @@ class EntrenamientoRepository(private val client: HttpClient) {
             }
             respuesta.status.value in 200..299
         } catch (e: Exception) {
+            e.printStackTrace()
             false
         }
     }
 
     // --- LECTURA ---
-
     suspend fun obtenerTodosLosUsuarios(): List<Persona> {
         return try {
-            client.get("$baseUrl/api/usuarios").body<List<Persona>>()
-                .filter { it.rol != "ENTRENADOR" }
+            val respuesta = client.get("$baseUrl/api/usuarios")
+            if (respuesta.status.value in 200..299) {
+                respuesta.body<List<Persona>>().filter { it.rol != "ENTRENADOR" }
+            } else {
+                emptyList()
+            }
         } catch (e: Exception) {
+            e.printStackTrace()
             emptyList()
         }
     }
 
     suspend fun obtenerSesionHoy(idUsuario: String): SesionEntrenamiento? {
         return try {
-            client.get("$baseUrl/api/sesiones/hoy/$idUsuario").body<SesionEntrenamiento>()
+            val respuesta = client.get("$baseUrl/api/sesiones/hoy/$idUsuario")
+            if (respuesta.status.value in 200..299) {
+                respuesta.body<SesionEntrenamiento>()
+            } else {
+                null
+            }
         } catch (e: Exception) {
+            e.printStackTrace()
             null
         }
     }
 
-    // --- CREACIÓN (LO QUE HEMOS CAMBIADO) ---
-
-    /**
-     * Envía la petición de creación al servidor.
-     * Recibe el objeto YA PREPARADO (CrearSesionRequest).
-     * La conversión de datos la haremos en el ViewModel.
-     */
+    // --- CREACIÓN ---
     suspend fun crearSesion(request: CrearSesionRequest): Boolean {
         return try {
-            val respuesta = client.post("$baseUrl/api/sesiones") {
+            val respuesta = client.post("$baseUrl/api/sesiones/App") {
                 contentType(ContentType.Application.Json)
-                setBody(request) // Ktor convierte esto a JSON automáticamente
+                setBody(request)
             }
-
-            println("REPO: Respuesta servidor: ${respuesta.status}")
-
-            // Devolvemos true si el código es 200 o 201
             respuesta.status.value in 200..299
         } catch (e: Exception) {
-            println("REPO: Error al crear sesión: ${e.message}")
             e.printStackTrace()
             false
         }
     }
+
     suspend fun finalizarSesion(idSesion: String): Boolean {
         return try {
-            // Asumiendo que tu API usa una ruta como /api/sesiones/finalizar/{id}
-            // o un PATCH a /api/sesiones/{id}
-            val respuesta = client.post("$baseUrl/api/sesiones/finalizar/$idSesion") {
+            val respuesta = client.patch("$baseUrl/api/sesiones/$idSesion/finalizar") {
                 contentType(ContentType.Application.Json)
             }
             respuesta.status.value in 200..299

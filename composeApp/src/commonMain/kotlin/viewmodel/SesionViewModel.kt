@@ -7,8 +7,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import network.EntrenamientoRepository
-import network.CrearSesionRequest
-import network.CrearEjercicioRequest
+import model.CrearSesionRequest
+import model.CrearEjercicioRequest
 import model.EjercicioDraft
 
 sealed class SesionUiState {
@@ -43,13 +43,12 @@ class SesionViewModel(
 
                 val ejerciciosParaEnviar = listaDrafts.map { borrador ->
                     CrearEjercicioRequest(
-                        nombreEjercicio = borrador.nombre,
-                        seriesObjetivo = borrador.series.toIntOrNull() ?: 0,
-                        repeticionesObjetivo = borrador.repeticiones,
-                        pesoObjetivo = borrador.peso.toDoubleOrNull(),
-                        // --- CORRECCIÓN: Ahora enviamos el bloque guardado en el draft ---
+                        nombre = borrador.nombre,
+                        series = borrador.series.toIntOrNull() ?: 0,
+                        repeticiones = borrador.repeticiones,
+                        peso = borrador.peso.toDoubleOrNull(),
                         bloque = borrador.bloque,
-                        notas = null
+                        observaciones = null
                     )
                 }
 
