@@ -39,8 +39,19 @@ fun App() {
                 var creandoSesion by remember { mutableStateOf(false) }
                 var viendoHistorial by remember { mutableStateOf(false) }
 
+                // --- NUEVO ESTADO PARA NAVEGACIÓN A DETALLE ---
+                var sesionSeleccionada by remember { mutableStateOf<model.SesionEntrenamiento?>(null) }
+
                 when {
-                    // 1. PANTALLA: CREAR NUEVA SESIÓN
+                    // 1. NIVEL MÁS ALTO: DETALLE DE SESIÓN
+                    sesionSeleccionada != null -> {
+                        ui.coach.DetalleSesionScreen(
+                            sesion = sesionSeleccionada!!,
+                            onBack = { sesionSeleccionada = null } // Al volver, limpiamos la selección
+                        )
+                    }
+
+                    // 2. FORMULARIO DE CREACIÓN
                     creandoSesion && usuarioSeleccionado != null -> {
                         NuevaSesionScreen(
                             idUsuario = usuarioSeleccionado!!.id,
@@ -49,28 +60,33 @@ fun App() {
                         )
                     }
 
-                    // 2. PANTALLA: HISTORIAL DEL ALUMNO
+                    // 3. LISTADO DE HISTORIAL
                     viendoHistorial && usuarioSeleccionado != null -> {
-                        HistorialScreen(
+                        ui.coach.HistorialScreen(
                             idUsuario = usuarioSeleccionado!!.id,
                             repository = repository,
-                            onBack = { viendoHistorial = false }
+                            onBack = { viendoHistorial = false },
+                            onSesionClick = { sesion ->
+                                // AQUÍ CAPTURAMOS EL CLICK Y CAMBIAMOS DE ESTADO
+                                sesionSeleccionada = sesion
+                            }
                         )
                     }
 
-                    // 3. PANTALLA: OPCIONES DEL ALUMNO SELECCIONADO
+                    // 4. MENÚ DE OPCIONES DEL ALUMNO
                     usuarioSeleccionado != null -> {
                         UserOptionsScreen(
                             usuario = usuarioSeleccionado!!,
                             onBack = { usuarioSeleccionado = null },
                             onNuevaSesion = { creandoSesion = true },
-                            onDuplicarSesion = { /* Implementación futura */ },
+                            onDuplicarSesion = { /* TODO */ },
                             onVerHistorial = { viendoHistorial = true }
                         )
                     }
 
-                    // 4. PANTALLA: LISTADO GENERAL DE ALUMNOS (INICIO COACH)
+                    // 5. LISTA DE ALUMNOS (Default)
                     else -> {
+                        // ... tu CoachScreen ...
                         val coachViewModel = getViewModel(
                             key = "coach-screen",
                             factory = viewModelFactory { CoachViewModel(repository) }
