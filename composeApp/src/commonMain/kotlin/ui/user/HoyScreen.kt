@@ -4,28 +4,29 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import dev.icerock.moko.mvvm.compose.getViewModel
+import dev.icerock.moko.mvvm.compose.viewModelFactory
 import network.EntrenamientoRepository
 import viewmodel.HoyUiState
 import viewmodel.HoyViewModel
-import viewmodel.SesionViewModelFactory
 import model.DetalleSesion
+import model.SesionEntrenamiento
 
-private val coloresBloques = listOf(
-    Color(0xFFFFFFFF), // Bloque 0: Blanco
-    Color(0xFFE3F2FD), // Bloque 1: Azul
-    Color(0xFFF1F8E9), // Bloque 2: Verde
-    Color(0xFFFFF3E0), // Bloque 3: Naranja
-    Color(0xFFF3E5F5), // Bloque 4: Morado
-    Color(0xFFEFEBE9)  // Bloque 5: Gris
+private val coloresBloquesAlumno = listOf(
+    Color(0xFFFFFFFF), Color(0xFFE3F2FD), Color(0xFFE8F5E9),
+    Color(0xFFFFF3E0), Color(0xFFF3E5F5), Color(0xFFEFEBE9)
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,7 +36,12 @@ fun HoyScreen(
     repository: EntrenamientoRepository,
     onNavigateBack: () -> Unit
 ) {
-    val viewModel: HoyViewModel = viewModel(factory = SesionViewModelFactory(repository))
+    // Uso correcto de Moko MVVM en Compose Multiplatform
+    val viewModel = getViewModel(
+        key = "hoy-screen-$idUsuario",
+        factory = viewModelFactory { HoyViewModel(repository) }
+    )
+
     val uiState by viewModel.uiState.collectAsState()
 
     LaunchedEffect(idUsuario) {
@@ -45,96 +51,28 @@ fun HoyScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Mi Entreno de Hoy", fontWeight = FontWeight.Bold) }
+                title = { Text("Mi Entreno de Hoy", fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                    }
+                }
             )
         }
     ) { padding ->
         Box(modifier = Modifier.padding(padding).fillMaxSize()) {
             when (val state = uiState) {
-                is HoyUiState.Loading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                }
+                is HoyUiState.Loading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 is HoyUiState.Empty -> {
-                    Text("Hoy toca descanso.", modifier = Modifier.align(Alignment.Center))
+                    Column(modifier = Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("💤", style = MaterialTheme.typography.displayLarge)
+                        Text("Hoy toca descanso", style = MaterialTheme.typography.headlineSmall)
+                    }
                 }
-                is HoyUiState.Error -> {
-                    Text(state.mensaje, color = Color.Red, modifier = Modifier.align(Alignment.Center))
-                }
+                is HoyUiState.Error -> Text("Error: ${state.mensaje}", color = Color.Red, modifier = Modifier.align(Alignment.Center))
                 is HoyUiState.Success -> {
-                    val sesion = state.sesion
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp)
-                    ) {
-                        // Título y Fecha
-                        item {
-                            Text(
-                                text = "Sesión: ${sesion.fechaProgramada}",
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Spacer(modifier = Modifier.height(20.dp))
-                        }
-
-                        // Lista de Ejercicios
-                        itemsIndexed(sesion.ejercicios) { index, ej ->
-                            val anterior = sesion.ejercicios.getOrNull(index - 1)
-                            val siguiente = sesion.ejercicios.getOrNull(index + 1)
-
-                            val unidoArriba = ej.bloque != 0 && ej.bloque == anterior?.bloque
-                            val unidoAbajo = ej.bloque != 0 && ej.bloque == siguiente?.bloque
-
-                            EjercicioVisualCard(ej, unidoArriba, unidoAbajo)
-                        }
-
-                        // --- PUNTO 3: BOTÓN DE FINALIZAR O ESTADO COMPLETADO ---
-                        item {
-                            Spacer(modifier = Modifier.height(32.dp))
-
-                            if (!sesion.finalizada) {
-                                Button(
-                                    onClick = { viewModel.finalizarEntrenamiento(sesion.idSesion, idUsuario) },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(56.dp),
-                                    shape = RoundedCornerShape(12.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.primary
-                                    )
-                                ) {
-                                    Text(
-                                        "TERMINAR ENTRENAMIENTO",
-                                        fontWeight = FontWeight.ExtraBold,
-                                        style = MaterialTheme.typography.titleMedium
-                                    )
-                                }
-                            } else {
-                                // Estado cuando la sesión ya está finalizada
-                                Card(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = Color(0xFF4CAF50).copy(alpha = 0.1f)
-                                    ),
-                                    shape = RoundedCornerShape(12.dp)
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(20.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.Center
-                                    ) {
-                                        Text(
-                                            text = "✅ ¡ENTRENAMIENTO COMPLETADO!",
-                                            color = Color(0xFF2E7D32),
-                                            fontWeight = FontWeight.Bold,
-                                            textAlign = TextAlign.Center,
-                                            modifier = Modifier.fillMaxWidth()
-                                        )
-                                    }
-                                }
-                            }
-                            // Espacio final para que el scroll no quede pegado
-                            Spacer(modifier = Modifier.height(40.dp))
-                        }
+                    ContenidoEntreno(state.sesion) {
+                        viewModel.finalizarEntrenamiento(state.sesion.idSesion, idUsuario)
                     }
                 }
             }
@@ -143,59 +81,82 @@ fun HoyScreen(
 }
 
 @Composable
-fun EjercicioVisualCard(
-    ejercicio: DetalleSesion,
-    unidoArriba: Boolean,
-    unidoAbajo: Boolean
-) {
-    val shape = RoundedCornerShape(
-        topStart = if (unidoArriba) 0.dp else 12.dp,
-        topEnd = if (unidoArriba) 0.dp else 12.dp,
-        bottomStart = if (unidoAbajo) 0.dp else 12.dp,
-        bottomEnd = if (unidoAbajo) 0.dp else 12.dp
-    )
-
-    Card(
-        shape = shape,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = if (unidoArriba) 0.dp else 8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (ejercicio.bloque == 0) MaterialTheme.colorScheme.surfaceVariant
-            else coloresBloques[ejercicio.bloque % coloresBloques.size]
-        ),
-        elevation = CardDefaults.cardElevation(if (unidoArriba) 0.dp else 2.dp)
+fun ContenidoEntreno(sesion: SesionEntrenamiento, onFinalizar: () -> Unit) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (ejercicio.bloque != 0) {
-                Surface(
-                    color = MaterialTheme.colorScheme.primary,
-                    shape = RoundedCornerShape(4.dp)
-                ) {
-                    Text(
-                        text = "${(ejercicio.bloque + 64).toChar()}",
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
+        item {
+            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
+                Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
+                    Text("📅 ${sesion.fechaProgramada}", style = MaterialTheme.typography.labelLarge)
+                    Text("Rutina del Día", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    if (sesion.finalizada) {
+                        Text("✅ ¡COMPLETADA!", fontWeight = FontWeight.Bold, color = Color(0xFF1B5E20))
+                    }
                 }
-                Spacer(modifier = Modifier.width(16.dp))
-            }
-
-            Column {
-                Text(
-                    text = ejercicio.nombre ?: "Sin nombre",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "${ejercicio.series} x ${ejercicio.repeticiones} — ${ejercicio.peso ?: 0}kg",
-                    style = MaterialTheme.typography.bodyMedium
-                )
             }
         }
+
+        itemsIndexed(sesion.ejercicios) { index, ej ->
+            val anterior = sesion.ejercicios.getOrNull(index - 1)
+            val siguiente = sesion.ejercicios.getOrNull(index + 1)
+            val unidoArriba = ej.bloque != 0 && ej.bloque == anterior?.bloque
+            val unidoAbajo = ej.bloque != 0 && ej.bloque == siguiente?.bloque
+            EjercicioAlumnoCard(ej, unidoArriba, unidoAbajo)
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(24.dp))
+            if (!sesion.finalizada) {
+                Button(onClick = onFinalizar, modifier = Modifier.fillMaxWidth().height(56.dp), shape = RoundedCornerShape(12.dp)) {
+                    Text("TERMINAR ENTRENAMIENTO", fontWeight = FontWeight.Bold)
+                }
+            } else {
+                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9))) {
+                    Text("Has cumplido por hoy 💪", modifier = Modifier.padding(24.dp).fillMaxWidth(), textAlign = TextAlign.Center, color = Color(0xFF2E7D32), fontWeight = FontWeight.Bold)
+                }
+            }
+            Spacer(modifier = Modifier.height(40.dp))
+        }
+    }
+}
+
+@Composable
+fun EjercicioAlumnoCard(ejercicio: DetalleSesion, unidoArriba: Boolean, unidoAbajo: Boolean) {
+    val shape = RoundedCornerShape(
+        topStart = if (unidoArriba) 0.dp else 12.dp, topEnd = if (unidoArriba) 0.dp else 12.dp,
+        bottomStart = if (unidoAbajo) 0.dp else 12.dp, bottomEnd = if (unidoAbajo) 0.dp else 12.dp
+    )
+    Card(
+        shape = shape,
+        modifier = Modifier.fillMaxWidth().padding(top = if (unidoArriba) 0.dp else 8.dp),
+        colors = CardDefaults.cardColors(containerColor = if (ejercicio.bloque == 0) MaterialTheme.colorScheme.surfaceVariant else coloresBloquesAlumno[ejercicio.bloque % coloresBloquesAlumno.size])
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (ejercicio.bloque != 0 && !unidoArriba) {
+                    Surface(color = MaterialTheme.colorScheme.primary, shape = RoundedCornerShape(4.dp), modifier = Modifier.padding(end = 8.dp)) {
+                        Text("${(ejercicio.bloque + 64).toChar()}", modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                }
+                Text(ejercicio.nombre ?: "Ejercicio", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                DatoAlumno("Series", "${ejercicio.series}")
+                DatoAlumno("Reps", ejercicio.repeticiones)
+                DatoAlumno("Peso", if ((ejercicio.peso ?: 0.0) > 0.0) "${ejercicio.peso}kg" else "--")
+            }
+        }
+    }
+}
+
+@Composable
+fun DatoAlumno(label: String, valor: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(label, style = MaterialTheme.typography.labelSmall)
+        Text(valor, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
     }
 }

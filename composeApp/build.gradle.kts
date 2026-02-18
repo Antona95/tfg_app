@@ -6,8 +6,6 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
-
-    // CORRECCIÓN: Ahora usamos el alias que definimos en el paso 1
     alias(libs.plugins.kotlinSerialization)
 }
 
@@ -41,54 +39,59 @@ kotlin {
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)
+
+            // Si esta línea te da warning, no pasa nada, funciona igual:
             implementation(compose.materialIconsExtended)
+
             implementation(libs.compose.ui)
             implementation(libs.compose.components.resources)
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
 
+            // ✅ LIBRERÍA DE FECHA (Fundamental)
+            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
+
             api(libs.moko.mvvm.core)
             api(libs.moko.mvvm.compose)
 
-            // Librerías de Ktor y Serialización
+            // Ktor y Serialización
             implementation("io.ktor:ktor-client-core:2.3.12")
             implementation("io.ktor:ktor-client-content-negotiation:2.3.12")
             implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.12")
             implementation("io.ktor:ktor-client-logging:2.3.12")
+        }
 
-
-            commonTest.dependencies {
-                implementation(libs.kotlin.test)
-
-            }
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
         }
     }
+}
 
-    android {
-        namespace = "com.example.app_tfg"
-        compileSdk = libs.versions.android.compileSdk.get().toInt()
+// ✅ EL BLOQUE ANDROID VA FUERA DE KOTLIN {}
+android {
+    namespace = "com.example.app_tfg"
+    compileSdk = libs.versions.android.compileSdk.get().toInt()
 
-        defaultConfig {
-            applicationId = "com.example.app_tfg"
-            minSdk = libs.versions.android.minSdk.get().toInt()
-            targetSdk = libs.versions.android.targetSdk.get().toInt()
-            versionCode = 1
-            versionName = "1.0"
+    defaultConfig {
+        applicationId = "com.example.app_tfg"
+        minSdk = libs.versions.android.minSdk.get().toInt()
+        targetSdk = libs.versions.android.targetSdk.get().toInt()
+        versionCode = 1
+        versionName = "1.0"
+    }
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
-        packaging {
-            resources {
-                excludes += "/META-INF/{AL2.0,LGPL2.1}"
-            }
+    }
+    buildTypes {
+        getByName("release") {
+            isMinifyEnabled = false
         }
-        buildTypes {
-            getByName("release") {
-                isMinifyEnabled = false
-            }
-        }
-        compileOptions {
-            sourceCompatibility = JavaVersion.VERSION_11
-            targetCompatibility = JavaVersion.VERSION_11
-        }
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
 }
