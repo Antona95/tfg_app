@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.ExitToApp // ✅ IMPORT AÑADIDO
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -23,21 +24,29 @@ import viewmodel.CoachViewModel
 @Composable
 fun CoachScreen(
     viewModel: CoachViewModel,
-    onAlumnoClick: (Persona) -> Unit, // Callback para cuando toques un alumno
-    onLogoutClick: () -> Unit
+    onAlumnoClick: (Persona) -> Unit,
+    onLogout: () -> Unit // ✅ UNIFICADO: quitamos el "Click" para que coincida con App.kt
 ) {
-    // 1. Escuchamos al ViewModel
     val alumnos by viewModel.alumnos.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Mis Alumnos") },
+                title = { Text("Mis Alumnos", fontWeight = FontWeight.Bold) },
                 actions = {
                     // Botón para recargar la lista
                     IconButton(onClick = { viewModel.cargarAlumnos() }) {
                         Icon(Icons.Default.Refresh, "Recargar")
+                    }
+
+                    // Botón de Cerrar Sesión
+                    IconButton(onClick = onLogout) { // ✅ Ahora el nombre coincide
+                        Icon(
+                            imageVector = Icons.Default.ExitToApp,
+                            contentDescription = "Cerrar Sesión",
+                            tint = MaterialTheme.colorScheme.error
+                        )
                     }
                 }
             )
@@ -48,7 +57,6 @@ fun CoachScreen(
             if (isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             } else {
-                // 2. LA LISTA DE ALUMNOS
                 if (alumnos.isEmpty()) {
                     Text(
                         text = "No hay alumnos registrados aún.",
@@ -70,7 +78,6 @@ fun CoachScreen(
     }
 }
 
-// Tarjeta bonita para cada alumno
 @Composable
 fun AlumnoItem(alumno: Persona, onClick: () -> Unit) {
     Card(
@@ -82,7 +89,6 @@ fun AlumnoItem(alumno: Persona, onClick: () -> Unit) {
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Icono de persona a la izquierda
             Icon(
                 imageVector = Icons.Default.Person,
                 contentDescription = null,
@@ -92,7 +98,6 @@ fun AlumnoItem(alumno: Persona, onClick: () -> Unit) {
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            // Textos (Nombre y Nickname)
             Column {
                 Text(
                     text = "${alumno.nombre} ${alumno.apellidos}",
