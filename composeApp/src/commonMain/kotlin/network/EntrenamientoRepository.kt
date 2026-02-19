@@ -11,9 +11,12 @@ import io.ktor.http.contentType
 import model.*
 
 class EntrenamientoRepository(
-    private val client: HttpClient,
-    private val baseUrl: String = "http://10.0.2.2:3005"
+    // El 'client' se queda aquí arriba (es obligatorio para que funcione)
+    private val client: HttpClient
 ) {
+    // La URL la movemos aquí abajo (dentro de las llaves)
+    // Así ya no sale en rojo y nadie se confunde al crear el repositorio
+    private val baseUrl = "http://10.0.2.2:8080"
     // --- AUTENTICACIÓN ---
     suspend fun login(nickname: String, pass: String): Persona? {
         return try {
