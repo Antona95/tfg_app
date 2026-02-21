@@ -3,11 +3,12 @@ package viewmodel
 import dev.icerock.moko.mvvm.viewmodel.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import model.Persona
 import network.EntrenamientoRepository
 
-// Estado de la pantalla
+// Representacion del estado de la pantalla de acceso
 data class LoginUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
@@ -20,51 +21,63 @@ class LoginViewModel(private val repository: EntrenamientoRepository) : ViewMode
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState = _uiState.asStateFlow()
 
+    // Gestion de la validacion de credenciales
     fun onLoginClick(nickname: String, pass: String) {
-        _uiState.value = LoginUiState(isLoading = true, error = null)
+        // Iniciamos carga y limpiamos errores previos
+        _uiState.update { it.copy(isLoading = true, error = null, mensajeExito = null) }
 
         viewModelScope.launch {
             try {
                 val persona = repository.login(nickname, pass)
 
                 if (persona != null) {
-                    _uiState.value = LoginUiState(usuarioLogueado = persona)
+                    // Login exitoso: guardamos el usuario
+                    _uiState.update { it.copy(usuarioLogueado = persona, isLoading = false) }
                 } else {
-                    _uiState.value = LoginUiState(error = "Nickname o contraseña incorrectos", isLoading = false)
+                    // Fallo de credenciales
+                    _uiState.update { it.copy(error = "Nickname o contrasena incorrectos", isLoading = false) }
                 }
             } catch (e: Exception) {
-                _uiState.value = LoginUiState(error = "Error de conexión: ${e.message}", isLoading = false)
+                // Error de red o servidor
+                _uiState.update { it.copy(error = "Error de conexion: ${e.message}", isLoading = false) }
             }
         }
     }
 
+    // Gestion de la creacion de nuevas cuentas
     fun onRegistroClick(nickname: String, pass: String, nombre: String, apellidos: String) {
-        _uiState.value = LoginUiState(isLoading = true)
+        // Iniciamos carga y limpiamos estados anteriores
+        _uiState.update { it.copy(isLoading = true, error = null, mensajeExito = null) }
+
         viewModelScope.launch {
             try {
                 val exito = repository.registrarUsuario(nickname, pass, nombre, apellidos)
                 if (exito) {
-                    _uiState.value = LoginUiState(
-                        mensajeExito = "¡Cuenta creada! Ahora inicia sesión.",
-                        isLoading = false
-                    )
+                    // Registro exitoso: actualizamos mensajeExito para que la UI cambie al modo Login
+                    _uiState.update {
+                        it.copy(
+                            mensajeExito = "Cuenta creada con exito. Ahora puedes iniciar sesion.",
+                            isLoading = false
+                        )
+                    }
                 } else {
-                    _uiState.value = LoginUiState(error = "No se pudo crear (¿Nickname repetido?)", isLoading = false)
+                    // Fallo en la creacion (posible duplicidad)
+                    _uiState.update { it.copy(error = "No se pudo crear la cuenta. El usuario ya existe.", isLoading = false) }
                 }
             } catch (e: Exception) {
-                _uiState.value = LoginUiState(error = "Error al registrar", isLoading = false)
+                // Error en la comunicacion con la API
+                _uiState.update { it.copy(error = "Error al procesar el registro", isLoading = false) }
             }
         }
     }
 
-    // --- ESTA ES LA FUNCIÓN QUE FALTABA ---
+    // Restablece el estado completo (util para Logout)
     fun cerrarSesion() {
-        // Al instanciar LoginUiState() vacío, todos los valores vuelven a sus
-        // valores por defecto (usuarioLogueado = null, isLoading = false, etc.)
         _uiState.value = LoginUiState()
     }
 
-    fun limpiarErrores() {
-        _uiState.value = LoginUiState()
+    // Limpia los mensajes de error y exito sin afectar al usuario logueado
+    fun limpiarMensajes() {
+        _uiState.update { it.copy(error = null, mensajeExito = null) }
     }
 }

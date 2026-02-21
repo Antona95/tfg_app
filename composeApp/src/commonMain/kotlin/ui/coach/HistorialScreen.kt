@@ -38,7 +38,7 @@ fun HistorialScreen(
                 title = { Text("Historial de Sesiones", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver al menu anterior")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
                     }
                 }
             )
@@ -48,11 +48,7 @@ fun HistorialScreen(
             if (isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             } else if (sesiones.isEmpty()) {
-                Text(
-                    text = "No se encontraron sesiones registradas",
-                    modifier = Modifier.align(Alignment.Center),
-                    style = MaterialTheme.typography.bodyLarge
-                )
+                Text("No hay sesiones registradas", modifier = Modifier.align(Alignment.Center))
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -62,8 +58,7 @@ fun HistorialScreen(
                     items(sesiones) { sesion ->
                         Card(
                             onClick = { onSesionClick(sesion) },
-                            modifier = Modifier.fillMaxWidth(),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                            modifier = Modifier.fillMaxWidth()
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Row(
@@ -79,34 +74,15 @@ fun HistorialScreen(
                                     )
                                     if(sesion.finalizada) {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Icon(
-                                                Icons.Default.CheckCircle,
-                                                contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.primary,
-                                                modifier = Modifier.size(16.dp)
-                                            )
+                                            Icon(Icons.Default.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                                             Spacer(Modifier.width(4.dp))
-                                            Text(
-                                                "COMPLETADA",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                fontWeight = FontWeight.Bold,
-                                                color = MaterialTheme.colorScheme.primary
-                                            )
+                                            Text("COMPLETADA", style = MaterialTheme.typography.labelSmall)
                                         }
                                     } else {
-                                        Icon(
-                                            Icons.Default.PendingActions,
-                                            contentDescription = "Sesion pendiente",
-                                            tint = MaterialTheme.colorScheme.outline,
-                                            modifier = Modifier.size(16.dp)
-                                        )
+                                        Icon(Icons.Default.PendingActions, contentDescription = "Pendiente")
                                     }
                                 }
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = "${sesion.ejercicios.size} ejercicios programados",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
+                                Text("${sesion.ejercicios.size} ejercicios planificados")
                             }
                         }
                     }

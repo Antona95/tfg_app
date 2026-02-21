@@ -7,7 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.EventBusy
+import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import dev.icerock.moko.mvvm.compose.getViewModel
 import dev.icerock.moko.mvvm.compose.viewModelFactory
 import network.EntrenamientoRepository
@@ -54,7 +55,7 @@ fun HoyScreen(
                 title = { Text("Mi Entrenamiento de Hoy", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver al menu principal")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
                     }
                 }
             )
@@ -63,20 +64,33 @@ fun HoyScreen(
         Box(modifier = Modifier.padding(padding).fillMaxSize()) {
             when (val state = uiState) {
                 is HoyUiState.Loading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+
                 is HoyUiState.Empty -> {
-                    Column(modifier = Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            Icons.Default.EventBusy,
-                            contentDescription = null,
-                            modifier = Modifier.size(80.dp),
-                            tint = MaterialTheme.colorScheme.outline
+                    // Contenedor centrado para accesibilidad cognitiva
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text("💤", fontSize = 100.sp)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            "Hoy toca descanso",
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold
                         )
-                        Spacer(Modifier.height(16.dp))
-                        Text("No hay entrenamientos programados", style = MaterialTheme.typography.headlineSmall)
-                        Text("Hoy es dia de descanso", style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            "Recupera energia para el proximo entrenamiento",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.outline,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(horizontal = 32.dp)
+                        )
                     }
                 }
-                is HoyUiState.Error -> Text("Error en la carga: ${state.mensaje}", color = MaterialTheme.colorScheme.error, modifier = Modifier.align(Alignment.Center))
+
+                is HoyUiState.Error -> Text("Error: ${state.mensaje}", modifier = Modifier.align(Alignment.Center))
+
                 is HoyUiState.Success -> {
                     ContenidoEntreno(state.sesion) {
                         viewModel.finalizarEntrenamiento(state.sesion.idSesion, idUsuario)
@@ -98,12 +112,12 @@ fun ContenidoEntreno(sesion: SesionEntrenamiento, onFinalizar: () -> Unit) {
             Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
                 Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
                     Text("Fecha: ${sesion.fechaProgramada}", style = MaterialTheme.typography.labelLarge)
-                    Text("Rutina Actual", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Text("Rutina del Dia", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                     if (sesion.finalizada) {
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
-                            Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF2E7D32))
+                            Text("✅", fontSize = 20.sp)
                             Spacer(Modifier.width(8.dp))
-                            Text("SESION COMPLETADA", fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32))
+                            Text("ENTRENAMIENTO COMPLETADO", fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32))
                         }
                     }
                 }
@@ -119,24 +133,24 @@ fun ContenidoEntreno(sesion: SesionEntrenamiento, onFinalizar: () -> Unit) {
         }
 
         item {
-            Spacer(modifier = Modifier.height(24.dp))
             if (!sesion.finalizada) {
                 Button(
                     onClick = onFinalizar,
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    modifier = Modifier.fillMaxWidth().height(60.dp).padding(top = 16.dp),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text("FINALIZAR ENTRENAMIENTO", fontWeight = FontWeight.Bold)
                 }
             } else {
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9))
                 ) {
                     Text(
-                        "Objetivo cumplido por hoy",
+                        "Buen trabajo, has terminado por hoy",
                         modifier = Modifier.padding(24.dp).fillMaxWidth(),
                         textAlign = TextAlign.Center,
+                        color = Color(0xFF2E7D32),
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -161,26 +175,33 @@ fun EjercicioAlumnoCard(ejercicio: DetalleSesion, unidoArriba: Boolean, unidoAba
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                if (ejercicio.bloque != 0 && !unidoArriba) {
+                if (ejercicio.bloque != 0) {
+                    // Uso de Letras para identificar el bloque
                     Surface(
                         color = MaterialTheme.colorScheme.primary,
                         shape = RoundedCornerShape(4.dp),
                         modifier = Modifier.padding(end = 8.dp)
                     ) {
-                        Row(modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Row(modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.Link, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
                             Spacer(Modifier.width(4.dp))
-                            Text("${(ejercicio.bloque + 64).toChar()}", color = Color.White, fontWeight = FontWeight.Bold)
+                            Text(
+                                text = "${(ejercicio.bloque + 64).toChar()}",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
+                } else {
+                    Icon(Icons.Default.FitnessCenter, contentDescription = null, modifier = Modifier.size(20.dp).padding(end = 8.dp), tint = MaterialTheme.colorScheme.primary)
                 }
-                Text(ejercicio.nombre ?: "Ejercicio sin nombre", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(ejercicio.nombre ?: "Ejercicio", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
             Spacer(modifier = Modifier.height(12.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                DatoAlumno("Series", "${ejercicio.series}")
-                DatoAlumno("Repeticiones", ejercicio.repeticiones)
-                DatoAlumno("Peso", if ((ejercicio.peso ?: 0.0) > 0.0) "${ejercicio.peso}kg" else "Sin peso")
+                DatoAlumno("SERIES", "${ejercicio.series}")
+                DatoAlumno("REPS", ejercicio.repeticiones)
+                DatoAlumno("PESO", if ((ejercicio.peso ?: 0.0) > 0.0) "${ejercicio.peso}kg" else "--")
             }
         }
     }
@@ -190,6 +211,6 @@ fun EjercicioAlumnoCard(ejercicio: DetalleSesion, unidoArriba: Boolean, unidoAba
 fun DatoAlumno(label: String, valor: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(label, style = MaterialTheme.typography.labelSmall)
-        Text(valor, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Text(valor, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
     }
 }
