@@ -132,7 +132,7 @@ fun FormularioAuth(
     OutlinedTextField(
         value = nickname,
         onValueChange = { nickname = it },
-        label = { Text("Nombre de usuario") },
+        label = { Text("Nickname") },
         modifier = Modifier.fillMaxWidth(),
         singleLine = true
     )
@@ -142,7 +142,7 @@ fun FormularioAuth(
     OutlinedTextField(
         value = password,
         onValueChange = { password = it },
-        label = { Text("Contrasena") },
+        label = { Text("Password") },
         modifier = Modifier.fillMaxWidth(),
         singleLine = true,
         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
