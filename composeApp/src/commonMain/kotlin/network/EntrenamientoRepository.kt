@@ -43,7 +43,7 @@ class EntrenamientoRepository(
         return try {
             val respuesta = client.get("$baseUrl/api/usuarios")
             if (respuesta.status.value in 200..299) {
-                respuesta.body<List<Persona>>().filter { it.rol != "ENTRENADOR" }
+                respuesta.body<List<Persona>>()
             } else emptyList()
         } catch (e: Exception) { emptyList() }
     }
