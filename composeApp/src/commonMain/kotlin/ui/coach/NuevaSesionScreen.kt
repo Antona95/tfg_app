@@ -9,6 +9,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,8 +26,6 @@ import viewmodel.SesionViewModel
 import viewmodel.SesionViewModelFactory
 import model.EjercicioDraft
 import model.SesionEntrenamiento
-
-// ✅ IMPORTS DE FECHA CORRECTOS
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -72,7 +72,7 @@ fun NuevaSesionScreen(
     LaunchedEffect(uiState) {
         when (uiState) {
             is SesionUiState.Success -> {
-                snackbarHostState.showSnackbar("¡Sesión guardada con éxito!")
+                snackbarHostState.showSnackbar("Sesion guardada con exito")
                 viewModel.resetState()
                 onNavigateBack()
             }
@@ -90,13 +90,13 @@ fun NuevaSesionScreen(
             TopAppBar(
                 title = {
                     Text(
-                        if (sesionBase != null) "Duplicar Sesión" else "Nueva Sesión",
+                        if (sesionBase != null) "Duplicar Sesion" else "Nueva Sesion",
                         fontWeight = FontWeight.Bold
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver al menu anterior")
                     }
                 }
             )
@@ -107,29 +107,35 @@ fun NuevaSesionScreen(
             OutlinedTextField(
                 value = tituloSesion,
                 onValueChange = { tituloSesion = it },
-                label = { Text("Título de la sesión") },
-                placeholder = { Text("Ej: Empuje - Hipertrofia") },
+                label = { Text("Titulo de la sesion") },
+                placeholder = { Text("Ejemplo: Rutina de Pierna") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Text("Agrupar últimos ejercicios:", style = MaterialTheme.typography.labelMedium)
+            Text("Agrupar ejercicios seleccionados", style = MaterialTheme.typography.labelMedium)
             Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(
                     onClick = { listaEjercicios = viewModel.agruparUltimosEnDrafts(listaEjercicios, 2) },
                     enabled = listaEjercicios.size >= 2,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF64B5F6))
-                ) { Text("Biserie") }
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.Default.Link, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Biserie")
+                }
 
                 Button(
                     onClick = { listaEjercicios = viewModel.agruparUltimosEnDrafts(listaEjercicios, 3) },
                     enabled = listaEjercicios.size >= 3,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF81C784))
-                ) { Text("Triserie") }
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.Default.Layers, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Triserie")
+                }
             }
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
@@ -157,7 +163,9 @@ fun NuevaSesionScreen(
                         },
                         modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
                     ) {
-                        Icon(Icons.Default.Add, null); Spacer(Modifier.width(8.dp)); Text("Añadir ejercicio")
+                        Icon(Icons.Default.Add, null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Anadir nuevo ejercicio")
                     }
                 }
             }
@@ -165,13 +173,10 @@ fun NuevaSesionScreen(
             Button(
                 onClick = {
                     if (tituloSesion.isNotBlank() && listaEjercicios.isNotEmpty()) {
-
-                        // ✅ CÓDIGO CORRECTO PARA FECHA REAL EN KOTLIN MULTIPLATFORM
                         val fechaHoy = Clock.System.now()
                             .toLocalDateTime(TimeZone.currentSystemDefault())
                             .date
                             .toString()
-
                         viewModel.guardarSesion(idUsuario, tituloSesion, fechaHoy, listaEjercicios)
                     }
                 },
@@ -182,7 +187,7 @@ fun NuevaSesionScreen(
                 if (uiState is SesionUiState.Loading) {
                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                 } else {
-                    Text("FINALIZAR Y GUARDAR", fontWeight = FontWeight.Bold)
+                    Text("GUARDAR ENTRENAMIENTO", fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -206,24 +211,42 @@ fun EjercicioItemCard(
     Card(
         shape = shape,
         modifier = Modifier.fillMaxWidth().padding(top = if (unidoArriba) 0.dp else 8.dp),
-        colors = CardDefaults.cardColors(containerColor = if (ejercicio.bloque == 0) Color.White else coloresBloques[ejercicio.bloque % coloresBloques.size]),
+        colors = CardDefaults.cardColors(
+            containerColor = if (ejercicio.bloque == 0) MaterialTheme.colorScheme.surface else coloresBloques[ejercicio.bloque % coloresBloques.size]
+        ),
         elevation = CardDefaults.cardElevation(if (unidoArriba) 0.dp else 2.dp)
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (ejercicio.bloque != 0) {
                     val letra = (ejercicio.bloque + 64).toChar()
-                    Surface(color = MaterialTheme.colorScheme.primary, shape = RoundedCornerShape(4.dp), modifier = Modifier.padding(end = 8.dp)) {
-                        Text("$letra", modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), color = Color.White, style = MaterialTheme.typography.labelLarge)
+                    Surface(
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = RoundedCornerShape(4.dp),
+                        modifier = Modifier.padding(end = 8.dp)
+                    ) {
+                        Row(modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Link, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text("$letra", color = Color.White, style = MaterialTheme.typography.labelLarge)
+                        }
                     }
                 }
-                OutlinedTextField(value = ejercicio.nombre, onValueChange = { onUpdate(ejercicio.copy(nombre = it)) }, label = { Text("Ejercicio") }, modifier = Modifier.weight(1f), singleLine = true)
-                IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, "Borrar", tint = Color.LightGray) }
+                OutlinedTextField(
+                    value = ejercicio.nombre,
+                    onValueChange = { onUpdate(ejercicio.copy(nombre = it)) },
+                    label = { Text("Nombre del ejercicio") },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true
+                )
+                IconButton(onClick = onDelete) {
+                    Icon(Icons.Default.Delete, "Eliminar ejercicio", tint = MaterialTheme.colorScheme.error)
+                }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
-                OutlinedTextField(value = ejercicio.series, onValueChange = { onUpdate(ejercicio.copy(series = it)) }, label = { Text("S") }, modifier = Modifier.weight(0.7f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
-                OutlinedTextField(value = ejercicio.repeticiones, onValueChange = { onUpdate(ejercicio.copy(repeticiones = it)) }, label = { Text("R") }, modifier = Modifier.weight(1f))
-                OutlinedTextField(value = ejercicio.peso, onValueChange = { onUpdate(ejercicio.copy(peso = it)) }, label = { Text("kg") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                OutlinedTextField(value = ejercicio.series, onValueChange = { onUpdate(ejercicio.copy(series = it)) }, label = { Text("Series") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                OutlinedTextField(value = ejercicio.repeticiones, onValueChange = { onUpdate(ejercicio.copy(repeticiones = it)) }, label = { Text("Reps") }, modifier = Modifier.weight(1f))
+                OutlinedTextField(value = ejercicio.peso, onValueChange = { onUpdate(ejercicio.copy(peso = it)) }, label = { Text("Peso kg") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
             }
         }
     }

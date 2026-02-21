@@ -28,3 +28,14 @@ Thumbs.db
 *.exe
 *.bat
 *.cmd
+
+# --- Android SDK (Evitar subir gigas de herramientas) ---
+.knownPackages
+build-tools/
+emulator/
+licenses/
+platform-tools/
+platforms/
+skins/
+sources/
+system-images/

@@ -19,10 +19,19 @@ import ui.user.HoyScreen
 import ui.user.AlumnoHomeScreen
 import model.Persona
 import kotlinx.coroutines.launch
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 
 @Composable
 fun App() {
-    MaterialTheme {
+    // 1. GUARDAMOS EL ESTADO DEL MODO OSCURO
+    var isDarkMode by remember { mutableStateOf(false) }
+
+    // 2. ELEGIMOS LA PALETA DE COLORES
+    val colorScheme = if (isDarkMode) darkColorScheme() else lightColorScheme()
+
+    // 3. APLICAMOS EL TEMA A TODA LA APP
+    MaterialTheme(colorScheme = colorScheme) {
         val client = remember { createHttpClient() }
         val repository = remember { EntrenamientoRepository(client) }
         val scope = rememberCoroutineScope()
@@ -39,7 +48,7 @@ fun App() {
 
             if (usuario.rol == "ENTRENADOR") {
                 // =================================================
-                // 📋 SECCIÓN ENTRENADOR
+                // SECCIÓN ENTRENADOR
                 // =================================================
                 var usuarioSeleccionado by remember { mutableStateOf<Persona?>(null) }
                 var creandoSesion by remember { mutableStateOf(false) }
@@ -48,7 +57,6 @@ fun App() {
                 var sesionParaDuplicar by remember { mutableStateOf<model.SesionEntrenamiento?>(null) }
 
                 when {
-                    // 1. Detalle de sesión
                     sesionSeleccionada != null -> {
                         DetalleSesionScreen(
                             sesion = sesionSeleccionada!!,
@@ -56,7 +64,6 @@ fun App() {
                         )
                     }
 
-                    // 2. Pantalla de creación (Nueva o Copia)
                     creandoSesion && usuarioSeleccionado != null -> {
                         NuevaSesionScreen(
                             idUsuario = usuarioSeleccionado!!.id,
@@ -69,7 +76,6 @@ fun App() {
                         )
                     }
 
-                    // 3. Historial del alumno seleccionado
                     viendoHistorial && usuarioSeleccionado != null -> {
                         HistorialScreen(
                             idUsuario = usuarioSeleccionado!!.id,
@@ -81,7 +87,6 @@ fun App() {
                         )
                     }
 
-                    // 4. Opciones del alumno (Menú intermedio)
                     usuarioSeleccionado != null -> {
                         UserOptionsScreen(
                             usuario = usuarioSeleccionado!!,
@@ -103,7 +108,6 @@ fun App() {
                         )
                     }
 
-                    // 5. Lista de alumnos (Pantalla principal Coach)
                     else -> {
                         val coachViewModel = getViewModel(
                             key = "coach-screen",
@@ -111,17 +115,20 @@ fun App() {
                         )
                         CoachScreen(
                             viewModel = coachViewModel,
-                            onLogout = { loginViewModel.cerrarSesion() }, // ✅ Conectado al Logout
+                            onLogout = { loginViewModel.cerrarSesion() },
                             onAlumnoClick = { alumno ->
                                 usuarioSeleccionado = alumno
-                            }
+                            },
+                            // 🌙 PASAMOS EL TEMA A LA PANTALLA DEL COACH
+                            isDarkMode = isDarkMode,
+                            onThemeToggle = { isDarkMode = !isDarkMode }
                         )
                     }
                 }
 
             } else {
                 // =================================================
-                // 🥋 SECCIÓN ALUMNO
+                // SECCIÓN ALUMNO
                 // =================================================
                 var pantallaAlumno by remember { mutableStateOf("MENU") }
                 var sesionDetalleAlumno by remember { mutableStateOf<model.SesionEntrenamiento?>(null) }
@@ -132,7 +139,10 @@ fun App() {
                             usuario = usuario,
                             onVerHoy = { pantallaAlumno = "HOY" },
                             onVerHistorial = { pantallaAlumno = "HISTORIAL" },
-                            onLogout = { loginViewModel.cerrarSesion() }
+                            onLogout = { loginViewModel.cerrarSesion() },
+                            // 🌙 PASAMOS EL TEMA A LA PANTALLA DEL ALUMNO
+                            isDarkMode = isDarkMode,
+                            onThemeToggle = { isDarkMode = !isDarkMode }
                         )
                     }
 
@@ -174,7 +184,7 @@ fun App() {
 
         } else {
             // =================================================
-            // 🔐 PANTALLA DE ACCESO (Login/Registro)
+            // PANTALLA DE ACCESO (Login/Registro)
             // =================================================
             LoginScreen(
                 onLoginClick = { nick, pass -> loginViewModel.onLoginClick(nick, pass) },

@@ -5,10 +5,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.PendingActions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import model.SesionEntrenamiento
 import network.EntrenamientoRepository
@@ -32,10 +35,10 @@ fun HistorialScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Historial de Sesiones") },
+                title = { Text("Historial de Sesiones", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver al menu anterior")
                     }
                 }
             )
@@ -46,8 +49,9 @@ fun HistorialScreen(
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             } else if (sesiones.isEmpty()) {
                 Text(
-                    text = "No hay sesiones guardadas",
-                    modifier = Modifier.align(Alignment.Center)
+                    text = "No se encontraron sesiones registradas",
+                    modifier = Modifier.align(Alignment.Center),
+                    style = MaterialTheme.typography.bodyLarge
                 )
             } else {
                 LazyColumn(
@@ -56,29 +60,51 @@ fun HistorialScreen(
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     items(sesiones) { sesion ->
-                        // Tarjeta interactiva
                         Card(
-                            onClick = { onSesionClick(sesion) }, // <--- DETECTAMOS EL CLICK
+                            onClick = { onSesionClick(sesion) },
                             modifier = Modifier.fillMaxWidth(),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
                                         text = sesion.fechaProgramada,
                                         style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary
                                     )
                                     if(sesion.finalizada) {
-                                        Text("✅", style = MaterialTheme.typography.bodyMedium)
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(
+                                                Icons.Default.CheckCircle,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                            Spacer(Modifier.width(4.dp))
+                                            Text(
+                                                "COMPLETADA",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+                                    } else {
+                                        Icon(
+                                            Icons.Default.PendingActions,
+                                            contentDescription = "Sesion pendiente",
+                                            tint = MaterialTheme.colorScheme.outline,
+                                            modifier = Modifier.size(16.dp)
+                                        )
                                     }
                                 }
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = "${sesion.ejercicios.size} ejercicios planificados",
+                                    text = "${sesion.ejercicios.size} ejercicios programados",
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                             }

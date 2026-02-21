@@ -3,10 +3,11 @@ package ui.user
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.SportsGymnastics
+import androidx.compose.material.icons.filled.DarkMode // Icono Luna (poblacion autista)
+import androidx.compose.material.icons.filled.LightMode // Icono Sol (poblacion autista)
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -23,7 +24,9 @@ fun AlumnoHomeScreen(
     usuario: Persona,
     onVerHoy: () -> Unit,
     onVerHistorial: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    isDarkMode: Boolean,
+    onThemeToggle: () -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -35,6 +38,28 @@ fun AlumnoHomeScreen(
                     }
                 },
                 actions = {
+                    // INTERRUPTOR CON PICTOGRAMAS INCRUSTADOS (Accesibilidad Cognitiva y Visual)
+                    Switch(
+                        checked = isDarkMode,
+                        onCheckedChange = { onThemeToggle() },
+                        modifier = Modifier.padding(end = 8.dp),
+                        thumbContent = {
+                            if (isDarkMode) {
+                                Icon(
+                                    imageVector = Icons.Default.DarkMode,
+                                    contentDescription = "Modo Oscuro Activado",
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.LightMode,
+                                    contentDescription = "Modo Claro Activado",
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
+                            }
+                        }
+                    )
+
                     IconButton(onClick = onLogout) {
                         Icon(Icons.Default.ExitToApp, "Cerrar Sesión")
                     }
@@ -50,7 +75,6 @@ fun AlumnoHomeScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // TARJETA GIGANTE: ENTRENO DE HOY
             AlumnoMenuCard(
                 titulo = "Entrenamiento de Hoy",
                 subtitulo = "Ver tu rutina y registrar pesos",
@@ -62,7 +86,6 @@ fun AlumnoHomeScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // TARJETA SECUNDARIA: HISTORIAL
             AlumnoMenuCard(
                 titulo = "Historial de Sesiones",
                 subtitulo = "Consulta tus entrenos pasados",

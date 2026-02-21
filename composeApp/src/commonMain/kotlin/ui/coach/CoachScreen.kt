@@ -7,7 +7,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.ExitToApp // ✅ IMPORT AÑADIDO
+import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.DarkMode // Icono Luna (poblacion autista)
+import androidx.compose.material.icons.filled.LightMode // Icono Sol (poblacion autista)
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -25,7 +27,9 @@ import viewmodel.CoachViewModel
 fun CoachScreen(
     viewModel: CoachViewModel,
     onAlumnoClick: (Persona) -> Unit,
-    onLogout: () -> Unit // ✅ UNIFICADO: quitamos el "Click" para que coincida con App.kt
+    onLogout: () -> Unit,
+    isDarkMode: Boolean,
+    onThemeToggle: () -> Unit
 ) {
     val alumnos by viewModel.alumnos.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -35,13 +39,33 @@ fun CoachScreen(
             TopAppBar(
                 title = { Text("Mis Alumnos", fontWeight = FontWeight.Bold) },
                 actions = {
-                    // Botón para recargar la lista
+                    // INTERRUPTOR CON PICTOGRAMAS INCRUSTADOS (Accesibilidad Cognitiva y Visual)
+                    Switch(
+                        checked = isDarkMode,
+                        onCheckedChange = { onThemeToggle() },
+                        modifier = Modifier.padding(end = 8.dp),
+                        thumbContent = {
+                            if (isDarkMode) {
+                                Icon(
+                                    imageVector = Icons.Default.DarkMode,
+                                    contentDescription = "Modo Oscuro Activado",
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.LightMode,
+                                    contentDescription = "Modo Claro Activado",
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
+                            }
+                        }
+                    )
+
                     IconButton(onClick = { viewModel.cargarAlumnos() }) {
                         Icon(Icons.Default.Refresh, "Recargar")
                     }
 
-                    // Botón de Cerrar Sesión
-                    IconButton(onClick = onLogout) { // ✅ Ahora el nombre coincide
+                    IconButton(onClick = onLogout) {
                         Icon(
                             imageVector = Icons.Default.ExitToApp,
                             contentDescription = "Cerrar Sesión",
