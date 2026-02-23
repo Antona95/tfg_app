@@ -2,15 +2,17 @@ package ui.coach
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape // 👈 IMPORT PARA EL SHAPE
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment // 👈 IMPORT PARA ALIGNMENT
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.dp // 👈 IMPORT PARA EL DP
 import model.SesionEntrenamiento
 import model.DetalleSesion
 
@@ -18,6 +20,7 @@ import model.DetalleSesion
 @Composable
 fun DetalleSesionScreen(
     sesion: SesionEntrenamiento,
+    isDarkMode: Boolean,
     onBack: () -> Unit
 ) {
     Scaffold(
@@ -45,6 +48,26 @@ fun DetalleSesionScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    ),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = sesion.titulo,
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        if (sesion.finalizada) {
+                            Text("✅ FINALIZADA", color = Color(0xFF2E7D32), fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+
+            item {
                 Text(
                     text = "Ejercicios Realizados",
                     style = MaterialTheme.typography.titleLarge,
@@ -53,75 +76,76 @@ fun DetalleSesionScreen(
                 )
             }
 
-            items(sesion.ejercicios) { ejercicio ->
-                ExerciseDetailCard(ejercicio)
+            itemsIndexed(sesion.ejercicios) { index, ejercicio ->
+                ExerciseDetailCard(ejercicio, isDarkMode)
             }
         }
     }
 }
 
 @Composable
-fun ExerciseDetailCard(ejercicio: DetalleSesion) {
-    // 1. OBTENEMOS EL COLOR SEGÚN EL BLOQUE
-    val colorFondo = obtenerColorBloque(ejercicio.bloque)
+fun ExerciseDetailCard(ejercicio: DetalleSesion, isDarkMode: Boolean) {
+    val colorFondo = obtenerColorBloque(ejercicio.bloque, isDarkMode)
+    val colorTexto = if (isDarkMode && ejercicio.bloque > 0) Color.White else MaterialTheme.colorScheme.onSurface
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        // 2. APLICAMOS EL COLOR AL CONTENEDOR
-        colors = CardDefaults.cardColors(containerColor = colorFondo)
+        colors = CardDefaults.cardColors(
+            containerColor = colorFondo,
+            contentColor = colorTexto
+        )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-
-            // CABECERA: Nombre y Etiqueta de Bloque
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = ejercicio.nombre ?: "Ejercicio sin nombre",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    color = colorTexto
                 )
 
-                // Si tiene bloque asignado (>0), mostramos una etiqueta visual
                 if (ejercicio.bloque > 0) {
-                    AssistChip(
-                        onClick = {},
-                        label = { Text("Bloque ${ejercicio.bloque}") },
-                        colors = AssistChipDefaults.assistChipColors(
-                            containerColor = Color.White.copy(alpha = 0.5f),
-                            labelColor = Color.Black
-                        ),
-                        border = null
-                    )
+                    Surface(
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = RoundedCornerShape(4.dp) // 👈 Ahora ya no debería estar en rojo
+                    ) {
+                        Text(
+                            text = "Bloque ${ejercicio.bloque}",
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // DATOS TÉCNICOS
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                InfoBadge("Series", "${ejercicio.series}")
-                InfoBadge("Reps", ejercicio.repeticiones)
+                InfoBadge("Series", "${ejercicio.series}", colorTexto)
+                InfoBadge("Reps", ejercicio.repeticiones, colorTexto)
                 val pesoTexto = if (ejercicio.peso != null && ejercicio.peso > 0) "${ejercicio.peso} kg" else "--"
-                InfoBadge("Peso", pesoTexto)
+                InfoBadge("Peso", pesoTexto, colorTexto)
             }
 
-            // OBSERVACIONES
             if (!ejercicio.observaciones.isNullOrEmpty()) {
                 Spacer(modifier = Modifier.height(12.dp))
-                HorizontalDivider(color = Color.Black.copy(alpha = 0.1f))
+                HorizontalDivider(color = colorTexto.copy(alpha = 0.2f))
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = " ${ejercicio.observaciones}",
+                    text = ejercicio.observaciones!!,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Black.copy(alpha = 0.7f) // Aseguramos contraste
+                    color = colorTexto.copy(alpha = 0.8f)
                 )
             }
         }
@@ -129,21 +153,31 @@ fun ExerciseDetailCard(ejercicio: DetalleSesion) {
 }
 
 @Composable
-fun InfoBadge(label: String, value: String) {
-    Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
-        Text(text = label, style = MaterialTheme.typography.labelSmall, color = Color.Black.copy(alpha = 0.6f))
-        Text(text = value, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = Color.Black)
+fun InfoBadge(label: String, value: String, color: Color) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(text = label, style = MaterialTheme.typography.labelSmall, color = color.copy(alpha = 0.6f))
+        Text(text = value, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = color)
     }
 }
 
-// --- FUNCIÓN PARA COLOREAR LOS BLOQUES ---
-fun obtenerColorBloque(bloque: Int): Color {
-    return when (bloque) {
-        1 -> Color(0xFFBBDEFB) // Azul suave (Blue 100)
-        2 -> Color(0xFFFFCCBC) // Naranja suave (Deep Orange 100)
-        3 -> Color(0xFFC8E6C9) // Verde suave (Green 100)
-        4 -> Color(0xFFE1BEE7) // Violeta suave (Purple 100)
-        5 -> Color(0xFFFFF9C4) // Amarillo suave
-        else -> Color(0xFFF5F5F5) // Gris muy claro por defecto (o bloque 0)
+fun obtenerColorBloque(bloque: Int, isDarkMode: Boolean): Color {
+    return if (isDarkMode) {
+        when (bloque) {
+            1 -> Color(0xFF0D47A1)
+            2 -> Color(0xFFB71C1C)
+            3 -> Color(0xFF1B5E20)
+            4 -> Color(0xFF4A148C)
+            5 -> Color(0xFFE65100)
+            else -> Color(0xFF2C2C2C)
+        }
+    } else {
+        when (bloque) {
+            1 -> Color(0xFFBBDEFB)
+            2 -> Color(0xFFFFCCBC)
+            3 -> Color(0xFFC8E6C9)
+            4 -> Color(0xFFE1BEE7)
+            5 -> Color(0xFFFFF9C4)
+            else -> Color(0xFFF5F5F5)
+        }
     }
 }

@@ -6,8 +6,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.FitnessCenter
-import androidx.compose.material.icons.filled.Link
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,16 +20,35 @@ import viewmodel.HoyViewModel
 import model.DetalleSesion
 import model.SesionEntrenamiento
 
-private val coloresBloquesAlumno = listOf(
-    Color(0xFFFFFFFF), Color(0xFFE3F2FD), Color(0xFFE8F5E9),
-    Color(0xFFFFF3E0), Color(0xFFF3E5F5), Color(0xFFEFEBE9)
-)
+@Composable
+fun obtenerColoresAdaptativos(isDarkMode: Boolean): List<Color> {
+    return if (isDarkMode) {
+        listOf(
+            MaterialTheme.colorScheme.surfaceVariant, // Bloque 0
+            Color(0xFF0D47A1), // Azul Marino
+            Color(0xFF1B5E20), // Verde Bosque
+            Color(0xFFB71C1C), // Rojo Oscuro
+            Color(0xFF4A148C), // Púrpura
+            Color(0xFFE65100)  // Naranja Quemado
+        )
+    } else {
+        listOf(
+            MaterialTheme.colorScheme.surfaceVariant,
+            Color(0xFFE3F2FD),
+            Color(0xFFE8F5E9),
+            Color(0xFFFFF3E0),
+            Color(0xFFF3E5F5),
+            Color(0xFFEFEBE9)
+        )
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HoyScreen(
     idUsuario: String,
     viewModel: HoyViewModel,
+    isDarkMode: Boolean,
     onNavigateBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -54,9 +71,7 @@ fun HoyScreen(
     ) { padding ->
         Box(modifier = Modifier.padding(padding).fillMaxSize()) {
             when (val state = uiState) {
-                is HoyUiState.Loading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                }
+                is HoyUiState.Loading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 is HoyUiState.Empty -> {
                     Column(
                         modifier = Modifier.fillMaxSize(),
@@ -67,23 +82,21 @@ fun HoyScreen(
                         Text("Hoy toca descanso", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                     }
                 }
-                is HoyUiState.Error -> {
-                    Text("Error: ${state.mensaje}", modifier = Modifier.align(Alignment.Center))
-                }
+                is HoyUiState.Error -> Text("Error: ${state.mensaje}", modifier = Modifier.align(Alignment.Center))
                 is HoyUiState.Success -> {
-                    ContenidoEntreno(state.sesion) {
+                    ContenidoEntreno(state.sesion, isDarkMode) {
                         viewModel.finalizarEntrenamiento(state.sesion.idSesion, idUsuario) {
                             println("Finalizado")
                         }
                     }
                 }
-            } // Fin del when
-        } // Fin del Box
-    } // Fin del Scaffold
+            }
+        }
+    }
 }
 
 @Composable
-fun ContenidoEntreno(sesion: SesionEntrenamiento, onFinalizar: () -> Unit) {
+fun ContenidoEntreno(sesion: SesionEntrenamiento, isDarkMode: Boolean, onFinalizar: () -> Unit) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
@@ -93,7 +106,12 @@ fun ContenidoEntreno(sesion: SesionEntrenamiento, onFinalizar: () -> Unit) {
             Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
                 Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
                     Text("Fecha: ${sesion.fechaProgramada}", style = MaterialTheme.typography.labelLarge)
-                    Text(sesion.titulo, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    // REVERTIDO: Volvemos a usar sesion.titulo
+                    Text(
+                        text = sesion.titulo,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                    )
                     if (sesion.finalizada) {
                         Text("✅ COMPLETADO", fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32))
                     }
@@ -105,9 +123,10 @@ fun ContenidoEntreno(sesion: SesionEntrenamiento, onFinalizar: () -> Unit) {
             val anterior = sesion.ejercicios.getOrNull(index - 1)
             val siguiente = sesion.ejercicios.getOrNull(index + 1)
             EjercicioAlumnoCard(
-                ej,
+                ejercicio = ej,
                 unidoArriba = ej.bloque != 0 && ej.bloque == anterior?.bloque,
-                unidoAbajo = ej.bloque != 0 && ej.bloque == siguiente?.bloque
+                unidoAbajo = ej.bloque != 0 && ej.bloque == siguiente?.bloque,
+                isDarkMode = isDarkMode
             )
         }
 
@@ -115,7 +134,7 @@ fun ContenidoEntreno(sesion: SesionEntrenamiento, onFinalizar: () -> Unit) {
             if (!sesion.finalizada) {
                 Button(
                     onClick = onFinalizar,
-                    modifier = Modifier.fillMaxWidth().height(56.dp)
+                    modifier = Modifier.fillMaxWidth().height(56.dp).padding(top = 8.dp)
                 ) {
                     Text("FINALIZAR ENTRENAMIENTO", fontWeight = FontWeight.Bold)
                 }
@@ -125,33 +144,38 @@ fun ContenidoEntreno(sesion: SesionEntrenamiento, onFinalizar: () -> Unit) {
 }
 
 @Composable
-fun EjercicioAlumnoCard(ejercicio: DetalleSesion, unidoArriba: Boolean, unidoAbajo: Boolean) {
-    val shape = RoundedCornerShape(
-        topStart = if (unidoArriba) 0.dp else 12.dp, topEnd = if (unidoArriba) 0.dp else 12.dp,
-        bottomStart = if (unidoAbajo) 0.dp else 12.dp, bottomEnd = if (unidoAbajo) 0.dp else 12.dp
-    )
+fun EjercicioAlumnoCard(ejercicio: DetalleSesion, unidoArriba: Boolean, unidoAbajo: Boolean, isDarkMode: Boolean) {
+    val misColores = obtenerColoresAdaptativos(isDarkMode)
+
+    val fondo = if (ejercicio.bloque == 0) MaterialTheme.colorScheme.surfaceVariant
+    else misColores[ejercicio.bloque % misColores.size]
+
+    val colorTexto = if (isDarkMode && ejercicio.bloque != 0) Color.White
+    else MaterialTheme.colorScheme.onSurfaceVariant
+
     Card(
-        shape = shape,
+        shape = RoundedCornerShape(
+            topStart = if (unidoArriba) 0.dp else 12.dp, topEnd = if (unidoArriba) 0.dp else 12.dp,
+            bottomStart = if (unidoAbajo) 0.dp else 12.dp, bottomEnd = if (unidoAbajo) 0.dp else 12.dp
+        ),
         modifier = Modifier.fillMaxWidth().padding(top = if (unidoArriba) 0.dp else 8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (ejercicio.bloque == 0) MaterialTheme.colorScheme.surfaceVariant else coloresBloquesAlumno[ejercicio.bloque % coloresBloquesAlumno.size]
-        )
+        colors = CardDefaults.cardColors(containerColor = fondo, contentColor = colorTexto)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(ejercicio.nombre ?: "Ejercicio", fontWeight = FontWeight.Bold)
+            Text(text = ejercicio.nombre ?: "Ejercicio", fontWeight = FontWeight.Bold, color = colorTexto)
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                DatoAlumno("SERIES", "${ejercicio.series}")
-                DatoAlumno("REPS", ejercicio.repeticiones)
-                DatoAlumno("PESO", "${ejercicio.peso ?: 0.0}kg")
+                DatoAlumno("SERIES", "${ejercicio.series}", colorTexto)
+                DatoAlumno("REPS", ejercicio.repeticiones, colorTexto)
+                DatoAlumno("PESO", "${ejercicio.peso ?: 0.0}kg", colorTexto)
             }
         }
     }
 }
 
 @Composable
-fun DatoAlumno(label: String, valor: String) {
+fun DatoAlumno(label: String, valor: String, color: Color) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(label, style = MaterialTheme.typography.labelSmall)
-        Text(valor, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = color.copy(alpha = 0.7f))
+        Text(valor, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = color)
     }
 }

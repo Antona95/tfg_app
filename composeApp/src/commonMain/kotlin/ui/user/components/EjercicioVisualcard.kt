@@ -1,5 +1,6 @@
 package ui.components
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -11,23 +12,34 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import model.DetalleSesion
 
-// Paleta de colores para identificar visualmente las biseries/triseries
-private val coloresBloques = listOf(
-    Color(0xFFFFFFFF), // Bloque 0: Blanco (Normal)
-    Color(0xFFE3F2FD), // Bloque 1: Azul claro
-    Color(0xFFF1F8E9), // Bloque 2: Verde claro
-    Color(0xFFFFF3E0), // Bloque 3: Naranja claro
-    Color(0xFFF3E5F5), // Bloque 4: Morado claro
-    Color(0xFFEFEBE9)  // Bloque 5: Gris claro
-)
-
 @Composable
 fun EjercicioVisualCard(
     ejercicio: DetalleSesion,
     unidoArriba: Boolean,
     unidoAbajo: Boolean
 ) {
-    // 1. Lógica de esquinas: si está unido, la esquina es recta (0.dp)
+    val isDarkMode = isSystemInDarkTheme()
+
+    // Paleta adaptativa
+    val colores = if (isDarkMode) {
+        listOf(
+            MaterialTheme.colorScheme.surfaceVariant,
+            Color(0xFF0D47A1), Color(0xFF2E7D32), Color(0xFFE65100), Color(0xFF6A1B9A)
+        )
+    } else {
+        listOf(
+            MaterialTheme.colorScheme.surfaceVariant,
+            Color(0xFFE3F2FD), Color(0xFFF1F8E9), Color(0xFFFFF3E0), Color(0xFFF3E5F5)
+        )
+    }
+
+    val colorFondo = if (ejercicio.bloque == 0) colores[0]
+    else colores[ejercicio.bloque % colores.size]
+
+    // Texto blanco en bloques oscuros, o el color por defecto del tema
+    val colorTexto = if (isDarkMode && ejercicio.bloque != 0) Color.White
+    else MaterialTheme.colorScheme.onSurface
+
     val shape = RoundedCornerShape(
         topStart = if (unidoArriba) 0.dp else 12.dp,
         topEnd = if (unidoArriba) 0.dp else 12.dp,
@@ -39,21 +51,17 @@ fun EjercicioVisualCard(
         shape = shape,
         modifier = Modifier
             .fillMaxWidth()
-            // Si está unido arriba, quitamos el margen para que las tarjetas se peguen
             .padding(top = if (unidoArriba) 0.dp else 12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (ejercicio.bloque == 0) MaterialTheme.colorScheme.surfaceVariant
-            else coloresBloques[ejercicio.bloque % coloresBloques.size]
+            containerColor = colorFondo,
+            contentColor = colorTexto
         ),
         elevation = CardDefaults.cardElevation(if (unidoArriba) 0.dp else 2.dp)
     ) {
         Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
+            modifier = Modifier.padding(16.dp).fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 2. Indicador de Bloque (Letras A, B, C...)
             if (ejercicio.bloque != 0) {
                 Surface(
                     color = MaterialTheme.colorScheme.primary,
@@ -64,14 +72,13 @@ fun EjercicioVisualCard(
                         text = "$letra",
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.titleSmall,
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onPrimary, // Contraste automático
                         fontWeight = FontWeight.Bold
                     )
                 }
                 Spacer(modifier = Modifier.width(16.dp))
             }
 
-            // 3. Información del ejercicio
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = ejercicio.nombre ?: "Ejercicio sin nombre",
@@ -82,8 +89,7 @@ fun EjercicioVisualCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = "${ejercicio.series} x ${ejercicio.repeticiones}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        style = MaterialTheme.typography.bodyMedium
                     )
 
                     if (ejercicio.peso != null && ejercicio.peso!! > 0.0) {
@@ -96,12 +102,12 @@ fun EjercicioVisualCard(
                     }
                 }
 
-                // 4. Observaciones (si el coach escribió algo)
                 if (!ejercicio.observaciones.isNullOrBlank()) {
                     Text(
                         text = ejercicio.observaciones!!,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = if (isDarkMode && ejercicio.bloque != 0) Color.White.copy(alpha = 0.8f)
+                        else MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(top = 4.dp)
                     )
                 }

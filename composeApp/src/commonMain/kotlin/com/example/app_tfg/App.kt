@@ -63,8 +63,10 @@ fun App() {
 
                 when {
                     sesionSeleccionada != null -> {
+                        // CORREGIDO: Ahora el Coach también pasa el isDarkMode al detalle
                         DetalleSesionScreen(
                             sesion = sesionSeleccionada!!,
+                            isDarkMode = isDarkMode,
                             onBack = { sesionSeleccionada = null }
                         )
                     }
@@ -80,7 +82,6 @@ fun App() {
                         )
                     }
                     viendoHistorial && usuarioSeleccionado != null -> {
-                        // Aquí no pasamos ViewModel porque el Coach usa estado local
                         HistorialScreen(
                             idUsuario = usuarioSeleccionado!!.id,
                             repository = repository,
@@ -121,7 +122,7 @@ fun App() {
 
             } else {
                 // =================================================
-                // SECCIÓN ALUMNO (ViewModels Blindados)
+                // SECCIÓN ALUMNO
                 // =================================================
                 val hoyViewModel = getViewModel(
                     key = "hoy-screen-vm",
@@ -140,14 +141,8 @@ fun App() {
                     "MENU" -> {
                         AlumnoHomeScreen(
                             usuario = usuario,
-                            onVerHoy = {
-                                // la pantalla ya sabe cargarse sola
-                                pantallaAlumno = "HOY"
-                            },
-                            onVerHistorial = {
-                                // Solo cambiamos de pantalla
-                                pantallaAlumno = "HISTORIAL"
-                            },
+                            onVerHoy = { pantallaAlumno = "HOY" },
+                            onVerHistorial = { pantallaAlumno = "HISTORIAL" },
                             onLogout = { loginViewModel.cerrarSesion() },
                             isDarkMode = isDarkMode,
                             onThemeToggle = { isDarkMode = !isDarkMode }
@@ -157,6 +152,7 @@ fun App() {
                         HoyScreen(
                             idUsuario = usuario.id,
                             viewModel = hoyViewModel,
+                            isDarkMode = isDarkMode,
                             onNavigateBack = { pantallaAlumno = "MENU" }
                         )
                     }
@@ -176,6 +172,7 @@ fun App() {
                         if (sesionDetalleAlumno != null) {
                             DetalleSesionScreen(
                                 sesion = sesionDetalleAlumno!!,
+                                isDarkMode = isDarkMode,
                                 onBack = {
                                     pantallaAlumno = "HISTORIAL"
                                     sesionDetalleAlumno = null
