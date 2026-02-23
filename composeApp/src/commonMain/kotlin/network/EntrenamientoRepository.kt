@@ -16,7 +16,7 @@ class EntrenamientoRepository(
 ) {
     // La URL la movemos aquí abajo (dentro de las llaves)
     // Así ya no sale en rojo y nadie se confunde al crear el repositorio
-    private val baseUrl = "http://10.0.2.2:8080"
+    private val baseUrl = "http://10.0.2.2:3005"
     // --- AUTENTICACIÓN ---
     suspend fun login(nickname: String, pass: String): Persona? {
         return try {
@@ -35,7 +35,12 @@ class EntrenamientoRepository(
                 setBody(RegistroRequest(nickname, pass, nombre, apellidos))
             }
             respuesta.status.value in 200..299
-        } catch (e: Exception) { false }
+        } catch (e: Exception) {
+            // AÑADIMOS ESTE PRINT PARA VER EL ERROR REAL EN ANDROID STUDIO
+            println("ERROR GRAVE EN KTOR: ${e.message}")
+            e.printStackTrace()
+            false
+        }
     }
 
     // --- LECTURA ---

@@ -22,6 +22,10 @@ class HoyViewModel(private val repository: EntrenamientoRepository) : ViewModel(
     val uiState: StateFlow<HoyUiState> = _uiState.asStateFlow()
 
     fun cargarEntrenamiento(idUsuario: String) {
+        // ESCUDO: Si ya tenemos éxito, no hacemos nada.
+        // Esto evita que al volver atrás o cambiar modo oscuro se borren los datos.
+        if (uiState.value is HoyUiState.Success) return
+
         viewModelScope.launch {
             _uiState.value = HoyUiState.Loading
             try {
@@ -37,12 +41,23 @@ class HoyViewModel(private val repository: EntrenamientoRepository) : ViewModel(
         }
     }
 
-    fun finalizarEntrenamiento(idSesion: String, idUsuario: String) {
+    // Cambia la cabecera de la función para añadir el parámetro 'onExito'
+    fun finalizarEntrenamiento(idSesion: String, idUsuario: String, onExito: () -> Unit) {
         viewModelScope.launch {
-            val exito = repository.finalizarSesion(idSesion)
-            if (exito) {
-                // Si el patch en el servidor fue correcto, recargamos los datos
-                cargarEntrenamiento(idUsuario)
+            try {
+                val exito = repository.finalizarSesion(idSesion)
+                if (exito) {
+                    // Si el servidor dice que OK, recargamos la sesión de hoy
+                    val sesionActualizada = repository.obtenerSesionHoy(idUsuario)
+                    if (sesionActualizada != null) {
+                        _uiState.value = HoyUiState.Success(sesionActualizada)
+                    }
+
+                    // AQUÍ EJECUTAMOS EL AVISO
+                    onExito()
+                }
+            } catch (e: Exception) {
+                _uiState.value = HoyUiState.Error("Error al finalizar")
             }
         }
     }

@@ -28,6 +28,9 @@ class LoginViewModel(private val repository: EntrenamientoRepository) : ViewMode
 
         viewModelScope.launch {
             try {
+                // AÑADIMOS ESTE PRINT PARA VER QUÉ ESTAMOS ENVIANDO
+                println(" INTENTANDO LOGIN -> Nickname: $nickname, Pass: $pass")
+
                 val persona = repository.login(nickname, pass)
 
                 if (persona != null) {

@@ -1,5 +1,6 @@
 package model
 
+import app_tfg.composeapp.generated.resources.Res
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -14,6 +15,7 @@ data class SesionEntrenamiento(
     @SerialName("id") val idSesion: String, // Mongo devuelve 'id' tras el mapper
     @SerialName("id_plan") val idPlan: String,
     @SerialName("fecha") val fechaProgramada: String,
+    val titulo: String = "Rutina de Entrenamiento",
     val finalizada: Boolean = false,
     val ejercicios: List<DetalleSesion> = emptyList()
 )

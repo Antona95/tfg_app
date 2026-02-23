@@ -9,6 +9,7 @@ import network.EntrenamientoRepository
 import viewmodel.LoginViewModel
 import viewmodel.CoachViewModel
 import viewmodel.HoyViewModel
+import viewmodel.HistorialViewModel
 import ui.login.LoginScreen
 import ui.coach.CoachScreen
 import ui.coach.UserOptionsScreen
@@ -24,13 +25,12 @@ import androidx.compose.material3.lightColorScheme
 
 @Composable
 fun App() {
-    // 1. GUARDAMOS EL ESTADO DEL MODO OSCURO
+    // 1. ESTADO GLOBAL DEL MODO OSCURO (State Hoisting)
     var isDarkMode by remember { mutableStateOf(false) }
 
-    // 2. ELEGIMOS LA PALETA DE COLORES
+    // 2. CONFIGURACIÓN DEL TEMA
     val colorScheme = if (isDarkMode) darkColorScheme() else lightColorScheme()
 
-    // 3. APLICAMOS EL TEMA A TODA LA APP
     MaterialTheme(colorScheme = colorScheme) {
         val client = remember { createHttpClient() }
         val repository = remember { EntrenamientoRepository(client) }
@@ -50,6 +50,11 @@ fun App() {
                 // =================================================
                 // SECCIÓN ENTRENADOR
                 // =================================================
+                val coachViewModel = getViewModel(
+                    key = "coach-screen",
+                    factory = viewModelFactory { CoachViewModel(repository) }
+                )
+
                 var usuarioSeleccionado by remember { mutableStateOf<Persona?>(null) }
                 var creandoSesion by remember { mutableStateOf(false) }
                 var viendoHistorial by remember { mutableStateOf(false) }
@@ -63,7 +68,6 @@ fun App() {
                             onBack = { sesionSeleccionada = null }
                         )
                     }
-
                     creandoSesion && usuarioSeleccionado != null -> {
                         NuevaSesionScreen(
                             idUsuario = usuarioSeleccionado!!.id,
@@ -75,18 +79,15 @@ fun App() {
                             }
                         )
                     }
-
                     viendoHistorial && usuarioSeleccionado != null -> {
+                        // Aquí no pasamos ViewModel porque el Coach usa estado local
                         HistorialScreen(
                             idUsuario = usuarioSeleccionado!!.id,
                             repository = repository,
                             onBack = { viendoHistorial = false },
-                            onSesionClick = { sesion ->
-                                sesionSeleccionada = sesion
-                            }
+                            onSesionClick = { sesion -> sesionSeleccionada = sesion }
                         )
                     }
-
                     usuarioSeleccionado != null -> {
                         UserOptionsScreen(
                             usuario = usuarioSeleccionado!!,
@@ -107,19 +108,11 @@ fun App() {
                             onVerHistorial = { viendoHistorial = true }
                         )
                     }
-
                     else -> {
-                        val coachViewModel = getViewModel(
-                            key = "coach-screen",
-                            factory = viewModelFactory { CoachViewModel(repository) }
-                        )
                         CoachScreen(
                             viewModel = coachViewModel,
                             onLogout = { loginViewModel.cerrarSesion() },
-                            onAlumnoClick = { alumno ->
-                                usuarioSeleccionado = alumno
-                            },
-                            // 🌙 PASAMOS EL TEMA A LA PANTALLA DEL COACH
+                            onAlumnoClick = { alumno -> usuarioSeleccionado = alumno },
                             isDarkMode = isDarkMode,
                             onThemeToggle = { isDarkMode = !isDarkMode }
                         )
@@ -128,8 +121,18 @@ fun App() {
 
             } else {
                 // =================================================
-                // SECCIÓN ALUMNO
+                // SECCIÓN ALUMNO (ViewModels Blindados)
                 // =================================================
+                val hoyViewModel = getViewModel(
+                    key = "hoy-screen-vm",
+                    factory = viewModelFactory { HoyViewModel(repository) }
+                )
+
+                val historialViewModel = getViewModel(
+                    key = "historial-screen-vm",
+                    factory = viewModelFactory { HistorialViewModel(repository) }
+                )
+
                 var pantallaAlumno by remember { mutableStateOf("MENU") }
                 var sesionDetalleAlumno by remember { mutableStateOf<model.SesionEntrenamiento?>(null) }
 
@@ -137,27 +140,31 @@ fun App() {
                     "MENU" -> {
                         AlumnoHomeScreen(
                             usuario = usuario,
-                            onVerHoy = { pantallaAlumno = "HOY" },
-                            onVerHistorial = { pantallaAlumno = "HISTORIAL" },
+                            onVerHoy = {
+                                // la pantalla ya sabe cargarse sola
+                                pantallaAlumno = "HOY"
+                            },
+                            onVerHistorial = {
+                                // Solo cambiamos de pantalla
+                                pantallaAlumno = "HISTORIAL"
+                            },
                             onLogout = { loginViewModel.cerrarSesion() },
-                            // 🌙 PASAMOS EL TEMA A LA PANTALLA DEL ALUMNO
                             isDarkMode = isDarkMode,
                             onThemeToggle = { isDarkMode = !isDarkMode }
                         )
                     }
-
                     "HOY" -> {
                         HoyScreen(
                             idUsuario = usuario.id,
-                            repository = repository,
+                            viewModel = hoyViewModel,
                             onNavigateBack = { pantallaAlumno = "MENU" }
                         )
                     }
-
                     "HISTORIAL" -> {
                         HistorialScreen(
                             idUsuario = usuario.id,
                             repository = repository,
+                            viewModel = historialViewModel,
                             onBack = { pantallaAlumno = "MENU" },
                             onSesionClick = { sesion ->
                                 sesionDetalleAlumno = sesion
@@ -165,7 +172,6 @@ fun App() {
                             }
                         )
                     }
-
                     "DETALLE" -> {
                         if (sesionDetalleAlumno != null) {
                             DetalleSesionScreen(
@@ -183,9 +189,6 @@ fun App() {
             }
 
         } else {
-            // =================================================
-            // PANTALLA DE ACCESO (Login/Registro)
-            // =================================================
             LoginScreen(
                 onLoginClick = { nick, pass -> loginViewModel.onLoginClick(nick, pass) },
                 onRegistroClick = { nick, pass, nom, ape -> loginViewModel.onRegistroClick(nick, pass, nom, ape) },

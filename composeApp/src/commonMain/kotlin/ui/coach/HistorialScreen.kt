@@ -15,21 +15,34 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import model.SesionEntrenamiento
 import network.EntrenamientoRepository
+import viewmodel.HistorialViewModel // Importa tu ViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistorialScreen(
     idUsuario: String,
     repository: EntrenamientoRepository,
+    viewModel: HistorialViewModel? = null, // PARÁMETRO NUEVO OPCIONAL
     onBack: () -> Unit,
     onSesionClick: (SesionEntrenamiento) -> Unit
 ) {
-    var sesiones by remember { mutableStateOf<List<SesionEntrenamiento>>(emptyList()) }
-    var isLoading by remember { mutableStateOf(true) }
+    // Si pasamos un ViewModel (Alumnos), usamos su estado. Si no (Coach), usamos estado local.
+    val sesionesState = viewModel?.sesiones?.collectAsState()
+    val isLoadingState = viewModel?.isLoading?.collectAsState()
+
+    var sesionesLocal by remember { mutableStateOf<List<SesionEntrenamiento>>(emptyList()) }
+    var isLoadingLocal by remember { mutableStateOf(true) }
+
+    val sesiones = sesionesState?.value ?: sesionesLocal
+    val isLoading = isLoadingState?.value ?: isLoadingLocal
 
     LaunchedEffect(idUsuario) {
-        sesiones = repository.obtenerHistorialSesiones(idUsuario)
-        isLoading = false
+        if (viewModel != null) {
+            viewModel.cargarHistorial(idUsuario)
+        } else {
+            sesionesLocal = repository.obtenerHistorialSesiones(idUsuario)
+            isLoadingLocal = false
+        }
     }
 
     Scaffold(
@@ -73,11 +86,7 @@ fun HistorialScreen(
                                         color = MaterialTheme.colorScheme.primary
                                     )
                                     if(sesion.finalizada) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Icon(Icons.Default.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                                            Spacer(Modifier.width(4.dp))
-                                            Text("COMPLETADA", style = MaterialTheme.typography.labelSmall)
-                                        }
+                                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                                     } else {
                                         Icon(Icons.Default.PendingActions, contentDescription = "Pendiente")
                                     }
