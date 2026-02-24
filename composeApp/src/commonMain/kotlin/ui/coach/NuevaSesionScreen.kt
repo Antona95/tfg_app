@@ -1,6 +1,5 @@
 package ui.coach
 
-import androidx.compose.foundation.isSystemInDarkTheme // Importante para detectar el modo si no se pasa por parametro
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -32,14 +31,12 @@ import kotlinx.datetime.toLocalDateTime
 fun NuevaSesionScreen(
     idUsuario: String,
     repository: EntrenamientoRepository,
+    isDarkMode: Boolean, // <--- 1. AHORA LO RECIBIMOS DESDE APP.KT
     onNavigateBack: () -> Unit,
     sesionBase: SesionEntrenamiento? = null
 ) {
     val viewModel: SesionViewModel = viewModel(factory = SesionViewModelFactory(repository))
     val uiState by viewModel.uiState.collectAsState()
-
-    // Detectamos el modo oscuro automáticamente (KMP)
-    val isDarkMode = isSystemInDarkTheme()
 
     var tituloSesion by remember {
         mutableStateOf(if (sesionBase != null) "Copia de ${sesionBase.fechaProgramada}" else "")
@@ -69,7 +66,6 @@ fun NuevaSesionScreen(
         }
     }
 
-    // 1. EL ENVOLTORIO MULTIPLATAFORMA
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val isLandscape = maxWidth > maxHeight
 
@@ -84,7 +80,6 @@ fun NuevaSesionScreen(
                     }
                 )
             },
-            // 2. BOTÓN DE GUARDAR FIJO (Solo en Vertical, en Horizontal lo pondremos a la izquierda)
             bottomBar = {
                 if (!isLandscape) {
                     Box(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
@@ -102,10 +97,8 @@ fun NuevaSesionScreen(
             }
         ) { padding ->
 
-            // 3. LA MAGIA DE LA PANTALLA DIVIDIDA
             if (isLandscape) {
                 Row(modifier = Modifier.padding(padding).fillMaxSize().padding(16.dp)) {
-                    // PANEL IZQUIERDO: Controles (30% del ancho)
                     Column(
                         modifier = Modifier.weight(0.35f).fillMaxHeight().padding(end = 16.dp),
                         verticalArrangement = Arrangement.SpaceBetween
@@ -129,7 +122,6 @@ fun NuevaSesionScreen(
                             }
                         }
 
-                        // Botón de Guardar en la columna izquierda en Horizontal
                         Button(
                             onClick = {
                                 val fechaHoy = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
@@ -141,7 +133,6 @@ fun NuevaSesionScreen(
                         }
                     }
 
-                    // PANEL DERECHO: Lista de Ejercicios (65% del ancho)
                     LazyColumn(modifier = Modifier.weight(0.65f).fillMaxHeight()) {
                         item {
                             TextButton(onClick = {
@@ -165,12 +156,10 @@ fun NuevaSesionScreen(
                                 onUpdate = { nuevo -> listaEjercicios = listaEjercicios.toMutableList().apply { set(index, nuevo) } }
                             )
                         }
-                        // Espacio extra al final para que el último elemento no se quede pegado al borde
                         item { Spacer(modifier = Modifier.height(32.dp)) }
                     }
                 }
             } else {
-                // DISEÑO VERTICAL NORMAL
                 Column(modifier = Modifier.padding(padding).fillMaxSize().padding(horizontal = 16.dp)) {
                     OutlinedTextField(
                         value = tituloSesion,
@@ -221,7 +210,6 @@ fun NuevaSesionScreen(
     }
 }
 
-// 4. FUNCIÓN AUXILIAR PARA COLORES (Igual que en DetalleSesionScreen)
 @Composable
 fun obtenerColorBloqueForm(bloque: Int, isDarkMode: Boolean): Color {
     return if (isDarkMode) {
@@ -231,7 +219,7 @@ fun obtenerColorBloqueForm(bloque: Int, isDarkMode: Boolean): Color {
             3 -> Color(0xFFB71C1C)
             4 -> Color(0xFF4A148C)
             5 -> Color(0xFFE65100)
-            else -> MaterialTheme.colorScheme.surfaceVariant
+            else -> MaterialTheme.colorScheme.surfaceVariant // 2. GRIS OSCURO EN MODO NOCHE PARA BLOQUE 0
         }
     } else {
         when (bloque) {
@@ -240,7 +228,7 @@ fun obtenerColorBloqueForm(bloque: Int, isDarkMode: Boolean): Color {
             3 -> Color(0xFFFFF3E0)
             4 -> Color(0xFFF3E5F5)
             5 -> Color(0xFFEFEBE9)
-            else -> Color.White
+            else -> Color.White // BLANCO EN MODO CLARO PARA BLOQUE 0
         }
     }
 }
@@ -250,13 +238,18 @@ fun EjercicioItemCard(
     ejercicio: EjercicioDraft,
     unidoArriba: Boolean,
     unidoAbajo: Boolean,
-    isDarkMode: Boolean, // AÑADIDO
+    isDarkMode: Boolean,
     onDelete: () -> Unit,
     onUpdate: (EjercicioDraft) -> Unit
 ) {
     val colorFondo = obtenerColorBloqueForm(ejercicio.bloque, isDarkMode)
-    // Texto blanco solo si es modo oscuro Y pertenece a una biserie (>0)
-    val colorTexto = if (isDarkMode && ejercicio.bloque > 0) Color.White else MaterialTheme.colorScheme.onSurface
+
+    // 3. BLINDAMOS EL COLOR DEL TEXTO PARA QUE SIEMPRE CONTRASTE
+    val colorTexto = if (isDarkMode) {
+        Color.White // En modo oscuro, TODO el texto de los bloques es blanco
+    } else {
+        MaterialTheme.colorScheme.onSurface // En modo claro, texto oscuro
+    }
 
     val shape = RoundedCornerShape(
         topStart = if (unidoArriba) 0.dp else 12.dp, topEnd = if (unidoArriba) 0.dp else 12.dp,
@@ -278,43 +271,60 @@ fun EjercicioItemCard(
                     Spacer(Modifier.width(8.dp))
                 }
 
-                // Los OutlinedTextField por defecto no cambian de color interior automáticamente
-                // Forzamos el color del label y del texto de entrada
+                // 4. FORZAMOS EL COLOR DE LOS BORDES Y LABELS PARA QUE SEAN VISIBLES
+                val textFieldColors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = colorTexto,
+                    unfocusedTextColor = colorTexto,
+                    focusedBorderColor = colorTexto.copy(alpha = 0.8f),
+                    unfocusedBorderColor = colorTexto.copy(alpha = 0.4f),
+                    focusedLabelColor = colorTexto,
+                    unfocusedLabelColor = colorTexto.copy(alpha = 0.7f),
+                    cursorColor = colorTexto
+                )
+
                 OutlinedTextField(
                     value = ejercicio.nombre,
                     onValueChange = { onUpdate(ejercicio.copy(nombre = it)) },
-                    label = { Text("Ejercicio", color = colorTexto.copy(alpha = 0.8f)) },
+                    label = { Text("Ejercicio") },
                     modifier = Modifier.weight(1f),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = colorTexto,
-                        unfocusedTextColor = colorTexto,
-                    )
+                    colors = textFieldColors
                 )
                 IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, null, tint = colorTexto.copy(alpha = 0.6f)) }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
+
+                val textFieldColors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = colorTexto,
+                    unfocusedTextColor = colorTexto,
+                    focusedBorderColor = colorTexto.copy(alpha = 0.8f),
+                    unfocusedBorderColor = colorTexto.copy(alpha = 0.4f),
+                    focusedLabelColor = colorTexto,
+                    unfocusedLabelColor = colorTexto.copy(alpha = 0.7f),
+                    cursorColor = colorTexto
+                )
+
                 OutlinedTextField(
                     value = ejercicio.series,
                     onValueChange = { onUpdate(ejercicio.copy(series = it)) },
-                    label = { Text("S", color = colorTexto.copy(alpha = 0.8f)) },
+                    label = { Text("S") },
                     modifier = Modifier.weight(1f),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = colorTexto, unfocusedTextColor = colorTexto)
+                    colors = textFieldColors
                 )
                 OutlinedTextField(
                     value = ejercicio.repeticiones,
                     onValueChange = { onUpdate(ejercicio.copy(repeticiones = it)) },
-                    label = { Text("R", color = colorTexto.copy(alpha = 0.8f)) },
+                    label = { Text("R") },
                     modifier = Modifier.weight(1f),
-                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = colorTexto, unfocusedTextColor = colorTexto)
+                    colors = textFieldColors
                 )
                 OutlinedTextField(
                     value = ejercicio.peso,
                     onValueChange = { onUpdate(ejercicio.copy(peso = it)) },
-                    label = { Text("kg", color = colorTexto.copy(alpha = 0.8f)) },
+                    label = { Text("kg") },
                     modifier = Modifier.weight(1f),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = colorTexto, unfocusedTextColor = colorTexto)
+                    colors = textFieldColors
                 )
             }
         }

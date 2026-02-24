@@ -1,6 +1,5 @@
 package ui.coach.components
 
-import androidx.compose.foundation.isSystemInDarkTheme // Importante
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -15,11 +14,10 @@ import model.EjercicioDraft
 fun EjercicioCard(
     ejercicio: EjercicioDraft,
     unidoArriba: Boolean,
-    unidoAbajo: Boolean
+    unidoAbajo: Boolean,
+    isDarkMode: Boolean // <--- 1. AÑADIMOS EL PARÁMETRO AQUÍ
 ) {
-    val isDarkMode = isSystemInDarkTheme()
-
-    // Paleta que cambia según el tema
+    // Paleta que cambia según el tema de la App (No del sistema)
     val colores = if (isDarkMode) {
         listOf(
             MaterialTheme.colorScheme.surface, // Bloque 0

@@ -74,6 +74,7 @@ fun App() {
                         NuevaSesionScreen(
                             idUsuario = usuarioSeleccionado!!.id,
                             repository = repository,
+                            isDarkMode = isDarkMode,
                             sesionBase = sesionParaDuplicar,
                             onNavigateBack = {
                                 creandoSesion = false
