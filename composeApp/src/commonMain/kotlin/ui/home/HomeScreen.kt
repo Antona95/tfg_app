@@ -4,7 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -52,18 +54,14 @@ fun VistaEntrenador(
     val listaAlumnos by viewModel.alumnos.collectAsState()
     val cargando by viewModel.isLoading.collectAsState()
 
-    // ESTADO: ¿Qué alumno estamos mirando? (null = viendo la lista)
     var alumnoSeleccionado by remember { mutableStateOf<Persona?>(null) }
 
-    // DECISIÓN DE NAVEGACIÓN
     if (alumnoSeleccionado != null) {
-        // -> PANTALLA DE DETALLE (Si hemos pulsado en alguien)
         VistaDetalleAlumno(
             alumno = alumnoSeleccionado!!,
-            onVolver = { alumnoSeleccionado = null } // Botón atrás: borra la selección
+            onVolver = { alumnoSeleccionado = null }
         )
     } else {
-        // -> PANTALLA DE LISTA (La normal)
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -80,38 +78,43 @@ fun VistaEntrenador(
                 )
             }
         ) { padding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(16.dp)
+            Box(
+                modifier = Modifier.fillMaxSize().padding(padding),
+                contentAlignment = Alignment.TopCenter
             ) {
-                Text(
-                    text = "Mis Alumnos (${listaAlumnos.size})",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
+                Column(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .widthIn(max = 600.dp)
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = "Mis Alumnos (${listaAlumnos.size})",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                if (cargando) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
-                } else if (listaAlumnos.isEmpty()) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("No tienes alumnos asignados aún")
-                    }
-                } else {
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(listaAlumnos) { alumno ->
-                            // Pasamos la acción de click
-                            AlumnoCard(
-                                alumno = alumno,
-                                onClick = { alumnoSeleccionado = alumno }
-                            )
+                    if (cargando) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator()
+                        }
+                    } else if (listaAlumnos.isEmpty()) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text("No tienes alumnos asignados aún")
+                        }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(listaAlumnos) { alumno ->
+                                AlumnoCard(
+                                    alumno = alumno,
+                                    onClick = { alumnoSeleccionado = alumno }
+                                )
+                            }
                         }
                     }
                 }
@@ -123,28 +126,24 @@ fun VistaEntrenador(
 // ---------------------------------------------------------
 // 3. TARJETA DE ALUMNO (CLICABLE)
 // ---------------------------------------------------------
-@OptIn(ExperimentalMaterial3Api::class) // Necesario para el onClick de Card
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AlumnoCard(
     alumno: Persona,
     onClick: () -> Unit
 ) {
     Card(
-        onClick = onClick, // <--- CONECTAMOS EL CLIC
+        onClick = onClick,
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
-                modifier = Modifier
-                    .size(50.dp)
-                    .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+                modifier = Modifier.size(50.dp).background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 val nombreSeguro = alumno.nombre ?: "?"
@@ -177,6 +176,7 @@ fun AlumnoCard(
         }
     }
 }
+
 // ---------------------------------------------------------
 // 4. VISTA CLIENTE
 // ---------------------------------------------------------
@@ -199,42 +199,47 @@ fun VistaCliente(usuario: Persona, onLogoutClick: () -> Unit) {
             )
         }
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+        Box(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            contentAlignment = Alignment.TopCenter
         ) {
-            item {
-                Text(
-                    text = "Hola, ${usuario.nombre}",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "Rol: ${usuario.rol}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-            }
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .widthIn(max = 600.dp),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item {
+                    Text(
+                        text = "Hola, ${usuario.nombre}",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Rol: ${usuario.rol}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                }
 
-            item {
-                DashboardCard(
-                    titulo = "Mi Rutina",
-                    subtitulo = "Ver ejercicios de hoy",
-                    icono = Icons.Default.DateRange,
-                    onClick = { /* Navegar a rutina */ }
-                )
-            }
+                item {
+                    DashboardCard(
+                        titulo = "Mi Rutina",
+                        subtitulo = "Ver ejercicios de hoy",
+                        icono = Icons.Default.DateRange,
+                        onClick = { /* Navegar a rutina */ }
+                    )
+                }
 
-            item {
-                DashboardCard(
-                    titulo = "Mi Perfil",
-                    subtitulo = "Datos físicos y progresos",
-                    icono = Icons.Default.Person,
-                    onClick = { /* Navegar a perfil */ }
-                )
+                item {
+                    DashboardCard(
+                        titulo = "Mi Perfil",
+                        subtitulo = "Datos físicos y progresos",
+                        icono = Icons.Default.Person,
+                        onClick = { /* Navegar a perfil */ }
+                    )
+                }
             }
         }
     }
@@ -259,9 +264,7 @@ fun DashboardCard(
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier
-                .padding(20.dp)
-                .fillMaxWidth(),
+            modifier = Modifier.padding(20.dp).fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -284,39 +287,42 @@ fun DashboardCard(
         }
     }
 }
+
 // ---------------------------------------------------------
-// 6. PANTALLA DE DETALLE DEL ALUMNO (NUEVA) 📝
+// 6. PANTALLA DE DETALLE DEL ALUMNO
 // ---------------------------------------------------------
-    @OptIn(ExperimentalMaterial3Api::class)
-    @Composable
-    fun VistaDetalleAlumno(
-        alumno: Persona,
-        onVolver: () -> Unit
-    ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text(alumno.nombre ?: "Alumno") },
-                    navigationIcon = {
-                        IconButton(onClick = onVolver) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
-                        }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun VistaDetalleAlumno(
+    alumno: Persona,
+    onVolver: () -> Unit
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(alumno.nombre ?: "Alumno") },
+                navigationIcon = {
+                    IconButton(onClick = onVolver) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
                     }
-                )
-            }
-        ) { padding ->
+                }
+            )
+        }
+    ) { padding ->
+        Box(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            contentAlignment = Alignment.TopCenter
+        ) {
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(16.dp),
+                    .fillMaxHeight()
+                    .widthIn(max = 600.dp)
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // FOTO GRANDE
                 Box(
-                    modifier = Modifier
-                        .size(100.dp)
-                        .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
+                    modifier = Modifier.size(100.dp).background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -337,7 +343,6 @@ fun DashboardCard(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // BOTONES DE ACCIÓN (LO QUE HAREMOS LUEGO)
                 Button(
                     onClick = { /* TODO: Crear Rutina */ },
                     modifier = Modifier.fillMaxWidth().height(50.dp)
@@ -357,7 +362,9 @@ fun DashboardCard(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Ver Progreso")
                 }
+
+                Spacer(modifier = Modifier.height(32.dp))
             }
         }
     }
-
+}

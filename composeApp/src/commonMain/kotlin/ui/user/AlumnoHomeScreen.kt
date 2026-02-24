@@ -1,13 +1,15 @@
 package ui.user
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.SportsGymnastics
-import androidx.compose.material.icons.filled.DarkMode // Icono Luna (poblacion autista)
-import androidx.compose.material.icons.filled.LightMode // Icono Sol (poblacion autista)
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -28,76 +30,78 @@ fun AlumnoHomeScreen(
     isDarkMode: Boolean,
     onThemeToggle: () -> Unit
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text("Hola, ${usuario.nombre} 👋", fontWeight = FontWeight.Bold)
-                        Text("Vamos a por todas", style = MaterialTheme.typography.labelMedium)
-                    }
-                },
-                actions = {
-                    // INTERRUPTOR CON PICTOGRAMAS INCRUSTADOS (Accesibilidad Cognitiva y Visual)
-                    Switch(
-                        checked = isDarkMode,
-                        onCheckedChange = { onThemeToggle() },
-                        modifier = Modifier.padding(end = 8.dp),
-                        thumbContent = {
-                            if (isDarkMode) {
-                                Icon(
-                                    imageVector = Icons.Default.DarkMode,
-                                    contentDescription = "Modo Oscuro Activado",
-                                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                                )
-                            } else {
-                                Icon(
-                                    imageVector = Icons.Default.LightMode,
-                                    contentDescription = "Modo Claro Activado",
-                                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                                )
-                            }
+    // 1. LA SOLUCIÓN MULTIPLATAFORMA: BoxWithConstraints
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val isLandscape = maxWidth > maxHeight
+
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Column {
+                            Text("Hola, ${usuario.nombre} 👋", fontWeight = FontWeight.Bold)
+                            Text("Vamos a por todas", style = MaterialTheme.typography.labelMedium)
                         }
-                    )
+                    },
+                    actions = {
+                        Switch(
+                            checked = isDarkMode,
+                            onCheckedChange = { onThemeToggle() },
+                            modifier = Modifier.padding(end = 8.dp),
+                            thumbContent = {
+                                if (isDarkMode) {
+                                    Icon(Icons.Default.DarkMode, "Modo Oscuro", modifier = Modifier.size(SwitchDefaults.IconSize))
+                                } else {
+                                    Icon(Icons.Default.LightMode, "Modo Claro", modifier = Modifier.size(SwitchDefaults.IconSize))
+                                }
+                            }
+                        )
 
-                    IconButton(onClick = onLogout) {
-                        Icon(Icons.Default.ExitToApp, "Cerrar Sesión")
+                        IconButton(onClick = onLogout) {
+                            Icon(Icons.Default.ExitToApp, "Cerrar Sesión")
+                        }
                     }
+                )
+            }
+        ) { padding ->
+            // 2. LA CUADRÍCULA SE ADAPTA AL BoxWithConstraints
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(if (isLandscape) 2 else 1),
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxSize()
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp),
+                horizontalArrangement = Arrangement.spacedBy(24.dp),
+                contentPadding = PaddingValues(vertical = if (!isLandscape) 32.dp else 0.dp)
+            ) {
+                item {
+                    AlumnoMenuCard(
+                        titulo = "Entrenamiento de Hoy",
+                        subtitulo = "Ver tu rutina y registrar pesos",
+                        icono = Icons.Default.SportsGymnastics,
+                        colorFondo = MaterialTheme.colorScheme.primary,
+                        colorTexto = Color.White,
+                        onClick = onVerHoy
+                    )
                 }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            AlumnoMenuCard(
-                titulo = "Entrenamiento de Hoy",
-                subtitulo = "Ver tu rutina y registrar pesos",
-                icono = Icons.Default.SportsGymnastics,
-                colorFondo = MaterialTheme.colorScheme.primary,
-                colorTexto = Color.White,
-                onClick = onVerHoy
-            )
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            AlumnoMenuCard(
-                titulo = "Historial de Sesiones",
-                subtitulo = "Consulta tus entrenos pasados",
-                icono = Icons.Default.History,
-                colorFondo = MaterialTheme.colorScheme.secondaryContainer,
-                colorTexto = MaterialTheme.colorScheme.onSecondaryContainer,
-                onClick = onVerHistorial
-            )
+                item {
+                    AlumnoMenuCard(
+                        titulo = "Historial de Sesiones",
+                        subtitulo = "Consulta tus entrenos pasados",
+                        icono = Icons.Default.History,
+                        colorFondo = MaterialTheme.colorScheme.secondaryContainer,
+                        colorTexto = MaterialTheme.colorScheme.onSecondaryContainer,
+                        onClick = onVerHistorial
+                    )
+                }
+            }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AlumnoMenuCard(
     titulo: String,

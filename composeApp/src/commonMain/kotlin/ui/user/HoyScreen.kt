@@ -97,46 +97,54 @@ fun HoyScreen(
 
 @Composable
 fun ContenidoEntreno(sesion: SesionEntrenamiento, isDarkMode: Boolean, onFinalizar: () -> Unit) {
-    LazyColumn(
+    // 1. EL ENVOLTORIO MÁGICO QUE CENTRA LA LISTA
+    Box(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        contentAlignment = Alignment.TopCenter
     ) {
-        item {
-            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
-                Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
-                    Text("Fecha: ${sesion.fechaProgramada}", style = MaterialTheme.typography.labelLarge)
-                    // REVERTIDO: Volvemos a usar sesion.titulo
-                    Text(
-                        text = sesion.titulo,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                    if (sesion.finalizada) {
-                        Text("✅ COMPLETADO", fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32))
+        LazyColumn(
+            // 2. EL TOPE DE ANCHURA PARA QUE NO SE ESTIRE EN HORIZONTAL
+            modifier = Modifier
+                .fillMaxHeight()
+                .widthIn(max = 600.dp),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            item {
+                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
+                    Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
+                        Text("Fecha: ${sesion.fechaProgramada}", style = MaterialTheme.typography.labelLarge)
+                        Text(
+                            text = sesion.titulo,
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        if (sesion.finalizada) {
+                            Text("✅ COMPLETADO", fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32))
+                        }
                     }
                 }
             }
-        }
 
-        itemsIndexed(sesion.ejercicios) { index, ej ->
-            val anterior = sesion.ejercicios.getOrNull(index - 1)
-            val siguiente = sesion.ejercicios.getOrNull(index + 1)
-            EjercicioAlumnoCard(
-                ejercicio = ej,
-                unidoArriba = ej.bloque != 0 && ej.bloque == anterior?.bloque,
-                unidoAbajo = ej.bloque != 0 && ej.bloque == siguiente?.bloque,
-                isDarkMode = isDarkMode
-            )
-        }
+            itemsIndexed(sesion.ejercicios) { index, ej ->
+                val anterior = sesion.ejercicios.getOrNull(index - 1)
+                val siguiente = sesion.ejercicios.getOrNull(index + 1)
+                EjercicioAlumnoCard(
+                    ejercicio = ej,
+                    unidoArriba = ej.bloque != 0 && ej.bloque == anterior?.bloque,
+                    unidoAbajo = ej.bloque != 0 && ej.bloque == siguiente?.bloque,
+                    isDarkMode = isDarkMode
+                )
+            }
 
-        item {
-            if (!sesion.finalizada) {
-                Button(
-                    onClick = onFinalizar,
-                    modifier = Modifier.fillMaxWidth().height(56.dp).padding(top = 8.dp)
-                ) {
-                    Text("FINALIZAR ENTRENAMIENTO", fontWeight = FontWeight.Bold)
+            item {
+                if (!sesion.finalizada) {
+                    Button(
+                        onClick = onFinalizar,
+                        modifier = Modifier.fillMaxWidth().height(56.dp).padding(top = 8.dp)
+                    ) {
+                        Text("FINALIZAR ENTRENAMIENTO", fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }

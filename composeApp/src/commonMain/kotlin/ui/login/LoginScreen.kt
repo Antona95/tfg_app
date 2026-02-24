@@ -8,8 +8,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -48,7 +46,8 @@ fun LoginScreen(
                         )
                     }
                     Column(
-                        modifier = Modifier.weight(0.6f).fillMaxHeight().padding(horizontal = 32.dp).verticalScroll(rememberScrollState()),
+                        // SE MANTIENE TU SCROLL, PERO AJUSTAMOS PADDING PARA QUE OCUPE MÁS
+                        modifier = Modifier.weight(0.6f).fillMaxHeight().padding(horizontal = 16.dp).verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
@@ -63,11 +62,11 @@ fun LoginScreen(
                     Image(
                         painter = painterResource(Res.drawable.imagen_inicial),
                         contentDescription = "Logo Aplicacion",
-                        modifier = Modifier.fillMaxWidth().height(250.dp).padding(bottom = 24.dp),
+                        modifier = Modifier.fillMaxWidth().height(250.dp).padding(bottom = 16.dp), // Reducido el bottom padding
                         contentScale = ContentScale.Crop
                     )
                     Column(
-                        modifier = Modifier.padding(24.dp),
+                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp), // Ajustado el padding vertical
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         FormularioAuth(onLoginClick, onRegistroClick, mensajeExito)
@@ -102,104 +101,102 @@ fun FormularioAuth(
         }
     }
 
-    Text(
-        text = if (isRegistering) "Registro de Usuario" else "Inicio de Sesion",
-        style = MaterialTheme.typography.headlineLarge,
-        color = MaterialTheme.colorScheme.primary
-    )
-
-    Spacer(modifier = Modifier.height(24.dp))
-
-    if (isRegistering) {
-        OutlinedTextField(
-            value = nombre,
-            onValueChange = { nombre = it },
-            label = { Text("Nombre real") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        OutlinedTextField(
-            value = apellidos,
-            onValueChange = { apellidos = it },
-            label = { Text("Apellidos") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-    }
-
-    OutlinedTextField(
-        value = nickname,
-        onValueChange = { nickname = it },
-        label = { Text("Nickname") },
+    // AÑADIDO: Un Column que envuelve todo el formulario para compactarlo.
+    // Usamos spacedBy(8.dp) para eliminar todos los Spacer() sueltos que comían mucha altura.
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        singleLine = true
-    )
-
-    Spacer(modifier = Modifier.height(16.dp))
-
-    OutlinedTextField(
-        value = password,
-        onValueChange = { password = it },
-        label = { Text("Password") },
-        modifier = Modifier.fillMaxWidth(),
-        singleLine = true,
-        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-        trailingIcon = {
-            val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
-            IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                Icon(imageVector = image, contentDescription = "Mostrar contrasena")
-            }
-        }
-    )
-
-    Spacer(modifier = Modifier.height(32.dp))
-
-    Button(
-        onClick = {
-            if (isRegistering) {
-                if (nickname.isNotEmpty() && password.isNotEmpty() && nombre.isNotEmpty() && apellidos.isNotEmpty()) {
-                    onRegistroClick(nickname, password, nombre, apellidos)
-                } else {
-                    errorMessage = "Debe completar todos los campos"
-                }
-            } else {
-                if (nickname.isNotEmpty() && password.isNotEmpty()) {
-                    onLoginClick(nickname, password)
-                } else {
-                    errorMessage = "Credenciales incompletas"
-                }
-            }
-        },
-        modifier = Modifier.fillMaxWidth().height(50.dp)
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp) // Espaciado automático y más pequeño
     ) {
-        Text(if (isRegistering) "CREAR CUENTA" else "ENTRAR")
-    }
-
-    if (errorMessage != null) {
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(text = errorMessage!!, color = MaterialTheme.colorScheme.error)
-    }
-
-    if (mensajeExito != null) {
-        Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = mensajeExito,
+            text = if (isRegistering) "Registro de Usuario" else "Inicio de Sesion",
+            style = MaterialTheme.typography.headlineSmall, // Reducido un poco para que quepa mejor en apaisado
             color = MaterialTheme.colorScheme.primary,
-            fontSize = 16.sp,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.padding(bottom = 8.dp)
         )
-    }
 
-    Spacer(modifier = Modifier.height(16.dp))
+        if (isRegistering) {
+            OutlinedTextField(
+                value = nombre,
+                onValueChange = { nombre = it },
+                label = { Text("Nombre real") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+            OutlinedTextField(
+                value = apellidos,
+                onValueChange = { apellidos = it },
+                label = { Text("Apellidos") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+        }
 
-    TextButton(onClick = {
-        isRegistering = !isRegistering
-        errorMessage = null
-    }) {
-        Text(if (isRegistering) "Volver al inicio de sesion" else "No tengo cuenta, quiero registrarme")
+        OutlinedTextField(
+            value = nickname,
+            onValueChange = { nickname = it },
+            label = { Text("Nickname") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
+
+        OutlinedTextField(
+            value = password,
+            onValueChange = { password = it },
+            label = { Text("Password") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            trailingIcon = {
+                val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(imageVector = image, contentDescription = "Mostrar contrasena")
+                }
+            }
+        )
+
+        // Botón principal
+        Button(
+            onClick = {
+                if (isRegistering) {
+                    if (nickname.isNotEmpty() && password.isNotEmpty() && nombre.isNotEmpty() && apellidos.isNotEmpty()) {
+                        onRegistroClick(nickname, password, nombre, apellidos)
+                    } else {
+                        errorMessage = "Debe completar todos los campos"
+                    }
+                } else {
+                    if (nickname.isNotEmpty() && password.isNotEmpty()) {
+                        onLoginClick(nickname, password)
+                    } else {
+                        errorMessage = "Credenciales incompletas"
+                    }
+                }
+            },
+            modifier = Modifier.fillMaxWidth().height(48.dp).padding(top = 8.dp) // Añadido padding superior en lugar de Spacer
+        ) {
+            Text(if (isRegistering) "CREAR CUENTA" else "ENTRAR")
+        }
+
+        if (errorMessage != null) {
+            Text(text = errorMessage!!, color = MaterialTheme.colorScheme.error)
+        }
+
+        if (mensajeExito != null) {
+            Text(
+                text = mensajeExito,
+                color = MaterialTheme.colorScheme.primary,
+                fontSize = 16.sp,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        TextButton(onClick = {
+            isRegistering = !isRegistering
+            errorMessage = null
+        }) {
+            Text(if (isRegistering) "Volver al inicio de sesion" else "No tengo cuenta, quiero registrarme")
+        }
     }
 }
