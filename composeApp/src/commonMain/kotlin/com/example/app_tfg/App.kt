@@ -63,7 +63,6 @@ fun App() {
 
                 when {
                     sesionSeleccionada != null -> {
-                        // CORREGIDO: Ahora el Coach también pasa el isDarkMode al detalle
                         DetalleSesionScreen(
                             sesion = sesionSeleccionada!!,
                             isDarkMode = isDarkMode,
@@ -187,10 +186,15 @@ fun App() {
             }
 
         } else {
+            // =================================================
+            // PANTALLA DE LOGIN (MODIFICADA CON MODO OSCURO)
+            // =================================================
             LoginScreen(
                 onLoginClick = { nick, pass -> loginViewModel.onLoginClick(nick, pass) },
                 onRegistroClick = { nick, pass, nom, ape -> loginViewModel.onRegistroClick(nick, pass, nom, ape) },
-                mensajeExito = state.mensajeExito
+                mensajeExito = state.mensajeExito,
+                isDarkMode = isDarkMode,                      // <--- AÑADIDO AQUÍ
+                onThemeToggle = { isDarkMode = !isDarkMode }  // <--- Y AQUÍ
             )
         }
     }

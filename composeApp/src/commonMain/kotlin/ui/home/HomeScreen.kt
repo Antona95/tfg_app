@@ -29,14 +29,16 @@ import viewmodel.CoachViewModel
 fun HomeScreen(
     usuario: Persona,
     repository: EntrenamientoRepository,
-    onLogoutClick: () -> Unit
+    onLogoutClick: () -> Unit,
+    isDarkMode: Boolean,          // <--- NUEVO PARÁMETRO
+    onThemeToggle: () -> Unit     // <--- NUEVO PARÁMETRO
 ) {
     val rol = usuario.rol?.uppercase() ?: "USUARIO"
 
     if (rol == "ENTRENADOR") {
-        VistaEntrenador(usuario, repository, onLogoutClick)
+        VistaEntrenador(usuario, repository, onLogoutClick, isDarkMode, onThemeToggle)
     } else {
-        VistaCliente(usuario, onLogoutClick)
+        VistaCliente(usuario, onLogoutClick, isDarkMode, onThemeToggle)
     }
 }
 
@@ -48,7 +50,9 @@ fun HomeScreen(
 fun VistaEntrenador(
     usuario: Persona,
     repository: EntrenamientoRepository,
-    onLogoutClick: () -> Unit
+    onLogoutClick: () -> Unit,
+    isDarkMode: Boolean,          // <--- NUEVO PARÁMETRO
+    onThemeToggle: () -> Unit     // <--- NUEVO PARÁMETRO
 ) {
     val viewModel = remember { CoachViewModel(repository) }
     val listaAlumnos by viewModel.alumnos.collectAsState()
@@ -71,6 +75,20 @@ fun VistaEntrenador(
                         titleContentColor = MaterialTheme.colorScheme.onTertiaryContainer
                     ),
                     actions = {
+                        // INTERRUPTOR DE MODO OSCURO (ENTRENADOR)
+                        Switch(
+                            checked = isDarkMode,
+                            onCheckedChange = { onThemeToggle() },
+                            modifier = Modifier.padding(end = 8.dp),
+                            thumbContent = {
+                                if (isDarkMode) {
+                                    Icon(Icons.Default.DarkMode, "Modo Oscuro", modifier = Modifier.size(SwitchDefaults.IconSize))
+                                } else {
+                                    Icon(Icons.Default.LightMode, "Modo Claro", modifier = Modifier.size(SwitchDefaults.IconSize))
+                                }
+                            }
+                        )
+
                         IconButton(onClick = onLogoutClick) {
                             Icon(Icons.Default.ExitToApp, contentDescription = "Salir")
                         }
@@ -182,7 +200,12 @@ fun AlumnoCard(
 // ---------------------------------------------------------
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun VistaCliente(usuario: Persona, onLogoutClick: () -> Unit) {
+fun VistaCliente(
+    usuario: Persona,
+    onLogoutClick: () -> Unit,
+    isDarkMode: Boolean,          // <--- NUEVO PARÁMETRO
+    onThemeToggle: () -> Unit     // <--- NUEVO PARÁMETRO
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -192,6 +215,20 @@ fun VistaCliente(usuario: Persona, onLogoutClick: () -> Unit) {
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 ),
                 actions = {
+                    // INTERRUPTOR DE MODO OSCURO (CLIENTE)
+                    Switch(
+                        checked = isDarkMode,
+                        onCheckedChange = { onThemeToggle() },
+                        modifier = Modifier.padding(end = 8.dp),
+                        thumbContent = {
+                            if (isDarkMode) {
+                                Icon(Icons.Default.DarkMode, "Modo Oscuro", modifier = Modifier.size(SwitchDefaults.IconSize))
+                            } else {
+                                Icon(Icons.Default.LightMode, "Modo Claro", modifier = Modifier.size(SwitchDefaults.IconSize))
+                            }
+                        }
+                    )
+
                     IconButton(onClick = onLogoutClick) {
                         Icon(Icons.Default.ExitToApp, contentDescription = "Cerrar Sesión")
                     }

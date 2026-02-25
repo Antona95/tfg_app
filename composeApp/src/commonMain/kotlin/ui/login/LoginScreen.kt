@@ -6,6 +6,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -26,7 +28,9 @@ import org.jetbrains.compose.resources.painterResource
 fun LoginScreen(
     onLoginClick: (String, String) -> Unit,
     onRegistroClick: (String, String, String, String) -> Unit,
-    mensajeExito: String? = null
+    mensajeExito: String? = null,
+    isDarkMode: Boolean,
+    onThemeToggle: () -> Unit
 ) {
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val isLandscape = maxWidth > maxHeight
@@ -73,9 +77,25 @@ fun LoginScreen(
                     }
                 }
             }
+            // EL INTERRUPTOR FLOTANTE
+            Switch(
+                checked = isDarkMode,
+                onCheckedChange = { onThemeToggle() },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp),
+                thumbContent = {
+                    if (isDarkMode) {
+                        Icon(Icons.Default.DarkMode, "Modo Oscuro", modifier = Modifier.size(SwitchDefaults.IconSize))
+                    } else {
+                        Icon(Icons.Default.LightMode, "Modo Claro", modifier = Modifier.size(SwitchDefaults.IconSize))
+                    }
+                }
+            )
         }
     }
 }
+
 
 @Composable
 fun FormularioAuth(
