@@ -103,9 +103,10 @@ fun ContenidoEntreno(sesion: SesionEntrenamiento, isDarkMode: Boolean, onFinaliz
         contentAlignment = Alignment.TopCenter
     ) {
         LazyColumn(
-            // 2. EL TOPE DE ANCHURA PARA QUE NO SE ESTIRE EN HORIZONTAL
+            // 2. EL TOPE DE ANCHURA Y FILLMAXWIDTH PARA QUE NO SE ESTIRE NI DESAPAREZCA
             modifier = Modifier
                 .fillMaxHeight()
+                .fillMaxWidth() // <--- ¡AÑADIDO AQUÍ!
                 .widthIn(max = 600.dp),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)

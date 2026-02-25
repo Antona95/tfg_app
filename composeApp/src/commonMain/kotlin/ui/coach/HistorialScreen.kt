@@ -15,18 +15,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import model.SesionEntrenamiento
 import network.EntrenamientoRepository
-import viewmodel.HistorialViewModel // Importa tu ViewModel
+import viewmodel.HistorialViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistorialScreen(
     idUsuario: String,
     repository: EntrenamientoRepository,
-    viewModel: HistorialViewModel? = null, // PARÁMETRO NUEVO OPCIONAL
+    viewModel: HistorialViewModel? = null,
     onBack: () -> Unit,
     onSesionClick: (SesionEntrenamiento) -> Unit
 ) {
-    // Si pasamos un ViewModel (Alumnos), usamos su estado. Si no (Coach), usamos estado local.
     val sesionesState = viewModel?.sesiones?.collectAsState()
     val isLoadingState = viewModel?.isLoading?.collectAsState()
 
@@ -63,35 +62,44 @@ fun HistorialScreen(
             } else if (sesiones.isEmpty()) {
                 Text("No hay sesiones registradas", modifier = Modifier.align(Alignment.Center))
             } else {
-                LazyColumn(
+                // 1. EL ENVOLTORIO PARA CENTRAR EN TABLETS/HORIZONTAL
+                Box(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    contentAlignment = Alignment.TopCenter
                 ) {
-                    items(sesiones) { sesion ->
-                        Card(
-                            onClick = { onSesionClick(sesion) },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = sesion.fechaProgramada,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                    if(sesion.finalizada) {
-                                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                                    } else {
-                                        Icon(Icons.Default.PendingActions, contentDescription = "Pendiente")
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .fillMaxWidth()        // <--- 2. ¡EL SALVAVIDAS PARA QUE NO SE VUELVA INVISIBLE!
+                            .widthIn(max = 600.dp), // <--- 3. EL TOPE DE ANCHURA
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        items(sesiones) { sesion ->
+                            Card(
+                                onClick = { onSesionClick(sesion) },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = sesion.fechaProgramada,
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                        if(sesion.finalizada) {
+                                            Icon(Icons.Default.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                        } else {
+                                            Icon(Icons.Default.PendingActions, contentDescription = "Pendiente")
+                                        }
                                     }
+                                    Text("${sesion.ejercicios.size} ejercicios planificados")
                                 }
-                                Text("${sesion.ejercicios.size} ejercicios planificados")
                             }
                         }
                     }

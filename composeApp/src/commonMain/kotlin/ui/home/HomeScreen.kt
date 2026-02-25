@@ -30,8 +30,8 @@ fun HomeScreen(
     usuario: Persona,
     repository: EntrenamientoRepository,
     onLogoutClick: () -> Unit,
-    isDarkMode: Boolean,          // <--- NUEVO PARÁMETRO
-    onThemeToggle: () -> Unit     // <--- NUEVO PARÁMETRO
+    isDarkMode: Boolean,
+    onThemeToggle: () -> Unit
 ) {
     val rol = usuario.rol?.uppercase() ?: "USUARIO"
 
@@ -51,8 +51,8 @@ fun VistaEntrenador(
     usuario: Persona,
     repository: EntrenamientoRepository,
     onLogoutClick: () -> Unit,
-    isDarkMode: Boolean,          // <--- NUEVO PARÁMETRO
-    onThemeToggle: () -> Unit     // <--- NUEVO PARÁMETRO
+    isDarkMode: Boolean,
+    onThemeToggle: () -> Unit
 ) {
     val viewModel = remember { CoachViewModel(repository) }
     val listaAlumnos by viewModel.alumnos.collectAsState()
@@ -75,7 +75,6 @@ fun VistaEntrenador(
                         titleContentColor = MaterialTheme.colorScheme.onTertiaryContainer
                     ),
                     actions = {
-                        // INTERRUPTOR DE MODO OSCURO (ENTRENADOR)
                         Switch(
                             checked = isDarkMode,
                             onCheckedChange = { onThemeToggle() },
@@ -103,6 +102,7 @@ fun VistaEntrenador(
                 Column(
                     modifier = Modifier
                         .fillMaxHeight()
+                        .fillMaxWidth() // <--- ¡AÑADIDO PARA LA COLUMNA DE ALUMNOS!
                         .widthIn(max = 600.dp)
                         .padding(16.dp)
                 ) {
@@ -203,8 +203,8 @@ fun AlumnoCard(
 fun VistaCliente(
     usuario: Persona,
     onLogoutClick: () -> Unit,
-    isDarkMode: Boolean,          // <--- NUEVO PARÁMETRO
-    onThemeToggle: () -> Unit     // <--- NUEVO PARÁMETRO
+    isDarkMode: Boolean,
+    onThemeToggle: () -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -215,7 +215,6 @@ fun VistaCliente(
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 ),
                 actions = {
-                    // INTERRUPTOR DE MODO OSCURO (CLIENTE)
                     Switch(
                         checked = isDarkMode,
                         onCheckedChange = { onThemeToggle() },
@@ -243,6 +242,7 @@ fun VistaCliente(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxHeight()
+                    .fillMaxWidth() // <--- ¡AÑADIDO PARA EL MENÚ DEL CLIENTE!
                     .widthIn(max = 600.dp),
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -353,6 +353,7 @@ fun VistaDetalleAlumno(
             Column(
                 modifier = Modifier
                     .fillMaxHeight()
+                    .fillMaxWidth() // <--- ¡AÑADIDO PARA LA VISTA DETALLE DEL ALUMNO!
                     .widthIn(max = 600.dp)
                     .padding(16.dp)
                     .verticalScroll(rememberScrollState()),
