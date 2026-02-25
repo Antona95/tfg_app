@@ -2,13 +2,14 @@ package ui.coach
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed // 👈 ESTE ERA UNO DE LOS DESAPARECIDOS
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,12 +27,11 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
-// 👇 ALGORITMO PARA SABER QUÉ LETRA Y COLOR TOCA EN CADA EJERCICIO 👇
 fun obtenerInfoVisualBloque(lista: List<EjercicioDraft>, indexActual: Int): Pair<Char, Int> {
     var currentBlock = 1
     var lastDbBlock = -1
     for (i in 0..indexActual) {
-        val ej = lista[i]
+        val ej = lista.getOrNull(i) ?: continue
         if (ej.bloque == 0) {
             if (i > 0 && lastDbBlock != -1) currentBlock++
             else if (i > 0 && lista[i-1].bloque == 0) currentBlock++
@@ -55,25 +55,22 @@ fun NuevaSesionScreen(
 ) {
     val viewModel: SesionViewModel = viewModel(factory = SesionViewModelFactory(repository))
     val uiState by viewModel.uiState.collectAsState()
+    val listaEjercicios by viewModel.listaEjercicios.collectAsState()
 
-    var tituloSesion by remember { mutableStateOf(if (sesionBase != null) "Copia de ${sesionBase.fechaProgramada}" else "") }
-
-    // Le añadimos <List<EjercicioDraft>> explícitamente para que Compose no se líe
-    var listaEjercicios by remember {
-        mutableStateOf<List<EjercicioDraft>>(
-            sesionBase?.ejercicios?.map { detalle ->
-                EjercicioDraft(
-                    nombre = detalle.nombre ?: "",
-                    series = detalle.series.toString(),
-                    repeticiones = detalle.repeticiones,
-                    peso = detalle.peso?.toString() ?: "",
-                    bloque = detalle.bloque
-                )
-            } ?: listOf()
-        )
+    var tituloSesion by rememberSaveable {
+        mutableStateOf(if (sesionBase != null) "Copia de ${sesionBase.fechaProgramada}" else "")
     }
 
-    LaunchedEffect(uiState) { if (uiState is SesionUiState.Success) onNavigateBack() }
+    LaunchedEffect(Unit) {
+        viewModel.inicializarConSesionBase(sesionBase)
+    }
+
+    LaunchedEffect(uiState) {
+        if (uiState is SesionUiState.Success) {
+            onNavigateBack()
+            viewModel.resetState()
+        }
+    }
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val isLandscape = maxWidth > maxHeight
@@ -82,7 +79,7 @@ fun NuevaSesionScreen(
             topBar = {
                 TopAppBar(
                     title = { Text(if (sesionBase != null) "Duplicar Sesión" else "Nueva Sesión", fontWeight = FontWeight.Bold) },
-                    navigationIcon = { IconButton(onClick = onNavigateBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Volver") } }
+                    navigationIcon = { IconButton(onClick = onNavigateBack) { Icon(Icons.Default.ArrowBack, "Volver") } }
                 )
             },
             bottomBar = {
@@ -91,84 +88,84 @@ fun NuevaSesionScreen(
                         Button(
                             onClick = {
                                 val fechaHoy = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
-                                viewModel.guardarSesion(idUsuario, tituloSesion, fechaHoy, listaEjercicios)
+                                viewModel.guardarSesion(idUsuario, tituloSesion, fechaHoy)
                             },
-                            modifier = Modifier.fillMaxWidth().height(56.dp)
-                        ) { Text("GUARDAR RUTINA", fontWeight = FontWeight.Bold) }
+                            modifier = Modifier.fillMaxWidth().height(56.dp),
+                            enabled = uiState !is SesionUiState.Loading
+                        ) {
+                            if (uiState is SesionUiState.Loading) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                            else Text("GUARDAR RUTINA", fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             }
         ) { padding ->
-
             if (isLandscape) {
                 Row(modifier = Modifier.padding(padding).fillMaxSize().padding(16.dp)) {
+                    // Panel Lateral Izquierdo
                     Column(modifier = Modifier.weight(0.35f).fillMaxHeight().padding(end = 16.dp), verticalArrangement = Arrangement.SpaceBetween) {
                         Column {
                             OutlinedTextField(value = tituloSesion, onValueChange = { tituloSesion = it }, label = { Text("Nombre del entrenamiento") }, modifier = Modifier.fillMaxWidth())
                             Spacer(modifier = Modifier.height(16.dp))
                             Text("Agrupar últimos:", style = MaterialTheme.typography.labelSmall)
                             Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Button(onClick = { listaEjercicios = viewModel.agruparUltimosEnDrafts(listaEjercicios, 2) }, modifier = Modifier.weight(1f)) { Text("Biserie") }
-                                Button(onClick = { listaEjercicios = viewModel.agruparUltimosEnDrafts(listaEjercicios, 3) }, modifier = Modifier.weight(1f)) { Text("Triserie") }
+                                Button(onClick = { viewModel.agruparUltimos(2) }, modifier = Modifier.weight(1f)) { Text("Biserie") }
+                                Button(onClick = { viewModel.agruparUltimos(3) }, modifier = Modifier.weight(1f)) { Text("Triserie") }
                             }
                             Spacer(modifier = Modifier.height(16.dp))
                             OutlinedButton(
-                                onClick = { listaEjercicios = listaEjercicios + EjercicioDraft(nombre = "", series = "3", repeticiones = "10", peso = "", bloque = 0) },
+                                onClick = { viewModel.agregarEjercicio() },
                                 modifier = Modifier.fillMaxWidth().height(50.dp)
                             ) { Icon(Icons.Default.Add, null); Spacer(Modifier.width(8.dp)); Text("Añadir Ejercicio") }
                         }
                         Button(
                             onClick = {
                                 val fechaHoy = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
-                                viewModel.guardarSesion(idUsuario, tituloSesion, fechaHoy, listaEjercicios)
+                                viewModel.guardarSesion(idUsuario, tituloSesion, fechaHoy)
                             },
-                            modifier = Modifier.fillMaxWidth().height(56.dp)
+                            modifier = Modifier.fillMaxWidth().height(56.dp),
+                            enabled = uiState !is SesionUiState.Loading
                         ) { Text("GUARDAR", fontWeight = FontWeight.Bold) }
                     }
-
+                    // Lista Derecha
                     LazyColumn(modifier = Modifier.weight(0.65f).fillMaxHeight()) {
                         itemsIndexed(listaEjercicios) { index, ej ->
-                            val anterior = listaEjercicios.getOrNull(index - 1)
-                            val siguiente = listaEjercicios.getOrNull(index + 1)
-
                             val (letra, numBloque) = obtenerInfoVisualBloque(listaEjercicios, index)
-
                             EjercicioItemCard(
-                                ejercicio = ej, unidoArriba = ej.bloque != 0 && ej.bloque == anterior?.bloque, unidoAbajo = ej.bloque != 0 && ej.bloque == siguiente?.bloque,
+                                ejercicio = ej,
+                                unidoArriba = ej.bloque != 0 && ej.bloque == listaEjercicios.getOrNull(index - 1)?.bloque,
+                                unidoAbajo = ej.bloque != 0 && ej.bloque == listaEjercicios.getOrNull(index + 1)?.bloque,
                                 isDarkMode = isDarkMode, letraBloque = letra, numeroBloque = numBloque,
-                                onDelete = { listaEjercicios = listaEjercicios.toMutableList().apply { removeAt(index) } },
-                                onUpdate = { nuevo -> listaEjercicios = listaEjercicios.toMutableList().apply { set(index, nuevo) } }
+                                onDelete = { viewModel.eliminarEjercicio(index) },
+                                onUpdate = { nuevo -> viewModel.actualizarEjercicio(index, nuevo) }
                             )
                         }
                         item { Spacer(modifier = Modifier.height(32.dp)) }
                     }
                 }
             } else {
+                // Vista Vertical (Portrait)
                 Column(modifier = Modifier.padding(padding).fillMaxSize().padding(horizontal = 16.dp)) {
                     OutlinedTextField(value = tituloSesion, onValueChange = { tituloSesion = it }, label = { Text("Nombre del entrenamiento") }, modifier = Modifier.fillMaxWidth().padding(top = 16.dp))
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text("Agrupar últimos ejercicios:", style = MaterialTheme.typography.labelSmall)
-                    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(onClick = { listaEjercicios = viewModel.agruparUltimosEnDrafts(listaEjercicios, 2) }, modifier = Modifier.weight(1f)) { Text("Biserie") }
-                        Button(onClick = { listaEjercicios = viewModel.agruparUltimosEnDrafts(listaEjercicios, 3) }, modifier = Modifier.weight(1f)) { Text("Triserie") }
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(onClick = { viewModel.agruparUltimos(2) }, modifier = Modifier.weight(1f)) { Text("Biserie") }
+                        Button(onClick = { viewModel.agruparUltimos(3) }, modifier = Modifier.weight(1f)) { Text("Triserie") }
                     }
-
                     LazyColumn(modifier = Modifier.weight(1f)) {
                         itemsIndexed(listaEjercicios) { index, ej ->
-                            val anterior = listaEjercicios.getOrNull(index - 1)
-                            val siguiente = listaEjercicios.getOrNull(index + 1)
-
                             val (letra, numBloque) = obtenerInfoVisualBloque(listaEjercicios, index)
-
                             EjercicioItemCard(
-                                ejercicio = ej, unidoArriba = ej.bloque != 0 && ej.bloque == anterior?.bloque, unidoAbajo = ej.bloque != 0 && ej.bloque == siguiente?.bloque,
+                                ejercicio = ej,
+                                unidoArriba = ej.bloque != 0 && ej.bloque == listaEjercicios.getOrNull(index - 1)?.bloque,
+                                unidoAbajo = ej.bloque != 0 && ej.bloque == listaEjercicios.getOrNull(index + 1)?.bloque,
                                 isDarkMode = isDarkMode, letraBloque = letra, numeroBloque = numBloque,
-                                onDelete = { listaEjercicios = listaEjercicios.toMutableList().apply { removeAt(index) } },
-                                onUpdate = { nuevo -> listaEjercicios = listaEjercicios.toMutableList().apply { set(index, nuevo) } }
+                                onDelete = { viewModel.eliminarEjercicio(index) },
+                                onUpdate = { nuevo -> viewModel.actualizarEjercicio(index, nuevo) }
                             )
                         }
                         item {
-                            TextButton(onClick = { listaEjercicios = listaEjercicios + EjercicioDraft(nombre = "", series = "3", repeticiones = "10", peso = "", bloque = 0) }, modifier = Modifier.padding(vertical = 16.dp)) {
+                            TextButton(onClick = { viewModel.agregarEjercicio() }, modifier = Modifier.padding(vertical = 16.dp)) {
                                 Icon(Icons.Default.Add, null); Spacer(Modifier.width(8.dp)); Text("Añadir ejercicio")
                             }
                         }
@@ -216,20 +213,22 @@ fun EjercicioItemCard(
         bottomStart = if (unidoAbajo) 0.dp else 12.dp, bottomEnd = if (unidoAbajo) 0.dp else 12.dp
     )
 
-    Card(shape = shape, modifier = Modifier.fillMaxWidth().padding(top = if (unidoArriba) 0.dp else 8.dp), colors = CardDefaults.cardColors(containerColor = colorFondo, contentColor = colorTexto)) {
+    Card(
+        shape = shape,
+        modifier = Modifier.fillMaxWidth().padding(top = if (unidoArriba) 0.dp else 8.dp),
+        colors = CardDefaults.cardColors(containerColor = colorFondo, contentColor = colorTexto)
+    ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Surface(color = MaterialTheme.colorScheme.primary, shape = RoundedCornerShape(4.dp)) {
                     Text("$letraBloque", modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), color = Color.White, fontWeight = FontWeight.Bold)
                 }
                 Spacer(Modifier.width(8.dp))
-
                 val textFieldColors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = colorTexto, unfocusedTextColor = colorTexto,
                     focusedBorderColor = colorTexto.copy(alpha = 0.8f), unfocusedBorderColor = colorTexto.copy(alpha = 0.4f),
                     focusedLabelColor = colorTexto, unfocusedLabelColor = colorTexto.copy(alpha = 0.7f), cursorColor = colorTexto
                 )
-
                 OutlinedTextField(value = ejercicio.nombre, onValueChange = { onUpdate(ejercicio.copy(nombre = it)) }, label = { Text("Ejercicio") }, modifier = Modifier.weight(1f), colors = textFieldColors)
                 IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, null, tint = colorTexto.copy(alpha = 0.6f)) }
             }

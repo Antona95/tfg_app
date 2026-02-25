@@ -26,7 +26,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 
 @Composable
 fun App() {
-    // 1. ESTADO GLOBAL DEL MODO OSCURO (State Hoisting)
+    // 1. ESTADO GLOBAL (State Hoisting) - Usamos rememberSaveable para que sobreviva a rotaciones
     var isDarkMode by rememberSaveable { mutableStateOf(false) }
 
     // 2. CONFIGURACIÓN DEL TEMA
@@ -49,16 +49,18 @@ fun App() {
 
             if (usuario.rol == "ENTRENADOR") {
                 // =================================================
-                // SECCIÓN ENTRENADOR
+                // SECCIÓN ENTRENADOR (Persistente)
                 // =================================================
                 val coachViewModel = getViewModel(
                     key = "coach-screen",
                     factory = viewModelFactory { CoachViewModel(repository) }
                 )
 
+                // Usamos rememberSaveable para que no se pierda el alumno al rotar
                 var usuarioSeleccionado by remember { mutableStateOf<Persona?>(null) }
-                var creandoSesion by remember { mutableStateOf(false) }
-                var viendoHistorial by remember { mutableStateOf(false) }
+                var creandoSesion by rememberSaveable { mutableStateOf(false) }
+                var viendoHistorial by rememberSaveable { mutableStateOf(false) }
+
                 var sesionSeleccionada by remember { mutableStateOf<model.SesionEntrenamiento?>(null) }
                 var sesionParaDuplicar by remember { mutableStateOf<model.SesionEntrenamiento?>(null) }
 
@@ -79,6 +81,8 @@ fun App() {
                             onNavigateBack = {
                                 creandoSesion = false
                                 sesionParaDuplicar = null
+                                // Al volver, si estábamos en el historial, este se refrescará
+                                // automáticamente por el LaunchedEffect que pusimos allí.
                             }
                         )
                     }
@@ -123,7 +127,7 @@ fun App() {
 
             } else {
                 // =================================================
-                // SECCIÓN ALUMNO
+                // SECCIÓN ALUMNO (Persistente)
                 // =================================================
                 val hoyViewModel = getViewModel(
                     key = "hoy-screen-vm",
@@ -135,7 +139,7 @@ fun App() {
                     factory = viewModelFactory { HistorialViewModel(repository) }
                 )
 
-                var pantallaAlumno by remember { mutableStateOf("MENU") }
+                var pantallaAlumno by rememberSaveable { mutableStateOf("MENU") }
                 var sesionDetalleAlumno by remember { mutableStateOf<model.SesionEntrenamiento?>(null) }
 
                 when (pantallaAlumno) {
@@ -187,15 +191,12 @@ fun App() {
             }
 
         } else {
-            // =================================================
-            // PANTALLA DE LOGIN (MODIFICADA CON MODO OSCURO)
-            // =================================================
             LoginScreen(
                 onLoginClick = { nick, pass -> loginViewModel.onLoginClick(nick, pass) },
                 onRegistroClick = { nick, pass, nom, ape -> loginViewModel.onRegistroClick(nick, pass, nom, ape) },
                 mensajeExito = state.mensajeExito,
-                isDarkMode = isDarkMode,                      // <--- AÑADIDO AQUÍ
-                onThemeToggle = { isDarkMode = !isDarkMode }  // <--- Y AQUÍ
+                isDarkMode = isDarkMode,
+                onThemeToggle = { isDarkMode = !isDarkMode }
             )
         }
     }

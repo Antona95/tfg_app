@@ -15,7 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import model.SesionEntrenamiento
-import model.DetalleSesion
+import model.DetalleSesion // 👈 Usamos tu nombre original para que no salga en rojo
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,6 +24,7 @@ fun DetalleSesionScreen(
     isDarkMode: Boolean,
     onBack: () -> Unit
 ) {
+    // Agrupamos los ejercicios respetando tu variable DetalleSesion
     val gruposDeEjercicios = remember(sesion.ejercicios) {
         val grupos = mutableListOf<List<DetalleSesion>>()
         var grupoActual = mutableListOf<DetalleSesion>()
@@ -90,7 +91,9 @@ fun DetalleSesionScreen(
 
                 item {
                     Card(
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer
+                        ),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
@@ -99,18 +102,17 @@ fun DetalleSesionScreen(
                             if (sesion.finalizada) {
                                 Text("✅ FINALIZADA", color = Color(0xFF2E7D32), fontWeight = FontWeight.Bold)
                             } else {
-                                Text("⏳ PENDIENTE", color = Color(0xFFE65100), fontWeight = FontWeight.Bold)
+                                Text("⏳ PENDIENTE", color = if(isDarkMode) Color(0xFFFFB74D) else Color(0xFFE65100), fontWeight = FontWeight.Bold)
                             }
                         }
                     }
                 }
 
                 item {
-                    Text("Ejercicios Realizados", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 8.dp))
+                    Text("Ejercicios Planificados", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
                 }
 
                 itemsIndexed(gruposDeEjercicios) { indexGrupo, grupo ->
-                    // 👇 ASIGNACIÓN DINÁMICA DE BLOQUE (0 = A, 1 = B, 2 = C...) 👇
                     val numeroBloque = indexGrupo + 1
                     val letraBloque = (numeroBloque + 64).toChar()
 
@@ -121,6 +123,7 @@ fun DetalleSesionScreen(
                                     ExerciseDetailCard(ejercicio, isDarkMode, isLandscape = true, letraBloque, numeroBloque)
                                 }
                             }
+                            if (grupo.size == 1) Spacer(modifier = Modifier.weight(1f))
                         }
                     } else {
                         Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -130,7 +133,6 @@ fun DetalleSesionScreen(
                         }
                     }
                 }
-
                 item { Spacer(modifier = Modifier.height(32.dp)) }
             }
         }
@@ -144,11 +146,10 @@ fun ExerciseDetailCard(ejercicio: DetalleSesion, isDarkMode: Boolean, isLandscap
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(containerColor = colorFondo, contentColor = colorTexto)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = ejercicio.nombre ?: "Sin nombre",
                     style = MaterialTheme.typography.titleMedium,
@@ -156,71 +157,47 @@ fun ExerciseDetailCard(ejercicio: DetalleSesion, isDarkMode: Boolean, isLandscap
                     modifier = Modifier.weight(1f),
                     color = colorTexto
                 )
-
-                // AHORA TODOS TIENEN SU BLOQUE VISIBLE (A, B, C...)
                 Surface(color = MaterialTheme.colorScheme.primary, shape = RoundedCornerShape(4.dp)) {
-                    val textoBloque = if (isLandscape) "$letraBloque" else "Bloque $letraBloque"
                     Text(
-                        text = textoBloque,
+                        text = if (isLandscape) "$letraBloque" else "Bloque $letraBloque",
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onPrimary,
+                        color = Color.White,
                         fontWeight = FontWeight.Bold
                     )
                 }
             }
-
             Spacer(modifier = Modifier.height(12.dp))
-
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                val lblSeries = if (isLandscape) "S" else "Series"
-                val lblReps = if (isLandscape) "R" else "Reps"
-                val lblPeso = if (isLandscape) "Kg" else "Peso"
-                val pesoValor = if (ejercicio.peso != null && ejercicio.peso > 0) {
-                    if (isLandscape) "${ejercicio.peso}" else "${ejercicio.peso} kg"
-                } else "--"
-
-                InfoBadge(lblSeries, "${ejercicio.series}", colorTexto)
-                InfoBadge(lblReps, ejercicio.repeticiones, colorTexto)
-                InfoBadge(lblPeso, pesoValor, colorTexto)
-            }
-
-            if (!ejercicio.observaciones.isNullOrEmpty()) {
-                Spacer(modifier = Modifier.height(12.dp))
-                HorizontalDivider(color = colorTexto.copy(alpha = 0.2f))
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(text = ejercicio.observaciones!!, style = MaterialTheme.typography.bodyMedium, color = colorTexto.copy(alpha = 0.8f))
+                InfoBadge(if (isLandscape) "S" else "Series", "${ejercicio.series}", colorTexto)
+                InfoBadge(if (isLandscape) "R" else "Reps", ejercicio.repeticiones, colorTexto)
+                val pesoText = if (ejercicio.peso != null && ejercicio.peso > 0) "${ejercicio.peso}" else "--"
+                InfoBadge(if (isLandscape) "Kg" else "Peso", pesoText, colorTexto)
             }
         }
     }
 }
+
 @Composable
-fun InfoBadge(label: String, value: String, color: Color) {
+private fun InfoBadge(label: String, value: String, color: Color) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(text = label, style = MaterialTheme.typography.labelSmall, color = color.copy(alpha = 0.6f))
         Text(text = value, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = color)
     }
 }
 
+// Mantenemos tu función de colores intacta para que no falle nada
 fun obtenerColorBloque(numeroBloque: Int, isDarkMode: Boolean): Color {
-    val indexColor = ((numeroBloque - 1) % 5) + 1 // Hace que los colores se repitan en bucle si hay más de 5 bloques
+    val indexColor = ((numeroBloque - 1) % 5) + 1
     return if (isDarkMode) {
         when (indexColor) {
-            1 -> Color(0xFF0D47A1)
-            2 -> Color(0xFF1B5E20)
-            3 -> Color(0xFFB71C1C)
-            4 -> Color(0xFF4A148C)
-            5 -> Color(0xFFE65100)
-            else -> Color(0xFF2C2C2C)
+            1 -> Color(0xFF0D47A1); 2 -> Color(0xFF1B5E20); 3 -> Color(0xFFB71C1C)
+            4 -> Color(0xFF4A148C); 5 -> Color(0xFFE65100); else -> Color(0xFF2C2C2C)
         }
     } else {
         when (indexColor) {
-            1 -> Color(0xFFE3F2FD)
-            2 -> Color(0xFFE8F5E9)
-            3 -> Color(0xFFFFF3E0)
-            4 -> Color(0xFFF3E5F5)
-            5 -> Color(0xFFEFEBE9)
-            else -> Color(0xFFF5F5F5)
+            1 -> Color(0xFFE3F2FD); 2 -> Color(0xFFE8F5E9); 3 -> Color(0xFFFFF3E0)
+            4 -> Color(0xFFF3E5F5); 5 -> Color(0xFFEFEBE9); else -> Color(0xFFF5F5F5)
         }
     }
 }

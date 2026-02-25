@@ -15,29 +15,26 @@ class HistorialViewModel(private val repository: EntrenamientoRepository) : View
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
 
-    fun limpiarHistorialParaRecargar() {
-        _sesiones.value = emptyList() // Al estar vacía, el "if" del cargar permitirá la recarga
-    }
-    fun cargarHistorial(idUsuario: String) {
-        //  Si ya tenemos datos, no hacemos la petición (ahorra batería y datos)
-        if (_sesiones.value.isNotEmpty()) return
+    // Variable para evitar peticiones infinitas si falla
+    private var ultimoUsuarioCargado: String? = null
+
+    fun cargarHistorial(idUsuario: String, forzarRecarga: Boolean = false) {
+        // Si NO forzamos y ya tenemos los datos del usuario actual, salimos
+        if (!forzarRecarga && ultimoUsuarioCargado == idUsuario && _sesiones.value.isNotEmpty()) {
+            return
+        }
 
         viewModelScope.launch {
-            _isLoading.value = true
+            // Solo mostramos el circulito de carga si la lista está vacía
+            // Así, al recargar, el usuario sigue viendo los datos viejos hasta que lleguen los nuevos (evita parpadeos)
+            if (_sesiones.value.isEmpty()) _isLoading.value = true
+
             try {
                 val lista = repository.obtenerHistorialSesiones(idUsuario)
-
-                // LOG PARA DEPURAR: Abre el Logcat y busca "DEBUG_HISTORIAL"
-                println("DEBUG_HISTORIAL: El servidor ha devuelto ${lista.size} sesiones")
-
-                if (lista.isNotEmpty()) {
-                    _sesiones.value = lista
-                } else {
-                    // Si llega vacío pero sospechamos que hay datos, el problema está en el Backend
-                    println("DEBUG_HISTORIAL: ¡Ojo! El servidor devolvió una lista vacía.")
-                }
+                _sesiones.value = lista
+                ultimoUsuarioCargado = idUsuario
             } catch (e: Exception) {
-                println("DEBUG_HISTORIAL: Error de conexión -> ${e.message}")
+                println("Error: ${e.message}")
             } finally {
                 _isLoading.value = false
             }
