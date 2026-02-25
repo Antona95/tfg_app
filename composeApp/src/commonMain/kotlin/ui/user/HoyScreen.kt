@@ -106,8 +106,8 @@ fun ContenidoEntreno(sesion: SesionEntrenamiento, isDarkMode: Boolean, onFinaliz
             // 2. EL TOPE DE ANCHURA Y FILLMAXWIDTH PARA QUE NO SE ESTIRE NI DESAPAREZCA
             modifier = Modifier
                 .fillMaxHeight()
-                .fillMaxWidth() // <--- ¡AÑADIDO AQUÍ!
-                .widthIn(max = 600.dp),
+                .widthIn(max = 600.dp)
+                .fillMaxWidth() ,
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {

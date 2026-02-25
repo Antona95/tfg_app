@@ -100,10 +100,11 @@ fun VistaEntrenador(
                 contentAlignment = Alignment.TopCenter
             ) {
                 Column(
+                    // 👇 EL ORDEN CORRECTO: PRIMERO EL TOPE, LUEGO EL ESTIRAMIENTO 👇
                     modifier = Modifier
                         .fillMaxHeight()
-                        .fillMaxWidth() // <--- ¡AÑADIDO PARA LA COLUMNA DE ALUMNOS!
                         .widthIn(max = 600.dp)
+                        .fillMaxWidth()
                         .padding(16.dp)
                 ) {
                     Text(
@@ -240,10 +241,11 @@ fun VistaCliente(
             contentAlignment = Alignment.TopCenter
         ) {
             LazyColumn(
+                // 👇 EL ORDEN CORRECTO: PRIMERO EL TOPE, LUEGO EL ESTIRAMIENTO 👇
                 modifier = Modifier
                     .fillMaxHeight()
-                    .fillMaxWidth() // <--- ¡AÑADIDO PARA EL MENÚ DEL CLIENTE!
-                    .widthIn(max = 600.dp),
+                    .widthIn(max = 600.dp)
+                    .fillMaxWidth(),
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
@@ -351,10 +353,11 @@ fun VistaDetalleAlumno(
             contentAlignment = Alignment.TopCenter
         ) {
             Column(
+                // 👇 EL ORDEN CORRECTO: PRIMERO EL TOPE, LUEGO EL ESTIRAMIENTO 👇
                 modifier = Modifier
                     .fillMaxHeight()
-                    .fillMaxWidth() // <--- ¡AÑADIDO PARA LA VISTA DETALLE DEL ALUMNO!
                     .widthIn(max = 600.dp)
+                    .fillMaxWidth()
                     .padding(16.dp)
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally

@@ -2,7 +2,7 @@ package ui.coach
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.itemsIndexed // 👈 ESTE ERA UNO DE LOS DESAPARECIDOS
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -26,45 +26,54 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
+// 👇 ALGORITMO PARA SABER QUÉ LETRA Y COLOR TOCA EN CADA EJERCICIO 👇
+fun obtenerInfoVisualBloque(lista: List<EjercicioDraft>, indexActual: Int): Pair<Char, Int> {
+    var currentBlock = 1
+    var lastDbBlock = -1
+    for (i in 0..indexActual) {
+        val ej = lista[i]
+        if (ej.bloque == 0) {
+            if (i > 0 && lastDbBlock != -1) currentBlock++
+            else if (i > 0 && lista[i-1].bloque == 0) currentBlock++
+            lastDbBlock = -1
+        } else {
+            if (i > 0 && ej.bloque != lastDbBlock) currentBlock++
+            lastDbBlock = ej.bloque
+        }
+    }
+    return Pair((currentBlock + 64).toChar(), currentBlock)
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NuevaSesionScreen(
     idUsuario: String,
     repository: EntrenamientoRepository,
-    isDarkMode: Boolean, // <--- 1. AHORA LO RECIBIMOS DESDE APP.KT
+    isDarkMode: Boolean,
     onNavigateBack: () -> Unit,
     sesionBase: SesionEntrenamiento? = null
 ) {
     val viewModel: SesionViewModel = viewModel(factory = SesionViewModelFactory(repository))
     val uiState by viewModel.uiState.collectAsState()
 
-    var tituloSesion by remember {
-        mutableStateOf(if (sesionBase != null) "Copia de ${sesionBase.fechaProgramada}" else "")
-    }
+    var tituloSesion by remember { mutableStateOf(if (sesionBase != null) "Copia de ${sesionBase.fechaProgramada}" else "") }
 
+    // Le añadimos <List<EjercicioDraft>> explícitamente para que Compose no se líe
     var listaEjercicios by remember {
-        mutableStateOf(
-            if (sesionBase != null) {
-                sesionBase.ejercicios.map { detalle ->
-                    EjercicioDraft(
-                        nombre = detalle.nombre ?: "",
-                        series = detalle.series.toString(),
-                        repeticiones = detalle.repeticiones,
-                        peso = detalle.peso?.toString() ?: "",
-                        bloque = detalle.bloque
-                    )
-                }
-            } else {
-                listOf<EjercicioDraft>()
-            }
+        mutableStateOf<List<EjercicioDraft>>(
+            sesionBase?.ejercicios?.map { detalle ->
+                EjercicioDraft(
+                    nombre = detalle.nombre ?: "",
+                    series = detalle.series.toString(),
+                    repeticiones = detalle.repeticiones,
+                    peso = detalle.peso?.toString() ?: "",
+                    bloque = detalle.bloque
+                )
+            } ?: listOf()
         )
     }
 
-    LaunchedEffect(uiState) {
-        if (uiState is SesionUiState.Success) {
-            onNavigateBack()
-        }
-    }
+    LaunchedEffect(uiState) { if (uiState is SesionUiState.Success) onNavigateBack() }
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val isLandscape = maxWidth > maxHeight
@@ -73,11 +82,7 @@ fun NuevaSesionScreen(
             topBar = {
                 TopAppBar(
                     title = { Text(if (sesionBase != null) "Duplicar Sesión" else "Nueva Sesión", fontWeight = FontWeight.Bold) },
-                    navigationIcon = {
-                        IconButton(onClick = onNavigateBack) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
-                        }
-                    }
+                    navigationIcon = { IconButton(onClick = onNavigateBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Volver") } }
                 )
             },
             bottomBar = {
@@ -89,9 +94,7 @@ fun NuevaSesionScreen(
                                 viewModel.guardarSesion(idUsuario, tituloSesion, fechaHoy, listaEjercicios)
                             },
                             modifier = Modifier.fillMaxWidth().height(56.dp)
-                        ) {
-                            Text("GUARDAR RUTINA", fontWeight = FontWeight.Bold)
-                        }
+                        ) { Text("GUARDAR RUTINA", fontWeight = FontWeight.Bold) }
                     }
                 }
             }
@@ -99,59 +102,40 @@ fun NuevaSesionScreen(
 
             if (isLandscape) {
                 Row(modifier = Modifier.padding(padding).fillMaxSize().padding(16.dp)) {
-                    Column(
-                        modifier = Modifier.weight(0.35f).fillMaxHeight().padding(end = 16.dp),
-                        verticalArrangement = Arrangement.SpaceBetween
-                    ) {
+                    Column(modifier = Modifier.weight(0.35f).fillMaxHeight().padding(end = 16.dp), verticalArrangement = Arrangement.SpaceBetween) {
                         Column {
-                            OutlinedTextField(
-                                value = tituloSesion,
-                                onValueChange = { tituloSesion = it },
-                                label = { Text("Nombre del entrenamiento") },
-                                modifier = Modifier.fillMaxWidth()
-                            )
+                            OutlinedTextField(value = tituloSesion, onValueChange = { tituloSesion = it }, label = { Text("Nombre del entrenamiento") }, modifier = Modifier.fillMaxWidth())
                             Spacer(modifier = Modifier.height(16.dp))
                             Text("Agrupar últimos:", style = MaterialTheme.typography.labelSmall)
                             Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Button(onClick = { listaEjercicios = viewModel.agruparUltimosEnDrafts(listaEjercicios, 2) }, modifier = Modifier.weight(1f)) {
-                                    Text("Biserie")
-                                }
-                                Button(onClick = { listaEjercicios = viewModel.agruparUltimosEnDrafts(listaEjercicios, 3) }, modifier = Modifier.weight(1f)) {
-                                    Text("Triserie")
-                                }
+                                Button(onClick = { listaEjercicios = viewModel.agruparUltimosEnDrafts(listaEjercicios, 2) }, modifier = Modifier.weight(1f)) { Text("Biserie") }
+                                Button(onClick = { listaEjercicios = viewModel.agruparUltimosEnDrafts(listaEjercicios, 3) }, modifier = Modifier.weight(1f)) { Text("Triserie") }
                             }
+                            Spacer(modifier = Modifier.height(16.dp))
+                            OutlinedButton(
+                                onClick = { listaEjercicios = listaEjercicios + EjercicioDraft(nombre = "", series = "3", repeticiones = "10", peso = "", bloque = 0) },
+                                modifier = Modifier.fillMaxWidth().height(50.dp)
+                            ) { Icon(Icons.Default.Add, null); Spacer(Modifier.width(8.dp)); Text("Añadir Ejercicio") }
                         }
-
                         Button(
                             onClick = {
                                 val fechaHoy = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
                                 viewModel.guardarSesion(idUsuario, tituloSesion, fechaHoy, listaEjercicios)
                             },
                             modifier = Modifier.fillMaxWidth().height(56.dp)
-                        ) {
-                            Text("GUARDAR", fontWeight = FontWeight.Bold)
-                        }
+                        ) { Text("GUARDAR", fontWeight = FontWeight.Bold) }
                     }
 
                     LazyColumn(modifier = Modifier.weight(0.65f).fillMaxHeight()) {
-                        item {
-                            TextButton(onClick = {
-                                listaEjercicios = listaEjercicios + EjercicioDraft(nombre = "", series = "3", repeticiones = "10", peso = "", bloque = 0)
-                            }) {
-                                Icon(Icons.Default.Add, null)
-                                Spacer(Modifier.width(8.dp))
-                                Text("Añadir ejercicio al inicio")
-                            }
-                        }
                         itemsIndexed(listaEjercicios) { index, ej ->
                             val anterior = listaEjercicios.getOrNull(index - 1)
                             val siguiente = listaEjercicios.getOrNull(index + 1)
 
+                            val (letra, numBloque) = obtenerInfoVisualBloque(listaEjercicios, index)
+
                             EjercicioItemCard(
-                                ejercicio = ej,
-                                unidoArriba = ej.bloque != 0 && ej.bloque == anterior?.bloque,
-                                unidoAbajo = ej.bloque != 0 && ej.bloque == siguiente?.bloque,
-                                isDarkMode = isDarkMode,
+                                ejercicio = ej, unidoArriba = ej.bloque != 0 && ej.bloque == anterior?.bloque, unidoAbajo = ej.bloque != 0 && ej.bloque == siguiente?.bloque,
+                                isDarkMode = isDarkMode, letraBloque = letra, numeroBloque = numBloque,
                                 onDelete = { listaEjercicios = listaEjercicios.toMutableList().apply { removeAt(index) } },
                                 onUpdate = { nuevo -> listaEjercicios = listaEjercicios.toMutableList().apply { set(index, nuevo) } }
                             )
@@ -161,23 +145,12 @@ fun NuevaSesionScreen(
                 }
             } else {
                 Column(modifier = Modifier.padding(padding).fillMaxSize().padding(horizontal = 16.dp)) {
-                    OutlinedTextField(
-                        value = tituloSesion,
-                        onValueChange = { tituloSesion = it },
-                        label = { Text("Nombre del entrenamiento") },
-                        modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
-                    )
-
+                    OutlinedTextField(value = tituloSesion, onValueChange = { tituloSesion = it }, label = { Text("Nombre del entrenamiento") }, modifier = Modifier.fillMaxWidth().padding(top = 16.dp))
                     Spacer(modifier = Modifier.height(16.dp))
-
                     Text("Agrupar últimos ejercicios:", style = MaterialTheme.typography.labelSmall)
                     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(onClick = { listaEjercicios = viewModel.agruparUltimosEnDrafts(listaEjercicios, 2) }, modifier = Modifier.weight(1f)) {
-                            Text("Biserie")
-                        }
-                        Button(onClick = { listaEjercicios = viewModel.agruparUltimosEnDrafts(listaEjercicios, 3) }, modifier = Modifier.weight(1f)) {
-                            Text("Triserie")
-                        }
+                        Button(onClick = { listaEjercicios = viewModel.agruparUltimosEnDrafts(listaEjercicios, 2) }, modifier = Modifier.weight(1f)) { Text("Biserie") }
+                        Button(onClick = { listaEjercicios = viewModel.agruparUltimosEnDrafts(listaEjercicios, 3) }, modifier = Modifier.weight(1f)) { Text("Triserie") }
                     }
 
                     LazyColumn(modifier = Modifier.weight(1f)) {
@@ -185,22 +158,18 @@ fun NuevaSesionScreen(
                             val anterior = listaEjercicios.getOrNull(index - 1)
                             val siguiente = listaEjercicios.getOrNull(index + 1)
 
+                            val (letra, numBloque) = obtenerInfoVisualBloque(listaEjercicios, index)
+
                             EjercicioItemCard(
-                                ejercicio = ej,
-                                unidoArriba = ej.bloque != 0 && ej.bloque == anterior?.bloque,
-                                unidoAbajo = ej.bloque != 0 && ej.bloque == siguiente?.bloque,
-                                isDarkMode = isDarkMode,
+                                ejercicio = ej, unidoArriba = ej.bloque != 0 && ej.bloque == anterior?.bloque, unidoAbajo = ej.bloque != 0 && ej.bloque == siguiente?.bloque,
+                                isDarkMode = isDarkMode, letraBloque = letra, numeroBloque = numBloque,
                                 onDelete = { listaEjercicios = listaEjercicios.toMutableList().apply { removeAt(index) } },
                                 onUpdate = { nuevo -> listaEjercicios = listaEjercicios.toMutableList().apply { set(index, nuevo) } }
                             )
                         }
                         item {
-                            TextButton(onClick = {
-                                listaEjercicios = listaEjercicios + EjercicioDraft(nombre = "", series = "3", repeticiones = "10", peso = "", bloque = 0)
-                            }, modifier = Modifier.padding(vertical = 16.dp)) {
-                                Icon(Icons.Default.Add, null)
-                                Spacer(Modifier.width(8.dp))
-                                Text("Añadir ejercicio")
+                            TextButton(onClick = { listaEjercicios = listaEjercicios + EjercicioDraft(nombre = "", series = "3", repeticiones = "10", peso = "", bloque = 0) }, modifier = Modifier.padding(vertical = 16.dp)) {
+                                Icon(Icons.Default.Add, null); Spacer(Modifier.width(8.dp)); Text("Añadir ejercicio")
                             }
                         }
                     }
@@ -211,121 +180,68 @@ fun NuevaSesionScreen(
 }
 
 @Composable
-fun obtenerColorBloqueForm(bloque: Int, isDarkMode: Boolean): Color {
+fun obtenerColorBloqueForm(numeroBloque: Int, isDarkMode: Boolean): Color {
+    val indexColor = ((numeroBloque - 1) % 5) + 1
     return if (isDarkMode) {
-        when (bloque) {
+        when (indexColor) {
             1 -> Color(0xFF0D47A1)
             2 -> Color(0xFF1B5E20)
             3 -> Color(0xFFB71C1C)
             4 -> Color(0xFF4A148C)
             5 -> Color(0xFFE65100)
-            else -> MaterialTheme.colorScheme.surfaceVariant // 2. GRIS OSCURO EN MODO NOCHE PARA BLOQUE 0
+            else -> MaterialTheme.colorScheme.surfaceVariant
         }
     } else {
-        when (bloque) {
+        when (indexColor) {
             1 -> Color(0xFFE3F2FD)
             2 -> Color(0xFFE8F5E9)
             3 -> Color(0xFFFFF3E0)
             4 -> Color(0xFFF3E5F5)
             5 -> Color(0xFFEFEBE9)
-            else -> Color.White // BLANCO EN MODO CLARO PARA BLOQUE 0
+            else -> Color.White
         }
     }
 }
 
 @Composable
 fun EjercicioItemCard(
-    ejercicio: EjercicioDraft,
-    unidoArriba: Boolean,
-    unidoAbajo: Boolean,
-    isDarkMode: Boolean,
-    onDelete: () -> Unit,
-    onUpdate: (EjercicioDraft) -> Unit
+    ejercicio: EjercicioDraft, unidoArriba: Boolean, unidoAbajo: Boolean, isDarkMode: Boolean,
+    letraBloque: Char, numeroBloque: Int, onDelete: () -> Unit, onUpdate: (EjercicioDraft) -> Unit
 ) {
-    val colorFondo = obtenerColorBloqueForm(ejercicio.bloque, isDarkMode)
-
-    // 3. BLINDAMOS EL COLOR DEL TEXTO PARA QUE SIEMPRE CONTRASTE
-    val colorTexto = if (isDarkMode) {
-        Color.White // En modo oscuro, TODO el texto de los bloques es blanco
-    } else {
-        MaterialTheme.colorScheme.onSurface // En modo claro, texto oscuro
-    }
+    val colorFondo = obtenerColorBloqueForm(numeroBloque, isDarkMode)
+    val colorTexto = if (isDarkMode) Color.White else MaterialTheme.colorScheme.onSurface
 
     val shape = RoundedCornerShape(
         topStart = if (unidoArriba) 0.dp else 12.dp, topEnd = if (unidoArriba) 0.dp else 12.dp,
         bottomStart = if (unidoAbajo) 0.dp else 12.dp, bottomEnd = if (unidoAbajo) 0.dp else 12.dp
     )
 
-    Card(
-        shape = shape,
-        modifier = Modifier.fillMaxWidth().padding(top = if (unidoArriba) 0.dp else 8.dp),
-        colors = CardDefaults.cardColors(containerColor = colorFondo, contentColor = colorTexto)
-    ) {
+    Card(shape = shape, modifier = Modifier.fillMaxWidth().padding(top = if (unidoArriba) 0.dp else 8.dp), colors = CardDefaults.cardColors(containerColor = colorFondo, contentColor = colorTexto)) {
         Column(modifier = Modifier.padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                if (ejercicio.bloque != 0) {
-                    val letra = (ejercicio.bloque + 64).toChar()
-                    Surface(color = MaterialTheme.colorScheme.primary, shape = RoundedCornerShape(4.dp)) {
-                        Text("$letra", modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), color = Color.White, fontWeight = FontWeight.Bold)
-                    }
-                    Spacer(Modifier.width(8.dp))
+                Surface(color = MaterialTheme.colorScheme.primary, shape = RoundedCornerShape(4.dp)) {
+                    Text("$letraBloque", modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), color = Color.White, fontWeight = FontWeight.Bold)
                 }
+                Spacer(Modifier.width(8.dp))
 
-                // 4. FORZAMOS EL COLOR DE LOS BORDES Y LABELS PARA QUE SEAN VISIBLES
                 val textFieldColors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = colorTexto,
-                    unfocusedTextColor = colorTexto,
-                    focusedBorderColor = colorTexto.copy(alpha = 0.8f),
-                    unfocusedBorderColor = colorTexto.copy(alpha = 0.4f),
-                    focusedLabelColor = colorTexto,
-                    unfocusedLabelColor = colorTexto.copy(alpha = 0.7f),
-                    cursorColor = colorTexto
+                    focusedTextColor = colorTexto, unfocusedTextColor = colorTexto,
+                    focusedBorderColor = colorTexto.copy(alpha = 0.8f), unfocusedBorderColor = colorTexto.copy(alpha = 0.4f),
+                    focusedLabelColor = colorTexto, unfocusedLabelColor = colorTexto.copy(alpha = 0.7f), cursorColor = colorTexto
                 )
 
-                OutlinedTextField(
-                    value = ejercicio.nombre,
-                    onValueChange = { onUpdate(ejercicio.copy(nombre = it)) },
-                    label = { Text("Ejercicio") },
-                    modifier = Modifier.weight(1f),
-                    colors = textFieldColors
-                )
+                OutlinedTextField(value = ejercicio.nombre, onValueChange = { onUpdate(ejercicio.copy(nombre = it)) }, label = { Text("Ejercicio") }, modifier = Modifier.weight(1f), colors = textFieldColors)
                 IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, null, tint = colorTexto.copy(alpha = 0.6f)) }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
-
                 val textFieldColors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = colorTexto,
-                    unfocusedTextColor = colorTexto,
-                    focusedBorderColor = colorTexto.copy(alpha = 0.8f),
-                    unfocusedBorderColor = colorTexto.copy(alpha = 0.4f),
-                    focusedLabelColor = colorTexto,
-                    unfocusedLabelColor = colorTexto.copy(alpha = 0.7f),
-                    cursorColor = colorTexto
+                    focusedTextColor = colorTexto, unfocusedTextColor = colorTexto,
+                    focusedBorderColor = colorTexto.copy(alpha = 0.8f), unfocusedBorderColor = colorTexto.copy(alpha = 0.4f),
+                    focusedLabelColor = colorTexto, unfocusedLabelColor = colorTexto.copy(alpha = 0.7f), cursorColor = colorTexto
                 )
-
-                OutlinedTextField(
-                    value = ejercicio.series,
-                    onValueChange = { onUpdate(ejercicio.copy(series = it)) },
-                    label = { Text("S") },
-                    modifier = Modifier.weight(1f),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    colors = textFieldColors
-                )
-                OutlinedTextField(
-                    value = ejercicio.repeticiones,
-                    onValueChange = { onUpdate(ejercicio.copy(repeticiones = it)) },
-                    label = { Text("R") },
-                    modifier = Modifier.weight(1f),
-                    colors = textFieldColors
-                )
-                OutlinedTextField(
-                    value = ejercicio.peso,
-                    onValueChange = { onUpdate(ejercicio.copy(peso = it)) },
-                    label = { Text("kg") },
-                    modifier = Modifier.weight(1f),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    colors = textFieldColors
-                )
+                OutlinedTextField(value = ejercicio.series, onValueChange = { onUpdate(ejercicio.copy(series = it)) }, label = { Text("S") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = textFieldColors)
+                OutlinedTextField(value = ejercicio.repeticiones, onValueChange = { onUpdate(ejercicio.copy(repeticiones = it)) }, label = { Text("R") }, modifier = Modifier.weight(1f), colors = textFieldColors)
+                OutlinedTextField(value = ejercicio.peso, onValueChange = { onUpdate(ejercicio.copy(peso = it)) }, label = { Text("kg") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = textFieldColors)
             }
         }
     }

@@ -22,11 +22,12 @@ import model.Persona
 import kotlinx.coroutines.launch
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.saveable.rememberSaveable
 
 @Composable
 fun App() {
     // 1. ESTADO GLOBAL DEL MODO OSCURO (State Hoisting)
-    var isDarkMode by remember { mutableStateOf(false) }
+    var isDarkMode by rememberSaveable { mutableStateOf(false) }
 
     // 2. CONFIGURACIÓN DEL TEMA
     val colorScheme = if (isDarkMode) darkColorScheme() else lightColorScheme()
