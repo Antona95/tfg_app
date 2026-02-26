@@ -59,7 +59,7 @@ class EntrenamientoRepository(
             if (respuesta.status.value in 200..299) respuesta.body<SesionEntrenamiento>() else null
         } catch (e: Exception) { null }
     }
-
+    //comentario a borrar
     suspend fun obtenerHistorialSesiones(idUsuario: String): List<SesionEntrenamiento> {
         return try {
             val respuesta = client.get("$baseUrl/api/sesiones/usuario/$idUsuario")
