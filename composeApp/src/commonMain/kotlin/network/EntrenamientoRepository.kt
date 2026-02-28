@@ -16,7 +16,7 @@ class EntrenamientoRepository(
 ) {
     // La URL la movemos aquí abajo (dentro de las llaves)
     // Así ya no sale en rojo y nadie se confunde al crear el repositorio
-    private val baseUrl = "http://10.0.2.2:3005"
+    private val baseUrl = "http://10.0.2.2:8080"
     // --- AUTENTICACIÓN ---
     suspend fun login(nickname: String, pass: String): Persona? {
         return try {
@@ -24,8 +24,15 @@ class EntrenamientoRepository(
                 contentType(ContentType.Application.Json)
                 setBody(LoginRequest(nickname, pass))
             }
-            if (respuesta.status.value in 200..299) respuesta.body<Persona>() else null
-        } catch (e: Exception) { null }
+            if (respuesta.status.value in 200..299) respuesta.body<Persona>() else {
+                println("ERROR HTTP: El servidor devolvió código ${respuesta.status.value}")
+                null
+            }
+        } catch (e: Exception) {
+            println("ERROR GRAVE EN KTOR LOGIN: ${e.message}")
+            e.printStackTrace()
+            null
+        }
     }
 
     suspend fun registrarUsuario(nickname: String, pass: String, nombre: String, apellidos: String): Boolean {
@@ -34,10 +41,18 @@ class EntrenamientoRepository(
                 contentType(ContentType.Application.Json)
                 setBody(RegistroRequest(nickname, pass, nombre, apellidos))
             }
-            respuesta.status.value in 200..299
+
+            // Comprobamos si el servidor nos dio un OK (200-299)
+            if (respuesta.status.value in 200..299) {
+                true
+            } else {
+                // SI FALLA POR CULPA DEL SERVIDOR (ej. usuario duplicado), LO IMPRIMIMOS:
+                println("ERROR HTTP REGISTRO: El servidor devolvió código ${respuesta.status.value}")
+                false
+            }
         } catch (e: Exception) {
-            // AÑADIMOS ESTE PRINT PARA VER EL ERROR REAL EN ANDROID STUDIO
-            println("ERROR GRAVE EN KTOR: ${e.message}")
+            // SI FALLA POR CULPA DE ANDROID O LA RED (ej. sin internet), CAE AQUÍ:
+            println("ERROR GRAVE EN KTOR REGISTRO: ${e.message}")
             e.printStackTrace()
             false
         }
