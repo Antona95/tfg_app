@@ -56,6 +56,12 @@ fun App() {
                     factory = viewModelFactory { CoachViewModel(repository) }
                 )
 
+                // Añadimos el HistorialViewModel para el Coach en el nivel superior para que persista
+                val historialCoachVM = getViewModel(
+                    key = "historial-coach-vm",
+                    factory = viewModelFactory { HistorialViewModel(repository) }
+                )
+
                 // Usamos rememberSaveable para que no se pierda el alumno al rotar
                 var usuarioSeleccionado by remember { mutableStateOf<Persona?>(null) }
                 var creandoSesion by rememberSaveable { mutableStateOf(false) }
@@ -81,8 +87,6 @@ fun App() {
                             onNavigateBack = {
                                 creandoSesion = false
                                 sesionParaDuplicar = null
-                                // Al volver, si estábamos en el historial, este se refrescará
-                                // automáticamente por el LaunchedEffect que pusimos allí.
                             }
                         )
                     }
@@ -90,6 +94,7 @@ fun App() {
                         HistorialScreen(
                             idUsuario = usuarioSeleccionado!!.id,
                             repository = repository,
+                            viewModel = historialCoachVM,
                             onBack = { viendoHistorial = false },
                             onSesionClick = { sesion -> sesionSeleccionada = sesion }
                         )

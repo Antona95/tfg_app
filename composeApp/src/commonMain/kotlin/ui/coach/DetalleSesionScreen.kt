@@ -15,7 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import model.SesionEntrenamiento
-import model.DetalleSesion // 👈 Usamos tu nombre original para que no salga en rojo
+import model.DetalleSesion
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,7 +24,6 @@ fun DetalleSesionScreen(
     isDarkMode: Boolean,
     onBack: () -> Unit
 ) {
-    // Agrupamos los ejercicios respetando tu variable DetalleSesion
     val gruposDeEjercicios = remember(sesion.ejercicios) {
         val grupos = mutableListOf<List<DetalleSesion>>()
         var grupoActual = mutableListOf<DetalleSesion>()
@@ -123,7 +122,6 @@ fun DetalleSesionScreen(
                                     ExerciseDetailCard(ejercicio, isDarkMode, isLandscape = true, letraBloque, numeroBloque)
                                 }
                             }
-                            if (grupo.size == 1) Spacer(modifier = Modifier.weight(1f))
                         }
                     } else {
                         Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -186,7 +184,6 @@ private fun InfoBadge(label: String, value: String, color: Color) {
     }
 }
 
-// Mantenemos tu función de colores intacta para que no falle nada
 fun obtenerColorBloque(numeroBloque: Int, isDarkMode: Boolean): Color {
     val indexColor = ((numeroBloque - 1) % 5) + 1
     return if (isDarkMode) {
