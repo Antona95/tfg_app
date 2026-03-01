@@ -8,8 +8,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.filled.DarkMode // Icono Luna (poblacion autista)
-import androidx.compose.material.icons.filled.LightMode // Icono Sol (poblacion autista)
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -33,13 +35,13 @@ fun CoachScreen(
 ) {
     val alumnos by viewModel.alumnos.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val textoBusqueda by viewModel.textoBusqueda.collectAsState()
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Mis Alumnos", fontWeight = FontWeight.Bold) },
                 actions = {
-                    // INTERRUPTOR CON PICTOGRAMAS INCRUSTADOS (Accesibilidad Cognitiva y Visual)
                     Switch(
                         checked = isDarkMode,
                         onCheckedChange = { onThemeToggle() },
@@ -76,24 +78,45 @@ fun CoachScreen(
             )
         }
     ) { padding ->
-        Box(modifier = Modifier.padding(padding).fillMaxSize()) {
+        Column(modifier = Modifier.padding(padding).fillMaxSize()) {
+            
+            // --- BUSCADOR ---
+            OutlinedTextField(
+                value = textoBusqueda,
+                onValueChange = { viewModel.buscar(it) },
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                placeholder = { Text("Buscar por nickname...") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                trailingIcon = {
+                    if (textoBusqueda.isNotEmpty()) {
+                        IconButton(onClick = { viewModel.buscar("") }) {
+                            Icon(Icons.Default.Clear, contentDescription = "Limpiar")
+                        }
+                    }
+                },
+                singleLine = true,
+                shape = MaterialTheme.shapes.medium
+            )
 
-            if (isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            } else {
-                if (alumnos.isEmpty()) {
-                    Text(
-                        text = "No hay alumnos registrados aún.",
-                        modifier = Modifier.align(Alignment.Center),
-                        color = Color.Gray
-                    )
+            // --- LISTA ---
+            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 } else {
-                    LazyColumn(
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(alumnos) { alumno ->
-                            AlumnoItem(alumno = alumno, onClick = { onAlumnoClick(alumno) })
+                    if (alumnos.isEmpty()) {
+                        Text(
+                            text = if (textoBusqueda.isEmpty()) "No hay alumnos registrados aún." else "No se han encontrado resultados.",
+                            modifier = Modifier.align(Alignment.Center),
+                            color = Color.Gray
+                        )
+                    } else {
+                        LazyColumn(
+                            contentPadding = PaddingValues(bottom = 16.dp, start = 16.dp, end = 16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(alumnos) { alumno ->
+                                AlumnoItem(alumno = alumno, onClick = { onAlumnoClick(alumno) })
+                            }
                         }
                     }
                 }

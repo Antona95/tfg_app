@@ -9,11 +9,17 @@ import network.EntrenamientoRepository
 
 class CoachViewModel(private val repository: EntrenamientoRepository) : ViewModel() {
 
-    // 1. ESTADO: La lista de alumnos
-    private val _alumnos = MutableStateFlow<List<Persona>>(emptyList())
-    val alumnos = _alumnos.asStateFlow()
+    // Lista original sin filtrar
+    private val _todosLosAlumnos = MutableStateFlow<List<Persona>>(emptyList())
+    
+    // Lista filtrada que se muestra en la UI
+    private val _alumnosFiltrados = MutableStateFlow<List<Persona>>(emptyList())
+    val alumnos = _alumnosFiltrados.asStateFlow()
 
-    // 2. ESTADO: ¿Estamos cargando?
+    // Texto de búsqueda
+    private val _textoBusqueda = MutableStateFlow("")
+    val textoBusqueda = _textoBusqueda.asStateFlow()
+
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
 
@@ -22,24 +28,40 @@ class CoachViewModel(private val repository: EntrenamientoRepository) : ViewMode
     }
 
     fun cargarAlumnos() {
-        // MEJORA 1: Si ya está cargando, evitamos lanzar otra petición repetida
         if (_isLoading.value) return
 
         viewModelScope.launch {
             _isLoading.value = true
             try {
                 val lista = repository.obtenerTodosLosUsuarios()
-
-                // MEJORA 2: Solo actualizamos la lista si el servidor devuelve datos.
-                // Así, si hay un error de red temporal, no le borramos los alumnos de la pantalla.
                 if (lista.isNotEmpty()) {
-                    _alumnos.value = lista.filter { it.rol == "USUARIO" }
+                    val soloAlumnos = lista.filter { it.rol == "USUARIO" }
+                    _todosLosAlumnos.value = soloAlumnos
+                    aplicarFiltro()
                 }
-
             } catch (e: Exception) {
                 println("Error cargando alumnos: ${e.message}")
             } finally {
                 _isLoading.value = false
+            }
+        }
+    }
+
+    // Funcion para actualizar el texto y filtrar
+    fun buscar(nuevoTexto: String) {
+        _textoBusqueda.value = nuevoTexto
+        aplicarFiltro()
+    }
+
+    private fun aplicarFiltro() {
+        val texto = _textoBusqueda.value.lowercase()
+        if (texto.isEmpty()) {
+            _alumnosFiltrados.value = _todosLosAlumnos.value
+        } else {
+            _alumnosFiltrados.value = _todosLosAlumnos.value.filter {
+                it.nickname.lowercase().contains(texto) ||
+                it.nombre.lowercase().contains(texto) ||
+                it.apellidos.lowercase().contains(texto)
             }
         }
     }
