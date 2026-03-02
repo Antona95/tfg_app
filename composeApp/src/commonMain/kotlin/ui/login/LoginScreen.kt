@@ -29,6 +29,7 @@ fun LoginScreen(
     onLoginClick: (String, String) -> Unit,
     onRegistroClick: (String, String, String, String) -> Unit,
     mensajeExito: String? = null,
+    errorBackend: String? = null,
     isDarkMode: Boolean,
     onThemeToggle: () -> Unit
 ) {
@@ -55,7 +56,8 @@ fun LoginScreen(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        FormularioAuth(onLoginClick, onRegistroClick, mensajeExito)
+                        // ✅ CORRECCIÓN 1: Pasamos errorBackend aquí
+                        FormularioAuth(onLoginClick, onRegistroClick, mensajeExito, errorBackend)
                     }
                 }
             } else {
@@ -73,7 +75,8 @@ fun LoginScreen(
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp), // Ajustado el padding vertical
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        FormularioAuth(onLoginClick, onRegistroClick, mensajeExito)
+                        // ✅ CORRECCIÓN 1: Pasamos errorBackend aquí también
+                        FormularioAuth(onLoginClick, onRegistroClick, mensajeExito, errorBackend)
                     }
                 }
             }
@@ -101,7 +104,8 @@ fun LoginScreen(
 fun FormularioAuth(
     onLoginClick: (String, String) -> Unit,
     onRegistroClick: (String, String, String, String) -> Unit,
-    mensajeExito: String?
+    mensajeExito: String?,
+    errorBackend: String?
 ) {
     var isRegistering by remember { mutableStateOf(false) }
     var nickname by remember { mutableStateOf("") }
@@ -110,6 +114,7 @@ fun FormularioAuth(
     var apellidos by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+
 
     // Sincronizacion de exito: Vuelve al login al registrar correctamente
     LaunchedEffect(mensajeExito) {
@@ -179,6 +184,9 @@ fun FormularioAuth(
         // Botón principal
         Button(
             onClick = {
+                // Limpiamos el error local al intentar de nuevo
+                errorMessage = null
+
                 if (isRegistering) {
                     if (nickname.isNotEmpty() && password.isNotEmpty() && nombre.isNotEmpty() && apellidos.isNotEmpty()) {
                         onRegistroClick(nickname, password, nombre, apellidos)
@@ -198,8 +206,14 @@ fun FormularioAuth(
             Text(if (isRegistering) "CREAR CUENTA" else "ENTRAR")
         }
 
-        if (errorMessage != null) {
-            Text(text = errorMessage!!, color = MaterialTheme.colorScheme.error)
+        // ✅ CORRECCIÓN 2: Mostrar el error (ya sea local o del backend)
+        val errorAMostrar = errorMessage ?: errorBackend
+        if (errorAMostrar != null) {
+            Text(
+                text = errorAMostrar,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(top = 8.dp)
+            )
         }
 
         if (mensajeExito != null) {

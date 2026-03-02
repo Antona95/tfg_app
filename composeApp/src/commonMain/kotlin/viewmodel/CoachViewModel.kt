@@ -35,7 +35,7 @@ class CoachViewModel(private val repository: EntrenamientoRepository) : ViewMode
             try {
                 val lista = repository.obtenerTodosLosUsuarios()
                 if (lista.isNotEmpty()) {
-                    val soloAlumnos = lista.filter { it.rol == "USUARIO" }
+                    val soloAlumnos = lista.filter { it.rol == "USUARIO" && it.nickname != "MasterCoach" }
                     _todosLosAlumnos.value = soloAlumnos
                     aplicarFiltro()
                 }
@@ -52,7 +52,34 @@ class CoachViewModel(private val repository: EntrenamientoRepository) : ViewMode
         _textoBusqueda.value = nuevoTexto
         aplicarFiltro()
     }
+    fun eliminarAlumno(nickname: String) {
+        // SEGURIDAD: No permitimos que el Coach se borre a sí mismo
+        if (nickname.equals("MasterCoach", ignoreCase = true)) {
+            println("Acción bloqueada: No puedes borrar al administrador")
+            return
+        }
 
+        viewModelScope.launch {
+            val exito = repository.eliminarAlumno(nickname)
+            if (exito) {
+                cargarAlumnos()
+            }
+        }
+    }
+
+    fun crearNuevoAlumno(nickname: String, pass: String, nombre: String, apellidos: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            val exito = repository.crearAlumno(nickname, pass, nombre, apellidos)
+            if (exito) {
+                // Volvemos a pedir todos los alumnos al servidor
+                cargarAlumnos()
+            } else {
+                println("El servidor rechazó la creación del alumno")
+            }
+            _isLoading.value = false
+        }
+    }
     private fun aplicarFiltro() {
         val texto = _textoBusqueda.value.lowercase()
         if (texto.isEmpty()) {

@@ -103,9 +103,10 @@ fun HistorialScreen(
                                     }
                                 }
                                 Text(
-                                    text = sesion.titulo ?: "Entrenamiento sin nombre",
+                                    text = "Rutina programada",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Medium
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Text(
                                     text = "${sesion.ejercicios.size} ejercicios planificados",

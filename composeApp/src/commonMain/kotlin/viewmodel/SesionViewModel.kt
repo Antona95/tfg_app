@@ -88,7 +88,6 @@ class SesionViewModel(
                         repeticiones = borrador.repeticiones,
                         peso = borrador.peso.toDoubleOrNull(),
                         bloque = borrador.bloque,
-                        observaciones = null
                     )
                 }
 

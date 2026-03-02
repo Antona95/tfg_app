@@ -96,7 +96,7 @@ fun DetalleSesionScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text(sesion.titulo, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                            Text(sesion.idSesion, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                             Spacer(modifier = Modifier.height(8.dp))
                             if (sesion.finalizada) {
                                 Text("✅ FINALIZADA", color = Color(0xFF2E7D32), fontWeight = FontWeight.Bold)

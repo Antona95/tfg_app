@@ -1,41 +1,43 @@
 package com.example.app_tfg
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import dev.icerock.moko.mvvm.compose.getViewModel
 import dev.icerock.moko.mvvm.compose.viewModelFactory
 import network.createHttpClient
 import network.EntrenamientoRepository
 import viewmodel.LoginViewModel
-import viewmodel.CoachViewModel
-import viewmodel.HoyViewModel
-import viewmodel.HistorialViewModel
 import ui.login.LoginScreen
+import viewmodel.CoachViewModel
+import viewmodel.BibliotecaViewModel
+import viewmodel.HoyViewModel
 import ui.coach.CoachScreen
 import ui.coach.UserOptionsScreen
 import ui.coach.NuevaSesionScreen
-import ui.coach.HistorialScreen
-import ui.coach.DetalleSesionScreen
+import ui.coach.BibliotecaScreen
 import ui.user.HoyScreen
-import ui.user.AlumnoHomeScreen
 import model.Persona
-import kotlinx.coroutines.launch
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
-import androidx.compose.runtime.saveable.rememberSaveable
+import ui.coach.HistorialScreen
+import ui.user.AlumnoHomeScreen
+import viewmodel.HistorialViewModel
 
 @Composable
 fun App() {
-    // 1. ESTADO GLOBAL (State Hoisting) - Usamos rememberSaveable para que sobreviva a rotaciones
+    // 1. Estado global del modo oscuro con rememberSaveable para sobrevivir a la rotación
     var isDarkMode by rememberSaveable { mutableStateOf(false) }
 
-    // 2. CONFIGURACIÓN DEL TEMA
-    val colorScheme = if (isDarkMode) darkColorScheme() else lightColorScheme()
+    // 2. Definimos los colores dependiendo del estado
+    val colores = if (isDarkMode) darkColorScheme() else lightColorScheme()
 
-    MaterialTheme(colorScheme = colorScheme) {
+    // 3. Aplicamos los colores al MaterialTheme para que toda la app reaccione
+    MaterialTheme(colorScheme = colores) {
+
+        // --- CONFIGURACIÓN DE CONEXIÓN ---
         val client = remember { createHttpClient() }
         val repository = remember { EntrenamientoRepository(client) }
-        val scope = rememberCoroutineScope()
 
         val loginViewModel = getViewModel(
             key = "login-screen",
@@ -48,82 +50,56 @@ fun App() {
             val usuario = state.usuarioLogueado!!
 
             if (usuario.rol == "ENTRENADOR") {
-                // =================================================
-                // SECCIÓN ENTRENADOR (Persistente)
-                // =================================================
+                var usuarioSeleccionado by remember { mutableStateOf<Persona?>(null) }
+                var creandoSesion by remember { mutableStateOf(false) }
+                var viendoBiblioteca by remember { mutableStateOf(false) }
+
+                // 1. ELEVAMOS LOS VIEWMODELS DEL ENTRENADOR
+                // Al estar aquí arriba, sobreviven a la navegación y a la rotación
                 val coachViewModel = getViewModel(
                     key = "coach-screen",
                     factory = viewModelFactory { CoachViewModel(repository) }
                 )
 
-                // Añadimos el HistorialViewModel para el Coach en el nivel superior para que persista
-                val historialCoachVM = getViewModel(
-                    key = "historial-coach-vm",
-                    factory = viewModelFactory { HistorialViewModel(repository) }
+                val biblioViewModel = getViewModel(
+                    key = "biblioteca-screen",
+                    factory = viewModelFactory { BibliotecaViewModel(repository) }
                 )
 
-                // Usamos rememberSaveable para que no se pierda el alumno al rotar
-                var usuarioSeleccionado by remember { mutableStateOf<Persona?>(null) }
-                var creandoSesion by rememberSaveable { mutableStateOf(false) }
-                var viendoHistorial by rememberSaveable { mutableStateOf(false) }
-
-                var sesionSeleccionada by remember { mutableStateOf<model.SesionEntrenamiento?>(null) }
-                var sesionParaDuplicar by remember { mutableStateOf<model.SesionEntrenamiento?>(null) }
-
                 when {
-                    sesionSeleccionada != null -> {
-                        DetalleSesionScreen(
-                            sesion = sesionSeleccionada!!,
-                            isDarkMode = isDarkMode,
-                            onBack = { sesionSeleccionada = null }
+                    viendoBiblioteca -> {
+                        BibliotecaScreen(
+                            viewModel = biblioViewModel, // Usamos el ViewModel elevado
+                            onBack = { viendoBiblioteca = false }
                         )
                     }
+
                     creandoSesion && usuarioSeleccionado != null -> {
                         NuevaSesionScreen(
                             idUsuario = usuarioSeleccionado!!.id,
                             repository = repository,
                             isDarkMode = isDarkMode,
-                            sesionBase = sesionParaDuplicar,
-                            onNavigateBack = {
-                                creandoSesion = false
-                                sesionParaDuplicar = null
-                            }
+                            onNavigateBack = { creandoSesion = false },
+                            sesionBase = null
                         )
                     }
-                    viendoHistorial && usuarioSeleccionado != null -> {
-                        HistorialScreen(
-                            idUsuario = usuarioSeleccionado!!.id,
-                            repository = repository,
-                            viewModel = historialCoachVM,
-                            onBack = { viendoHistorial = false },
-                            onSesionClick = { sesion -> sesionSeleccionada = sesion }
-                        )
-                    }
+
                     usuarioSeleccionado != null -> {
                         UserOptionsScreen(
                             usuario = usuarioSeleccionado!!,
                             onBack = { usuarioSeleccionado = null },
-                            onNuevaSesion = {
-                                sesionParaDuplicar = null
-                                creandoSesion = true
-                            },
-                            onDuplicarSesion = {
-                                scope.launch {
-                                    val historial = repository.obtenerHistorialSesiones(usuarioSeleccionado!!.id)
-                                    if (historial.isNotEmpty()) {
-                                        sesionParaDuplicar = historial.first()
-                                        creandoSesion = true
-                                    }
-                                }
-                            },
-                            onVerHistorial = { viendoHistorial = true }
+                            onNuevaSesion = { creandoSesion = true },
+                            onDuplicarSesion = { /* TODO */ },
+                            onVerHistorial = { /* TODO */ }
                         )
                     }
+
                     else -> {
                         CoachScreen(
-                            viewModel = coachViewModel,
-                            onLogout = { loginViewModel.cerrarSesion() },
+                            viewModel = coachViewModel, // Usamos el ViewModel elevado
+                            onLogoutClick = { loginViewModel.cerrarSesion() },
                             onAlumnoClick = { alumno -> usuarioSeleccionado = alumno },
+                            onBibliotecaClick = { viendoBiblioteca = true },
                             isDarkMode = isDarkMode,
                             onThemeToggle = { isDarkMode = !isDarkMode }
                         )
@@ -131,9 +107,11 @@ fun App() {
                 }
 
             } else {
-                // =================================================
-                // SECCIÓN ALUMNO (Persistente)
-                // =================================================
+                // 1. Estado de navegación para el Alumno (sobrevive a rotaciones)
+                var pantallaAlumno by rememberSaveable { mutableStateOf("HOME") }
+
+                //  2. ELEVAMOS LOS VIEWMODELS DEL ALUMNO
+                // Los datos ya no se borrarán al ir de 'Hoy' al 'Home'
                 val hoyViewModel = getViewModel(
                     key = "hoy-screen-vm",
                     factory = viewModelFactory { HoyViewModel(repository) }
@@ -144,11 +122,9 @@ fun App() {
                     factory = viewModelFactory { HistorialViewModel(repository) }
                 )
 
-                var pantallaAlumno by rememberSaveable { mutableStateOf("MENU") }
-                var sesionDetalleAlumno by remember { mutableStateOf<model.SesionEntrenamiento?>(null) }
-
+                // 3. Control de pantallas
                 when (pantallaAlumno) {
-                    "MENU" -> {
+                    "HOME" -> {
                         AlumnoHomeScreen(
                             usuario = usuario,
                             onVerHoy = { pantallaAlumno = "HOY" },
@@ -158,48 +134,35 @@ fun App() {
                             onThemeToggle = { isDarkMode = !isDarkMode }
                         )
                     }
+
                     "HOY" -> {
                         HoyScreen(
                             idUsuario = usuario.id,
-                            viewModel = hoyViewModel,
+                            viewModel = hoyViewModel, // Usamos el ViewModel elevado
                             isDarkMode = isDarkMode,
-                            onNavigateBack = { pantallaAlumno = "MENU" }
+                            onNavigateBack = { pantallaAlumno = "HOME" }
                         )
                     }
+
                     "HISTORIAL" -> {
                         HistorialScreen(
                             idUsuario = usuario.id,
                             repository = repository,
-                            viewModel = historialViewModel,
-                            onBack = { pantallaAlumno = "MENU" },
-                            onSesionClick = { sesion ->
-                                sesionDetalleAlumno = sesion
-                                pantallaAlumno = "DETALLE"
-                            }
+                            viewModel = historialViewModel, // Usamos el ViewModel elevado
+                            onBack = { pantallaAlumno = "HOME" },
+                            onSesionClick = { /* TODO: Navegar al detalle si es necesario */ }
                         )
-                    }
-                    "DETALLE" -> {
-                        if (sesionDetalleAlumno != null) {
-                            DetalleSesionScreen(
-                                sesion = sesionDetalleAlumno!!,
-                                isDarkMode = isDarkMode,
-                                onBack = {
-                                    pantallaAlumno = "HISTORIAL"
-                                    sesionDetalleAlumno = null
-                                }
-                            )
-                        } else {
-                            pantallaAlumno = "MENU"
-                        }
                     }
                 }
             }
 
         } else {
+            // Pantalla de Login con los parámetros del modo oscuro integrados
             LoginScreen(
                 onLoginClick = { nick, pass -> loginViewModel.onLoginClick(nick, pass) },
                 onRegistroClick = { nick, pass, nom, ape -> loginViewModel.onRegistroClick(nick, pass, nom, ape) },
                 mensajeExito = state.mensajeExito,
+                errorBackend = state.error,
                 isDarkMode = isDarkMode,
                 onThemeToggle = { isDarkMode = !isDarkMode }
             )

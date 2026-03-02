@@ -116,7 +116,7 @@ fun ContenidoEntreno(sesion: SesionEntrenamiento, isDarkMode: Boolean, onFinaliz
                     Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
                         Text("Fecha: ${sesion.fechaProgramada}", style = MaterialTheme.typography.labelLarge)
                         Text(
-                            text = sesion.titulo,
+                            text = "Sesión de Entrenamiento",
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold
                         )
