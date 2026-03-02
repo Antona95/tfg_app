@@ -44,20 +44,32 @@ class HoyViewModel(private val repository: EntrenamientoRepository) : ViewModel(
     // Cambia la cabecera de la función para añadir el parámetro 'onExito'
     fun finalizarEntrenamiento(idSesion: String, idUsuario: String, onExito: () -> Unit) {
         viewModelScope.launch {
+            // 1. Mostramos estado de carga mientras procesamos
+            _uiState.value = HoyUiState.Loading
+
             try {
                 val exito = repository.finalizarSesion(idSesion)
+
                 if (exito) {
-                    // Si el servidor dice que OK, recargamos la sesión de hoy
+                    // 2. En lugar de solo recargar, podemos forzar un pequeño delay
+                    // o simplemente confiar en que el Repository ya limpió la caché.
                     val sesionActualizada = repository.obtenerSesionHoy(idUsuario)
+
                     if (sesionActualizada != null) {
                         _uiState.value = HoyUiState.Success(sesionActualizada)
+                    } else {
+                        // Si no hay sesión hoy tras finalizar, mostramos estado vacío
+                        _uiState.value = HoyUiState.Empty
                     }
 
-                    // AQUÍ EJECUTAMOS EL AVISO
+                    // 3. Notificamos a la UI (para mostrar un Toast o navegar)
                     onExito()
+                } else {
+                    _uiState.value = HoyUiState.Error("El servidor no pudo marcar la sesión como finalizada")
                 }
             } catch (e: Exception) {
-                _uiState.value = HoyUiState.Error("Error al finalizar")
+                println(" Error en finalizarEntrenamiento: ${e.message}")
+                _uiState.value = HoyUiState.Error("Error de conexión al finalizar sesión")
             }
         }
     }

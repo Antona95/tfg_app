@@ -40,4 +40,13 @@ class HistorialViewModel(private val repository: EntrenamientoRepository) : View
             }
         }
     }
+    fun marcarComoFinalizada(idSesion: String, idUsuario: String) {
+        viewModelScope.launch {
+            val exito = repository.finalizarSesion(idSesion)
+            if (exito) {
+                // Refrescamos el historial completo de ese usuario
+                cargarHistorial(idUsuario)
+            }
+        }
+    }
 }

@@ -26,7 +26,6 @@ data class CrearEjercicioRequest(
     val repeticiones: String, // String por si pongo rangos (ej: "10-12")
     val peso: Double? = null, // Puede ser nulo si no asigno peso
     val bloque: Int= 0,
-    val observaciones: String? = null
 )
 /**
  * Clase auxiliar para la Interfaz de Usuario (UI).

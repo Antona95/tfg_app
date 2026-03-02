@@ -94,7 +94,10 @@ class EntrenamientoRepository(
                 contentType(ContentType.Application.Json)
             }
             respuesta.status.value in 200..299
-        } catch (e: Exception) { false }
+        } catch (e: Exception) {
+            println(" Error al finalizar sesión: ${e.message}")
+            false
+        }
     }
 
     // --- EJERCICIOS (NUEVA FUNCIONALIDAD) ---
