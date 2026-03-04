@@ -56,7 +56,7 @@ fun LoginScreen(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // ✅ CORRECCIÓN 1: Pasamos errorBackend aquí
+                        // Pasamos errorBackend aquí
                         FormularioAuth(onLoginClick, onRegistroClick, mensajeExito, errorBackend)
                     }
                 }
@@ -75,7 +75,7 @@ fun LoginScreen(
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp), // Ajustado el padding vertical
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // ✅ CORRECCIÓN 1: Pasamos errorBackend aquí también
+                        // Pasamos errorBackend aquí también
                         FormularioAuth(onLoginClick, onRegistroClick, mensajeExito, errorBackend)
                     }
                 }

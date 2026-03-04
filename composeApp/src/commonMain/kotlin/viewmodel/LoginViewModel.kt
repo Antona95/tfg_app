@@ -23,15 +23,19 @@ class LoginViewModel(private val repository: EntrenamientoRepository) : ViewMode
 
     // Gestion de la validacion de credenciales
     fun onLoginClick(nickname: String, pass: String) {
+        // 1. LIMPIEZA: Eliminamos espacios accidentales que el teclado movil suele añadir
+        val nickLimpio = nickname.trim()
+        val passLimpia = pass.trim()
+
         // Iniciamos carga y limpiamos errores previos
         _uiState.update { it.copy(isLoading = true, error = null, mensajeExito = null) }
 
         viewModelScope.launch {
             try {
-                // AÑADIMOS ESTE PRINT PARA VER QUÉ ESTAMOS ENVIANDO
-                println(" INTENTANDO LOGIN -> Nickname: $nickname, Pass: $pass")
+                // DEBUG: Para ver en Logcat exactamente que enviamos
+                println(">>> INTENTO LOGIN: '$nickLimpio' / '$passLimpia'")
 
-                val persona = repository.login(nickname, pass)
+                val persona = repository.login(nickLimpio, passLimpia)
 
                 if (persona != null) {
                     // Login exitoso: guardamos el usuario
@@ -49,12 +53,15 @@ class LoginViewModel(private val repository: EntrenamientoRepository) : ViewMode
 
     // Gestion de la creacion de nuevas cuentas
     fun onRegistroClick(nickname: String, pass: String, nombre: String, apellidos: String) {
+        val nickLimpio = nickname.trim()
+        val passLimpia = pass.trim()
+        
         // Iniciamos carga y limpiamos estados anteriores
         _uiState.update { it.copy(isLoading = true, error = null, mensajeExito = null) }
 
         viewModelScope.launch {
             try {
-                val exito = repository.registrarUsuario(nickname, pass, nombre, apellidos)
+                val exito = repository.registrarUsuario(nickLimpio, passLimpia, nombre, apellidos)
                 if (exito) {
                     // Registro exitoso: actualizamos mensajeExito para que la UI cambie al modo Login
                     _uiState.update {

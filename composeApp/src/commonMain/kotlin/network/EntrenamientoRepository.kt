@@ -16,7 +16,7 @@ class EntrenamientoRepository(
     private val client: HttpClient
 ) {
     // Usamos el puerto 8080 como está en tu configuración actual
-    private val baseUrl = "http://10.0.2.2:3005"
+    private val baseUrl = "http://10.0.2.2:8080"
 
     // --- AUTENTICACIÓN ---
     suspend fun login(nickname: String, pass: String): Persona? {
@@ -70,6 +70,15 @@ class EntrenamientoRepository(
             if (respuesta.status.value in 200..299) respuesta.body<SesionEntrenamiento>() else null
         } catch (e: Exception) { null }
     }
+    suspend fun obtenerUltimaSesion(idUsuario: String): SesionEntrenamiento? {
+        return try {
+            // Llamamos al historial y nos quedamos con la primera (que suele ser la más reciente)
+            val historial = obtenerHistorialSesiones(idUsuario)
+            historial.firstOrNull()
+        } catch (e: Exception) {
+            null
+        }
+    }
 
     suspend fun obtenerHistorialSesiones(idUsuario: String): List<SesionEntrenamiento> {
         return try {
@@ -88,14 +97,22 @@ class EntrenamientoRepository(
         } catch (e: Exception) { false }
     }
 
-    suspend fun finalizarSesion(idSesion: String): Boolean {
+    suspend fun finalizarSesion(idSesion: String, ejercicios: List<CrearEjercicioRequest>): Boolean {
         return try {
             val respuesta = client.patch("$baseUrl/api/sesiones/$idSesion/finalizar") {
                 contentType(ContentType.Application.Json)
+                // IMPORTANTE: Enviamos el mapa con la clave "ejercicios" que espera tu backend TS
+                setBody(mapOf("ejercicios" to ejercicios))
             }
+
+            if (respuesta.status.value !in 200..299) {
+                val error = respuesta.bodyAsText()
+                println("Error Servidor: $error")
+            }
+
             respuesta.status.value in 200..299
         } catch (e: Exception) {
-            println(" Error al finalizar sesión: ${e.message}")
+            e.printStackTrace()
             false
         }
     }
@@ -162,3 +179,4 @@ class EntrenamientoRepository(
         }
     }
 }
+

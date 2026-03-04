@@ -44,32 +44,40 @@ class HoyViewModel(private val repository: EntrenamientoRepository) : ViewModel(
     // Cambia la cabecera de la función para añadir el parámetro 'onExito'
     fun finalizarEntrenamiento(idSesion: String, idUsuario: String, onExito: () -> Unit) {
         viewModelScope.launch {
-            // 1. Mostramos estado de carga mientras procesamos
-            _uiState.value = HoyUiState.Loading
+            val estado = _uiState.value
+            if (estado is HoyUiState.Success) {
 
-            try {
-                val exito = repository.finalizarSesion(idSesion)
+                // 1. CONVERSIÓN: Mapeamos de 'DetalleSesion' a 'CrearEjercicioRequest'
+                // Esto es lo que "limpia" el rojo, porque ahora los tipos coinciden con el Repo
+                val ejerciciosParaEnviar = estado.sesion.ejercicios.map { detalle ->
+                    model.CrearEjercicioRequest(
+                        nombre = detalle.nombre ?: "",
+                        series = detalle.series,
+                        repeticiones = detalle.repeticiones,
+                        peso = detalle.peso ?: 0.0,
+                        bloque = detalle.bloque
+                    )
+                }
+
+                // 2. Ahora llamamos al repo con la lista convertida 'ejerciciosParaEnviar'
+                val exito = repository.finalizarSesion(idSesion, ejerciciosParaEnviar)
 
                 if (exito) {
-                    // 2. En lugar de solo recargar, podemos forzar un pequeño delay
-                    // o simplemente confiar en que el Repository ya limpió la caché.
-                    val sesionActualizada = repository.obtenerSesionHoy(idUsuario)
-
-                    if (sesionActualizada != null) {
-                        _uiState.value = HoyUiState.Success(sesionActualizada)
-                    } else {
-                        // Si no hay sesión hoy tras finalizar, mostramos estado vacío
-                        _uiState.value = HoyUiState.Empty
+                    // Forzamos la recarga para ver el estado 'finalizada = true'
+                    // Nota: He quitado el IF de cargarEntrenamiento para que fuerce la recarga
+                    _uiState.value = HoyUiState.Loading // Opcional: mostrar carga un segundo
+                    try {
+                        val sesionNueva = repository.obtenerSesionHoy(idUsuario)
+                        if (sesionNueva != null) {
+                            _uiState.value = HoyUiState.Success(sesionNueva)
+                        } else {
+                            _uiState.value = HoyUiState.Empty
+                        }
+                    } catch (e: Exception) {
+                        _uiState.value = HoyUiState.Error("Error al refrescar")
                     }
-
-                    // 3. Notificamos a la UI (para mostrar un Toast o navegar)
                     onExito()
-                } else {
-                    _uiState.value = HoyUiState.Error("El servidor no pudo marcar la sesión como finalizada")
                 }
-            } catch (e: Exception) {
-                println(" Error en finalizarEntrenamiento: ${e.message}")
-                _uiState.value = HoyUiState.Error("Error de conexión al finalizar sesión")
             }
         }
     }

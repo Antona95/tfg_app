@@ -16,11 +16,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import network.EntrenamientoRepository
 import viewmodel.SesionUiState
 import viewmodel.SesionViewModel
-import viewmodel.SesionViewModelFactory
 import model.EjercicioDraft
 import model.SesionEntrenamiento
 import kotlinx.datetime.Clock
@@ -48,12 +46,11 @@ fun obtenerInfoVisualBloque(lista: List<EjercicioDraft>, indexActual: Int): Pair
 @Composable
 fun NuevaSesionScreen(
     idUsuario: String,
-    repository: EntrenamientoRepository,
+    viewModel: SesionViewModel,
     isDarkMode: Boolean,
     onNavigateBack: () -> Unit,
     sesionBase: SesionEntrenamiento? = null
 ) {
-    val viewModel: SesionViewModel = viewModel(factory = SesionViewModelFactory(repository))
     val uiState by viewModel.uiState.collectAsState()
     val listaEjercicios by viewModel.listaEjercicios.collectAsState()
 
@@ -106,6 +103,19 @@ fun NuevaSesionScreen(
                     Column(modifier = Modifier.weight(0.35f).fillMaxHeight().padding(end = 16.dp), verticalArrangement = Arrangement.SpaceBetween) {
                         Column {
                             OutlinedTextField(value = tituloSesion, onValueChange = { tituloSesion = it }, label = { Text("Nombre del entrenamiento") }, modifier = Modifier.fillMaxWidth())
+                            Spacer(modifier = Modifier.height(8.dp))
+                            
+                            // BOTÓN COPIAR ÚLTIMA (Landscape)
+                            OutlinedButton(
+                                onClick = { viewModel.copiarUltimaSesion(idUsuario) },
+                                modifier = Modifier.fillMaxWidth().height(48.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)
+                            ) {
+                                Icon(Icons.Default.ContentCopy, null)
+                                Spacer(Modifier.width(8.dp))
+                                Text("CARGAR ÚLTIMA")
+                            }
+
                             Spacer(modifier = Modifier.height(16.dp))
                             Text("Agrupar últimos:", style = MaterialTheme.typography.labelSmall)
                             Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -147,6 +157,19 @@ fun NuevaSesionScreen(
                 // Vista Vertical (Portrait)
                 Column(modifier = Modifier.padding(padding).fillMaxSize().padding(horizontal = 16.dp)) {
                     OutlinedTextField(value = tituloSesion, onValueChange = { tituloSesion = it }, label = { Text("Nombre del entrenamiento") }, modifier = Modifier.fillMaxWidth().padding(top = 16.dp))
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    // BOTÓN COPIAR ÚLTIMA (Portrait)
+                    OutlinedButton(
+                        onClick = { viewModel.copiarUltimaSesion(idUsuario) },
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        Icon(Icons.Default.ContentCopy, null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("CARGAR ÚLTIMA SESIÓN")
+                    }
+
                     Spacer(modifier = Modifier.height(16.dp))
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(onClick = { viewModel.agruparUltimos(2) }, modifier = Modifier.weight(1f)) { Text("Biserie") }

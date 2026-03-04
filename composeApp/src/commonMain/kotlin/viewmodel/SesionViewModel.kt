@@ -1,8 +1,6 @@
 package viewmodel
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewModelScope
+import dev.icerock.moko.mvvm.viewmodel.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -31,22 +29,22 @@ class SesionViewModel(
 
     private var ultimoBloqueId = 0
 
-    fun inicializarConSesionBase(sesionBase: SesionEntrenamiento?) {
-        if (_listaEjercicios.value.isNotEmpty()) return
+    fun inicializarConSesionBase(sesionBase: SesionEntrenamiento?, forzar: Boolean = false) {
+        if (!forzar && _listaEjercicios.value.isNotEmpty()) return
 
         _listaEjercicios.value = sesionBase?.ejercicios?.map { detalle ->
             EjercicioDraft(
                 nombre = detalle.nombre ?: "",
                 series = detalle.series.toString(),
                 repeticiones = detalle.repeticiones,
-                peso = detalle.peso?.toString() ?: "",
+                peso = detalle.peso?.toString() ?: "0.0",
                 bloque = detalle.bloque
             )
-        } ?: listOf(EjercicioDraft(nombre = "", series = "3", repeticiones = "10", peso = "", bloque = 0))
+        } ?: listOf(EjercicioDraft(nombre = "", series = "3", repeticiones = "10", peso = "0.0", bloque = 0))
     }
 
     fun agregarEjercicio() {
-        _listaEjercicios.value = _listaEjercicios.value + EjercicioDraft(nombre = "", series = "3", repeticiones = "10", peso = "", bloque = 0)
+        _listaEjercicios.value = _listaEjercicios.value + EjercicioDraft(nombre = "", series = "3", repeticiones = "10", peso = "0.0", bloque = 0)
     }
 
     fun eliminarEjercicio(index: Int) {
@@ -81,12 +79,18 @@ class SesionViewModel(
         viewModelScope.launch {
             try {
                 _uiState.value = SesionUiState.Loading
+                
+                if (_listaEjercicios.value.isEmpty()) {
+                    _uiState.value = SesionUiState.Error("Añade al menos un ejercicio")
+                    return@launch
+                }
+
                 val ejerciciosParaEnviar = _listaEjercicios.value.map { borrador ->
                     CrearEjercicioRequest(
                         nombre = borrador.nombre,
                         series = borrador.series.toIntOrNull() ?: 0,
                         repeticiones = borrador.repeticiones,
-                        peso = borrador.peso.toDoubleOrNull(),
+                        peso = borrador.peso.toDoubleOrNull() ?: 0.0,
                         bloque = borrador.bloque,
                     )
                 }
@@ -103,16 +107,65 @@ class SesionViewModel(
         }
     }
 
+    /**
+     * Lógica delegada desde App.kt para obtener la última sesión y prepararla para duplicar.
+     */
+    fun prepararDuplicado(idUsuario: String, onExito: (SesionEntrenamiento) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val historial = repository.obtenerHistorialSesiones(idUsuario)
+                if (historial.isNotEmpty()) {
+                    val ultima = historial.maxByOrNull { it.fechaProgramada } ?: historial.last()
+                    onExito(ultima)
+                }
+            } catch (e: Exception) {
+                println("Error al preparar duplicado: ${e.message}")
+            }
+        }
+    }
+
+    fun finalizarEntrenamiento(idSesion: String) {
+        viewModelScope.launch {
+            try {
+                _uiState.value = SesionUiState.Loading
+
+                val ejerciciosFinales = _listaEjercicios.value.map { borrador ->
+                    CrearEjercicioRequest(
+                        nombre = borrador.nombre,
+                        series = borrador.series.toIntOrNull() ?: 0,
+                        repeticiones = borrador.repeticiones,
+                        peso = borrador.peso.toDoubleOrNull() ?: 0.0,
+                        bloque = borrador.bloque
+                    )
+                }
+
+                if (repository.finalizarSesion(idSesion, ejerciciosFinales)) {
+                    _uiState.value = SesionUiState.Success
+                } else {
+                    _uiState.value = SesionUiState.Error("No se pudo guardar el progreso.")
+                }
+            } catch (e: Exception) {
+                _uiState.value = SesionUiState.Error("Error: ${e.message}")
+            }
+        }
+    }
+
+    fun copiarUltimaSesion(idUsuario: String) {
+        viewModelScope.launch {
+            try {
+                val ultima = repository.obtenerUltimaSesion(idUsuario)
+                if (ultima != null) {
+                    inicializarConSesionBase(ultima, forzar = true)
+                }
+            } catch (e: Exception) {
+                println("Error al copiar sesión: ${e.message}")
+            }
+        }
+    }
+
     fun resetState() {
         _uiState.value = SesionUiState.Idle
         _listaEjercicios.value = emptyList()
         ultimoBloqueId = 0
-    }
-}
-
-class SesionViewModelFactory(private val repository: EntrenamientoRepository) : ViewModelProvider.Factory {
-    @Suppress("UNCHECKED_CAST")
-    override fun <T : androidx.lifecycle.ViewModel> create(modelClass: kotlin.reflect.KClass<T>, extras: androidx.lifecycle.viewmodel.CreationExtras): T {
-        return SesionViewModel(repository) as T
     }
 }

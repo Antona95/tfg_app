@@ -33,12 +33,16 @@ class CoachViewModel(private val repository: EntrenamientoRepository) : ViewMode
         viewModelScope.launch {
             _isLoading.value = true
             try {
+                // Obtenemos la lista directamente del repositorio.
+                // El repositorio ya se encarga de quitar al "ENTRENADOR".
                 val lista = repository.obtenerTodosLosUsuarios()
-                if (lista.isNotEmpty()) {
-                    val soloAlumnos = lista.filter { it.rol == "USUARIO" && it.nickname != "MasterCoach" }
-                    _todosLosAlumnos.value = soloAlumnos
-                    aplicarFiltro()
-                }
+
+                _todosLosAlumnos.value = lista
+                aplicarFiltro()
+
+                // DEBUG: Útil para ver qué llega en los logs de Android Studio
+                println("ALUMNOS CARGADOS: ${lista.size}")
+
             } catch (e: Exception) {
                 println("Error cargando alumnos: ${e.message}")
             } finally {
@@ -52,6 +56,7 @@ class CoachViewModel(private val repository: EntrenamientoRepository) : ViewMode
         _textoBusqueda.value = nuevoTexto
         aplicarFiltro()
     }
+
     fun eliminarAlumno(nickname: String) {
         // SEGURIDAD: No permitimos que el Coach se borre a sí mismo
         if (nickname.equals("MasterCoach", ignoreCase = true)) {
@@ -72,7 +77,6 @@ class CoachViewModel(private val repository: EntrenamientoRepository) : ViewMode
             _isLoading.value = true
             val exito = repository.crearAlumno(nickname, pass, nombre, apellidos)
             if (exito) {
-                // Volvemos a pedir todos los alumnos al servidor
                 cargarAlumnos()
             } else {
                 println("El servidor rechazó la creación del alumno")
@@ -80,6 +84,7 @@ class CoachViewModel(private val repository: EntrenamientoRepository) : ViewMode
             _isLoading.value = false
         }
     }
+
     private fun aplicarFiltro() {
         val texto = _textoBusqueda.value.lowercase()
         if (texto.isEmpty()) {
