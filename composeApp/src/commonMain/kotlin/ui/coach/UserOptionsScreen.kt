@@ -2,7 +2,7 @@ package ui.coach
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan // IMPORTANTE PARA EL TÍTULO
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -10,7 +10,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -22,19 +22,21 @@ import model.Persona
 @Composable
 fun UserOptionsScreen(
     usuario: Persona,
+    tieneSesiones: Boolean, // <--- 1. NUEVO PARÁMETRO AÑADIDO
     onBack: () -> Unit,
     onNuevaSesion: () -> Unit,
     onDuplicarSesion: () -> Unit,
     onVerHistorial: () -> Unit
 ) {
-    // 1. EL ENVOLTORIO MULTIPLATAFORMA
+    // 2. ESTADO PARA CONTROLAR EL MENSAJE DE ERROR
+    var mostrarErrorVacio by remember { mutableStateOf(false) }
+
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val isLandscape = maxWidth > maxHeight
 
         Scaffold(
             topBar = {
                 TopAppBar(
-                    // Mostramos el nombre del usuario seleccionado
                     title = { Text(usuario.nombre + " " + usuario.apellidos, fontWeight = FontWeight.Bold) },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
@@ -44,19 +46,17 @@ fun UserOptionsScreen(
                 )
             }
         ) { padding ->
-            // 2. LA CUADRÍCULA MÁGICA
             LazyVerticalGrid(
                 columns = GridCells.Fixed(if (isLandscape) 2 else 1),
                 modifier = Modifier
                     .padding(padding)
                     .fillMaxSize()
-                    .padding(horizontal = 24.dp), // Quitamos el padding vertical general para que el scroll fluya mejor
+                    .padding(horizontal = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 contentPadding = PaddingValues(vertical = 24.dp)
             ) {
 
-                // CABECERA: Ocupa todo el ancho (maxLineSpan)
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -68,7 +68,6 @@ fun UserOptionsScreen(
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
-
                         Text(
                             text = "¿Qué quieres hacer hoy?",
                             style = MaterialTheme.typography.bodyLarge
@@ -76,7 +75,6 @@ fun UserOptionsScreen(
                     }
                 }
 
-                // OPCIÓN 1: CREAR DESDE CERO
                 item {
                     MenuButton(
                         text = "Nueva Sesión (Desde Cero)",
@@ -85,16 +83,21 @@ fun UserOptionsScreen(
                     )
                 }
 
-                // OPCIÓN 2: DUPLICAR (PROGRESAR)
+                // 3. AQUÍ INTERCEPTAMOS EL CLIC DE DUPLICAR
                 item {
                     MenuButton(
                         text = "Copiar Última Sesión",
                         icon = Icons.Default.ContentCopy,
-                        onClick = onDuplicarSesion
+                        onClick = {
+                            if (tieneSesiones) {
+                                onDuplicarSesion() // Todo OK, navegamos
+                            } else {
+                                mostrarErrorVacio = true // Ups, no hay sesiones, sacamos el aviso
+                            }
+                        }
                     )
                 }
 
-                // OPCIÓN 3: HISTORIAL
                 item {
                     MenuButton(
                         text = "Ver Historial / Antiguas",
@@ -103,11 +106,28 @@ fun UserOptionsScreen(
                     )
                 }
             }
+
+            // 4. EL DIÁLOGO DE ALERTA EMERGENTE
+            if (mostrarErrorVacio) {
+                AlertDialog(
+                    onDismissRequest = { mostrarErrorVacio = false },
+                    title = {
+                        Text("Acción no permitida", fontWeight = FontWeight.Bold)
+                    },
+                    text = {
+                        Text("No hay ninguna sesión que copiar. Este alumno debe tener mínimo 1 sesión en su historial para poder duplicarla.")
+                    },
+                    confirmButton = {
+                        Button(onClick = { mostrarErrorVacio = false }) {
+                            Text("Entendido")
+                        }
+                    }
+                )
+            }
         }
     }
 }
 
-// Componente auxiliar para los botones (para no repetir código)
 @Composable
 fun MenuButton(text: String, icon: ImageVector, onClick: () -> Unit) {
     Button(

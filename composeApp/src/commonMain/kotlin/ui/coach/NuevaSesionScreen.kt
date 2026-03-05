@@ -21,8 +21,11 @@ import viewmodel.SesionUiState
 import viewmodel.SesionViewModel
 import model.EjercicioDraft
 import model.SesionEntrenamiento
+// IMPORTAMOS LA LÓGICA UNIVERSAL DE COLORES QUE CREAMOS ANTES
+import ui.components.obtenerColorBloqueUniversal
 
-fun obtenerInfoVisualBloque(lista: List<EjercicioDraft>, indexActual: Int): Pair<Char, Int> {
+// Lógica de letras adaptada para EjercicioDraft (porque el universal usa DetalleSesion)
+fun obtenerInfoVisualBloqueDraft(lista: List<EjercicioDraft>, indexActual: Int): Pair<Char, Int> {
     var currentBlock = 1
     var lastDbBlock = -1
     for (i in 0..indexActual) {
@@ -100,7 +103,7 @@ fun NuevaSesionScreen(
                         Column {
                             OutlinedTextField(value = tituloSesion, onValueChange = { tituloSesion = it }, label = { Text("Nombre del entrenamiento") }, modifier = Modifier.fillMaxWidth())
 
-                            Spacer(modifier = Modifier.height(24.dp)) // Aumentado un poco el espacio tras quitar el botón
+                            Spacer(modifier = Modifier.height(24.dp))
 
                             Text("Agrupar últimos:", style = MaterialTheme.typography.labelSmall)
                             Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -124,7 +127,7 @@ fun NuevaSesionScreen(
                     // Lista Derecha
                     LazyColumn(modifier = Modifier.weight(0.65f).fillMaxHeight()) {
                         itemsIndexed(listaEjercicios) { index, ej ->
-                            val (letra, numBloque) = obtenerInfoVisualBloque(listaEjercicios, index)
+                            val (letra, numBloque) = obtenerInfoVisualBloqueDraft(listaEjercicios, index)
                             EjercicioItemCard(
                                 ejercicio = ej,
                                 unidoArriba = ej.bloque != 0 && ej.bloque == listaEjercicios.getOrNull(index - 1)?.bloque,
@@ -142,7 +145,7 @@ fun NuevaSesionScreen(
                 Column(modifier = Modifier.padding(padding).fillMaxSize().padding(horizontal = 16.dp)) {
                     OutlinedTextField(value = tituloSesion, onValueChange = { tituloSesion = it }, label = { Text("Nombre del entrenamiento") }, modifier = Modifier.fillMaxWidth().padding(top = 16.dp))
 
-                    Spacer(modifier = Modifier.height(24.dp)) // Aumentado un poco el espacio tras quitar el botón
+                    Spacer(modifier = Modifier.height(24.dp))
 
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(onClick = { viewModel.agruparUltimos(2) }, modifier = Modifier.weight(1f)) { Text("Biserie") }
@@ -150,7 +153,7 @@ fun NuevaSesionScreen(
                     }
                     LazyColumn(modifier = Modifier.weight(1f)) {
                         itemsIndexed(listaEjercicios) { index, ej ->
-                            val (letra, numBloque) = obtenerInfoVisualBloque(listaEjercicios, index)
+                            val (letra, numBloque) = obtenerInfoVisualBloqueDraft(listaEjercicios, index)
                             EjercicioItemCard(
                                 ejercicio = ej,
                                 unidoArriba = ej.bloque != 0 && ej.bloque == listaEjercicios.getOrNull(index - 1)?.bloque,
@@ -173,35 +176,14 @@ fun NuevaSesionScreen(
 }
 
 @Composable
-fun obtenerColorBloqueForm(numeroBloque: Int, isDarkMode: Boolean): Color {
-    val indexColor = ((numeroBloque - 1) % 5) + 1
-    return if (isDarkMode) {
-        when (indexColor) {
-            1 -> Color(0xFF0D47A1)
-            2 -> Color(0xFF1B5E20)
-            3 -> Color(0xFFB71C1C)
-            4 -> Color(0xFF4A148C)
-            5 -> Color(0xFFE65100)
-            else -> MaterialTheme.colorScheme.surfaceVariant
-        }
-    } else {
-        when (indexColor) {
-            1 -> Color(0xFFE3F2FD)
-            2 -> Color(0xFFE8F5E9)
-            3 -> Color(0xFFFFF3E0)
-            4 -> Color(0xFFF3E5F5)
-            5 -> Color(0xFFEFEBE9)
-            else -> Color.White
-        }
-    }
-}
-
-@Composable
 fun EjercicioItemCard(
     ejercicio: EjercicioDraft, unidoArriba: Boolean, unidoAbajo: Boolean, isDarkMode: Boolean,
     letraBloque: Char, numeroBloque: Int, onDelete: () -> Unit, onUpdate: (EjercicioDraft) -> Unit
 ) {
-    val colorFondo = obtenerColorBloqueForm(numeroBloque, isDarkMode)
+    // USAMOS EL MÉTODO UNIVERSAL (Si el bloque es 0, usamos el color por defecto del tema)
+    val colorFondo = if (ejercicio.bloque == 0) MaterialTheme.colorScheme.surfaceVariant
+    else obtenerColorBloqueUniversal(numeroBloque, isDarkMode)
+
     val colorTexto = if (isDarkMode) Color.White else MaterialTheme.colorScheme.onSurface
 
     val shape = RoundedCornerShape(
