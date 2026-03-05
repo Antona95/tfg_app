@@ -9,15 +9,17 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import viewmodel.HoyUiState
 import viewmodel.HoyViewModel
 import model.SesionEntrenamiento
 import ui.components.EjercicioUniversalCard
 import ui.components.agruparEjercicios
+import ui.components.CabeceraEstadoSesion
+import ui.components.PantallaCargando
+import ui.components.PantallaError
+import ui.components.PantallaVacia
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,19 +50,11 @@ fun HoyScreen(
         BoxWithConstraints(modifier = Modifier.padding(padding).fillMaxSize()) {
             val isLandscape = maxWidth > maxHeight
 
+            // ¡MIRA QUÉ LIMPIO QUEDA AHORA EL MANEJO DE ESTADOS!
             when (val state = uiState) {
-                is HoyUiState.Loading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                is HoyUiState.Empty -> {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text("💤", fontSize = 100.sp)
-                        Text("Hoy toca descanso", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-                    }
-                }
-                is HoyUiState.Error -> Text("Error: ${state.mensaje}", modifier = Modifier.align(Alignment.Center))
+                is HoyUiState.Loading -> PantallaCargando()
+                is HoyUiState.Empty -> PantallaVacia(icono = "💤", mensaje = "Hoy toca descanso")
+                is HoyUiState.Error -> PantallaError(mensaje = state.mensaje)
                 is HoyUiState.Success -> {
                     ContenidoEntreno(state.sesion, isDarkMode, isLandscape) {
                         viewModel.finalizarEntrenamiento(state.sesion.idSesion, idUsuario) {
@@ -75,7 +69,6 @@ fun HoyScreen(
 
 @Composable
 fun ContenidoEntreno(sesion: SesionEntrenamiento, isDarkMode: Boolean, isLandscape: Boolean, onFinalizar: () -> Unit) {
-    // Usamos la misma función de agrupar del Coach
     val gruposDeEjercicios = remember(sesion.ejercicios) { agruparEjercicios(sesion.ejercicios) }
 
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
@@ -84,16 +77,9 @@ fun ContenidoEntreno(sesion: SesionEntrenamiento, isDarkMode: Boolean, isLandsca
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // USAMOS LA NUEVA CABECERA CENTRALIZADA
             item {
-                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
-                    Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
-                        Text("Rutina: ${sesion.titulo ?: "Sin título"}", style = MaterialTheme.typography.titleMedium)
-                        Text("Sesión de Entrenamiento", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                        if (sesion.finalizada) {
-                            Text("✅ COMPLETADO", fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32))
-                        }
-                    }
-                }
+                CabeceraEstadoSesion(sesion = sesion, isDarkMode = isDarkMode)
             }
 
             itemsIndexed(gruposDeEjercicios) { indexGrupo, grupo ->

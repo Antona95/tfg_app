@@ -10,12 +10,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import model.SesionEntrenamiento
 import ui.components.EjercicioUniversalCard
 import ui.components.agruparEjercicios
+import ui.components.CabeceraEstadoSesion
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,7 +24,6 @@ fun DetalleSesionScreen(
     isDarkMode: Boolean,
     onBack: () -> Unit
 ) {
-    // Usamos la lógica universal
     val gruposDeEjercicios = remember(sesion.ejercicios) { agruparEjercicios(sesion.ejercicios) }
 
     Scaffold(
@@ -55,22 +54,9 @@ fun DetalleSesionScreen(
                 modifier = Modifier.fillMaxHeight().widthIn(max = 900.dp).fillMaxWidth().padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                // USAMOS LA NUEVA CABECERA CENTRALIZADA
                 item {
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth().padding(16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            if (sesion.finalizada) {
-                                Text("✅ FINALIZADA", color = Color(0xFF2E7D32), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                            } else {
-                                Text("⏳ PENDIENTE", color = if(isDarkMode) Color(0xFFFFB74D) else Color(0xFFE65100), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                            }
-                        }
-                    }
+                    CabeceraEstadoSesion(sesion = sesion, isDarkMode = isDarkMode)
                 }
 
                 item {

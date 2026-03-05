@@ -121,6 +121,7 @@ fun App() {
                             idUsuario = usuarioSeleccionado!!.id,
                             repository = repository,
                             viewModel = historialCoachVM,
+                            isDarkMode = isDarkMode, // <--- AÑADIDO
                             onBack = { viendoHistorial = false },
                             onSesionClick = { sesion -> sesionSeleccionada = sesion }
                         )
@@ -199,6 +200,7 @@ fun App() {
                         idUsuario = usuario.id,
                         repository = repository,
                         viewModel = historialViewModel,
+                        isDarkMode = isDarkMode, // <--- AÑADIDO
                         onBack = { pantallaAlumno = "MENU" },
                         onSesionClick = { sesion ->
                             sesionDetalleAlumno = sesion
