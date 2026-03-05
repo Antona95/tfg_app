@@ -12,8 +12,7 @@ data class Ejercicio(
 @Serializable
 data class SesionEntrenamiento(
     @SerialName("_id") val idSesion: String,
-    val idPlan: String,
-    val fechaProgramada: String,
+    val titulo: String? = "",
     val finalizada: Boolean = false,
     val ejercicios: List<DetalleSesion> = emptyList()
 )

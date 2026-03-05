@@ -100,7 +100,6 @@ fun VistaEntrenador(
                 contentAlignment = Alignment.TopCenter
             ) {
                 Column(
-                    // 👇 EL ORDEN CORRECTO: PRIMERO EL TOPE, LUEGO EL ESTIRAMIENTO 👇
                     modifier = Modifier
                         .fillMaxHeight()
                         .widthIn(max = 600.dp)
@@ -241,7 +240,6 @@ fun VistaCliente(
             contentAlignment = Alignment.TopCenter
         ) {
             LazyColumn(
-                // 👇 EL ORDEN CORRECTO: PRIMERO EL TOPE, LUEGO EL ESTIRAMIENTO 👇
                 modifier = Modifier
                     .fillMaxHeight()
                     .widthIn(max = 600.dp)
@@ -353,7 +351,6 @@ fun VistaDetalleAlumno(
             contentAlignment = Alignment.TopCenter
         ) {
             Column(
-                // 👇 EL ORDEN CORRECTO: PRIMERO EL TOPE, LUEGO EL ESTIRAMIENTO 👇
                 modifier = Modifier
                     .fillMaxHeight()
                     .widthIn(max = 600.dp)

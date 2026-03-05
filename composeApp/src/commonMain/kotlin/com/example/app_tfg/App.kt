@@ -10,7 +10,6 @@ import viewmodel.LoginViewModel
 import viewmodel.CoachViewModel
 import viewmodel.HoyViewModel
 import viewmodel.HistorialViewModel
-import viewmodel.BibliotecaViewModel
 import viewmodel.SesionViewModel
 import ui.login.LoginScreen
 import ui.coach.CoachScreen
@@ -18,7 +17,6 @@ import ui.coach.UserOptionsScreen
 import ui.coach.NuevaSesionScreen
 import ui.coach.HistorialScreen
 import ui.coach.DetalleSesionScreen
-import ui.coach.BibliotecaScreen
 import ui.user.HoyScreen
 import ui.user.AlumnoHomeScreen
 import model.Persona
@@ -57,10 +55,7 @@ fun App() {
                     key = "historial-coach-vm",
                     factory = viewModelFactory { HistorialViewModel(repository) }
                 )
-                val bibliotecaVM = getViewModel(
-                    key = "biblioteca-vm",
-                    factory = viewModelFactory { BibliotecaViewModel(repository) }
-                )
+
                 val sesionVM = getViewModel(
                     key = "sesion-vm",
                     factory = viewModelFactory { SesionViewModel(repository) }
@@ -70,7 +65,6 @@ fun App() {
                 var usuarioSeleccionado by remember { mutableStateOf<Persona?>(null) }
                 var creandoSesion by rememberSaveable { mutableStateOf(false) }
                 var viendoHistorial by rememberSaveable { mutableStateOf(false) }
-                var viendoBiblioteca by rememberSaveable { mutableStateOf(false) }
                 var sesionSeleccionada by remember { mutableStateOf<model.SesionEntrenamiento?>(null) }
                 var sesionParaDuplicar by remember { mutableStateOf<model.SesionEntrenamiento?>(null) }
 
@@ -81,12 +75,6 @@ fun App() {
                 }
 
                 when {
-                    viendoBiblioteca -> {
-                        BibliotecaScreen(
-                            viewModel = bibliotecaVM,
-                            onBack = { viendoBiblioteca = false }
-                        )
-                    }
                     sesionSeleccionada != null -> {
                         DetalleSesionScreen(
                             sesion = sesionSeleccionada!!,
@@ -138,7 +126,6 @@ fun App() {
                             viewModel = coachViewModel,
                             onLogoutClick = { loginViewModel.cerrarSesion() },
                             onAlumnoClick = { alumno -> usuarioSeleccionado = alumno },
-                            onBibliotecaClick = { viendoBiblioteca = true },
                             isDarkMode = isDarkMode,
                             onThemeToggle = { isDarkMode = !isDarkMode }
                         )

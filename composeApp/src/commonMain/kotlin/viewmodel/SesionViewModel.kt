@@ -75,11 +75,11 @@ class SesionViewModel(
         }
     }
 
-    fun guardarSesion(idUsuario: String, titulo: String, fecha: String) {
+    fun guardarSesion(idUsuario: String, titulo: String) { // Quitamos 'fecha'
         viewModelScope.launch {
             try {
                 _uiState.value = SesionUiState.Loading
-                
+
                 if (_listaEjercicios.value.isEmpty()) {
                     _uiState.value = SesionUiState.Error("Añade al menos un ejercicio")
                     return@launch
@@ -95,7 +95,8 @@ class SesionViewModel(
                     )
                 }
 
-                val request = CrearSesionRequest(idUsuario, titulo, fecha, ejerciciosParaEnviar)
+                // Quitamos la fecha del request
+                val request = CrearSesionRequest(idUsuario, titulo, ejerciciosParaEnviar)
                 if (repository.crearSesion(request)) {
                     _uiState.value = SesionUiState.Success
                 } else {
@@ -115,7 +116,7 @@ class SesionViewModel(
             try {
                 val historial = repository.obtenerHistorialSesiones(idUsuario)
                 if (historial.isNotEmpty()) {
-                    val ultima = historial.maxByOrNull { it.fechaProgramada } ?: historial.last()
+                    val ultima = historial.last() // Cogemos la última de la lista
                     onExito(ultima)
                 }
             } catch (e: Exception) {

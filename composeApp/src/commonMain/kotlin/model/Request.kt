@@ -10,8 +10,7 @@ import kotlin.random.Random
 @Serializable
 data class CrearSesionRequest(
     val idUsuario: String,       // El ID de MongoDB del alumno
-    val titulo: String,          // El nombre que le puse (ej: "Pierna Hipertrofia")
-    val fechaProgramada: String, // La fecha en formato String (ej: "2026-02-10")
+    val titulo: String,          // (ej: "1 de marzo")
     val ejercicios: List<CrearEjercicioRequest> // La lista de ejercicios
 )
 

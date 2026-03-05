@@ -61,7 +61,7 @@ fun DetalleSesionScreen(
                 title = {
                     Column {
                         Text("Detalle de Sesión", style = MaterialTheme.typography.titleMedium)
-                        Text(sesion.fechaProgramada, style = MaterialTheme.typography.labelSmall)
+                        Text(sesion.titulo ?: "Sin título", style = MaterialTheme.typography.bodyLarge)
                     }
                 },
                 navigationIcon = {
@@ -96,8 +96,6 @@ fun DetalleSesionScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text(sesion.idSesion, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-                            Spacer(modifier = Modifier.height(8.dp))
                             if (sesion.finalizada) {
                                 Text("✅ FINALIZADA", color = Color(0xFF2E7D32), fontWeight = FontWeight.Bold)
                             } else {

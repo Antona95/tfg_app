@@ -7,10 +7,10 @@ import io.ktor.client.request.post
 import io.ktor.client.request.patch
 import io.ktor.client.request.setBody
 import io.ktor.client.request.delete
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import model.*
-import io.ktor.client.statement.bodyAsText
 
 class EntrenamientoRepository(
     private val client: HttpClient
@@ -28,13 +28,11 @@ class EntrenamientoRepository(
             if (respuesta.status.value in 200..299) {
                 respuesta.body<Persona>()
             } else {
-                // LEEMOS EL ERROR PARA LIBERAR LA CONEXIÓN
-                val errorBody = respuesta.bodyAsText()
-                println(" ERROR HTTP LOGIN: ${respuesta.status.value} - Detalle: $errorBody")
+                println("ERROR HTTP [login]: ${respuesta.status.value} - ${respuesta.bodyAsText()}")
                 null
             }
         } catch (e: Exception) {
-            println(" EXCEPCIÓN KTOR EN LOGIN: ${e.message}")
+            println("EXCEPCION KTOR [login]: ${e.message}")
             e.printStackTrace()
             null
         }
@@ -46,8 +44,14 @@ class EntrenamientoRepository(
                 contentType(ContentType.Application.Json)
                 setBody(RegistroRequest(nickname, pass, nombre, apellidos))
             }
-            respuesta.status.value in 200..299
+            if (respuesta.status.value in 200..299) {
+                true
+            } else {
+                println("ERROR HTTP [registrarUsuario]: ${respuesta.status.value} - ${respuesta.bodyAsText()}")
+                false
+            }
         } catch (e: Exception) {
+            println("EXCEPCION KTOR [registrarUsuario]: ${e.message}")
             e.printStackTrace()
             false
         }
@@ -59,23 +63,41 @@ class EntrenamientoRepository(
             val respuesta = client.get("$baseUrl/api/usuarios")
             if (respuesta.status.value in 200..299) {
                 respuesta.body<List<Persona>>().filter { it.rol != "ENTRENADOR" }
-            } else emptyList()
-        } catch (e: Exception) { emptyList() }
+            } else {
+                println("ERROR HTTP [obtenerTodosLosUsuarios]: ${respuesta.status.value} - ${respuesta.bodyAsText()}")
+                emptyList()
+            }
+        } catch (e: Exception) {
+            println("EXCEPCION KTOR [obtenerTodosLosUsuarios]: ${e.message}")
+            e.printStackTrace()
+            emptyList()
+        }
     }
 
     // --- SESIONES ---
     suspend fun obtenerSesionHoy(idUsuario: String): SesionEntrenamiento? {
         return try {
             val respuesta = client.get("$baseUrl/api/sesiones/hoy/$idUsuario")
-            if (respuesta.status.value in 200..299) respuesta.body<SesionEntrenamiento>() else null
-        } catch (e: Exception) { null }
+            if (respuesta.status.value in 200..299) {
+                respuesta.body<SesionEntrenamiento>()
+            } else {
+                println("ERROR HTTP [obtenerSesionHoy]: ${respuesta.status.value} - ${respuesta.bodyAsText()}")
+                null
+            }
+        } catch (e: Exception) {
+            println("EXCEPCION KTOR [obtenerSesionHoy]: ${e.message}")
+            e.printStackTrace()
+            null
+        }
     }
+
     suspend fun obtenerUltimaSesion(idUsuario: String): SesionEntrenamiento? {
         return try {
-            // Llamamos al historial y nos quedamos con la primera (que suele ser la más reciente)
             val historial = obtenerHistorialSesiones(idUsuario)
-            historial.firstOrNull()
+            historial.lastOrNull()
         } catch (e: Exception) {
+            println("EXCEPCION KTOR [obtenerUltimaSesion]: ${e.message}")
+            e.printStackTrace()
             null
         }
     }
@@ -83,8 +105,17 @@ class EntrenamientoRepository(
     suspend fun obtenerHistorialSesiones(idUsuario: String): List<SesionEntrenamiento> {
         return try {
             val respuesta = client.get("$baseUrl/api/sesiones/usuario/$idUsuario")
-            if (respuesta.status.value in 200..299) respuesta.body<List<SesionEntrenamiento>>() else emptyList()
-        } catch (e: Exception) { emptyList() }
+            if (respuesta.status.value in 200..299) {
+                respuesta.body<List<SesionEntrenamiento>>()
+            } else {
+                println("ERROR HTTP [obtenerHistorialSesiones]: ${respuesta.status.value} - ${respuesta.bodyAsText()}")
+                emptyList()
+            }
+        } catch (e: Exception) {
+            println("EXCEPCION KTOR [obtenerHistorialSesiones]: ${e.message}")
+            e.printStackTrace()
+            emptyList()
+        }
     }
 
     suspend fun crearSesion(request: CrearSesionRequest): Boolean {
@@ -93,90 +124,73 @@ class EntrenamientoRepository(
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }
-            respuesta.status.value in 200..299
-        } catch (e: Exception) { false }
+            if (respuesta.status.value in 200..299) {
+                true
+            } else {
+                println("ERROR HTTP [crearSesion]: ${respuesta.status.value} - ${respuesta.bodyAsText()}")
+                false
+            }
+        } catch (e: Exception) {
+            println("EXCEPCION KTOR [crearSesion]: ${e.message}")
+            e.printStackTrace()
+            false
+        }
     }
 
     suspend fun finalizarSesion(idSesion: String, ejercicios: List<CrearEjercicioRequest>): Boolean {
         return try {
             val respuesta = client.patch("$baseUrl/api/sesiones/$idSesion/finalizar") {
                 contentType(ContentType.Application.Json)
-                // IMPORTANTE: Enviamos el mapa con la clave "ejercicios" que espera tu backend TS
                 setBody(mapOf("ejercicios" to ejercicios))
             }
-
-            if (respuesta.status.value !in 200..299) {
-                val error = respuesta.bodyAsText()
-                println("Error Servidor: $error")
+            if (respuesta.status.value in 200..299) {
+                true
+            } else {
+                println("ERROR HTTP [finalizarSesion]: ${respuesta.status.value} - ${respuesta.bodyAsText()}")
+                false
             }
-
-            respuesta.status.value in 200..299
         } catch (e: Exception) {
+            println("EXCEPCION KTOR [finalizarSesion]: ${e.message}")
             e.printStackTrace()
             false
         }
     }
 
-    // --- EJERCICIOS (NUEVA FUNCIONALIDAD) ---
-    
-    /**
-     * Obtiene la lista global de ejercicios disponibles en el sistema.
-     */
-    suspend fun obtenerEjerciciosBiblioteca(): List<Ejercicio> {
-        return try {
-            val respuesta = client.get("$baseUrl/api/ejercicios")
-            if (respuesta.status.value in 200..299) {
-                respuesta.body<List<Ejercicio>>()
-            } else emptyList()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            emptyList()
-        }
-    }
 
-    /**
-     * Crea un nuevo ejercicio en la base de datos (Biblioteca global).
-     */
-    suspend fun crearEjercicioBiblioteca(nombre: String): Ejercicio? {
-        return try {
-            // Enviamos un objeto que coincida con lo que espera tu CrearEjercicioUseCase
-            val respuesta = client.post("$baseUrl/api/ejercicios") {
-                contentType(ContentType.Application.Json)
-                setBody(mapOf("nombre" to nombre)) // O un DTO si tienes más campos
-            }
-            if (respuesta.status.value in 200..299) {
-                respuesta.body<Ejercicio>()
-            } else null
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
-        }
-    }
+    // --- GESTIÓN DE ALUMNOS ---
 
-    // Borrar un alumno usando su nickname
     suspend fun eliminarAlumno(nickname: String): Boolean {
         return try {
             val respuesta = client.delete("$baseUrl/api/usuarios/$nickname")
-            respuesta.status.value in 200..299
+            if (respuesta.status.value in 200..299) {
+                true
+            } else {
+                println("ERROR HTTP [eliminarAlumno]: ${respuesta.status.value} - ${respuesta.bodyAsText()}")
+                false
+            }
         } catch (e: Exception) {
+            println("EXCEPCION KTOR [eliminarAlumno]: ${e.message}")
+            e.printStackTrace()
             false
         }
     }
 
-    // Crear un alumno (el Coach rellena los datos)
     suspend fun crearAlumno(nickname: String, pass: String, nombre: String, apellidos: String): Boolean {
         return try {
             val respuesta = client.post("$baseUrl/api/usuarios") {
                 contentType(ContentType.Application.Json)
                 setBody(RegistroRequest(nickname, pass, nombre, apellidos, "USUARIO"))
             }
-            if (respuesta.status.value !in 200..299) {
-                println(" Error Servidor: ${respuesta.bodyAsText()}")
+            if (respuesta.status.value in 200..299) {
+                true
+            } else {
+                println("ERROR HTTP [crearAlumno]: ${respuesta.status.value} - ${respuesta.bodyAsText()}")
+                false
             }
-            respuesta.status.value in 200..299
         } catch (e: Exception) {
+            println("EXCEPCION KTOR [crearAlumno]: ${e.message}")
+            e.printStackTrace()
             false
         }
     }
 }
-

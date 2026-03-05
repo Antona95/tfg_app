@@ -206,7 +206,7 @@ fun FormularioAuth(
             Text(if (isRegistering) "CREAR CUENTA" else "ENTRAR")
         }
 
-        // ✅ CORRECCIÓN 2: Mostrar el error (ya sea local o del backend)
+        //  Mostrar el error (ya sea local o del backend)
         val errorAMostrar = errorMessage ?: errorBackend
         if (errorAMostrar != null) {
             Text(

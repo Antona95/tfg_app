@@ -22,7 +22,6 @@ fun CoachScreen(
     viewModel: CoachViewModel,
     onAlumnoClick: (Persona) -> Unit,
     onLogoutClick: () -> Unit,
-    onBibliotecaClick: () -> Unit,
     isDarkMode: Boolean,
     onThemeToggle: () -> Unit
 ) {
@@ -80,15 +79,6 @@ fun CoachScreen(
                 }
             )
         },
-        floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = onBibliotecaClick,
-                icon = { Icon(Icons.Default.List, contentDescription = null) },
-                text = { Text("Biblioteca") },
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-        }
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
 

@@ -21,9 +21,6 @@ import viewmodel.SesionUiState
 import viewmodel.SesionViewModel
 import model.EjercicioDraft
 import model.SesionEntrenamiento
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 
 fun obtenerInfoVisualBloque(lista: List<EjercicioDraft>, indexActual: Int): Pair<Char, Int> {
     var currentBlock = 1
@@ -55,7 +52,7 @@ fun NuevaSesionScreen(
     val listaEjercicios by viewModel.listaEjercicios.collectAsState()
 
     var tituloSesion by rememberSaveable {
-        mutableStateOf(if (sesionBase != null) "Copia de ${sesionBase.fechaProgramada}" else "")
+        mutableStateOf(if (sesionBase != null) "Copia de ${sesionBase.titulo}" else "")
     }
 
     LaunchedEffect(Unit) {
@@ -84,8 +81,7 @@ fun NuevaSesionScreen(
                     Box(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
                         Button(
                             onClick = {
-                                val fechaHoy = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
-                                viewModel.guardarSesion(idUsuario, tituloSesion, fechaHoy)
+                                viewModel.guardarSesion(idUsuario, tituloSesion)
                             },
                             modifier = Modifier.fillMaxWidth().height(56.dp),
                             enabled = uiState !is SesionUiState.Loading
@@ -103,20 +99,9 @@ fun NuevaSesionScreen(
                     Column(modifier = Modifier.weight(0.35f).fillMaxHeight().padding(end = 16.dp), verticalArrangement = Arrangement.SpaceBetween) {
                         Column {
                             OutlinedTextField(value = tituloSesion, onValueChange = { tituloSesion = it }, label = { Text("Nombre del entrenamiento") }, modifier = Modifier.fillMaxWidth())
-                            Spacer(modifier = Modifier.height(8.dp))
-                            
-                            // BOTÓN COPIAR ÚLTIMA (Landscape)
-                            OutlinedButton(
-                                onClick = { viewModel.copiarUltimaSesion(idUsuario) },
-                                modifier = Modifier.fillMaxWidth().height(48.dp),
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)
-                            ) {
-                                Icon(Icons.Default.ContentCopy, null)
-                                Spacer(Modifier.width(8.dp))
-                                Text("CARGAR ÚLTIMA")
-                            }
 
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(24.dp)) // Aumentado un poco el espacio tras quitar el botón
+
                             Text("Agrupar últimos:", style = MaterialTheme.typography.labelSmall)
                             Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Button(onClick = { viewModel.agruparUltimos(2) }, modifier = Modifier.weight(1f)) { Text("Biserie") }
@@ -130,8 +115,7 @@ fun NuevaSesionScreen(
                         }
                         Button(
                             onClick = {
-                                val fechaHoy = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
-                                viewModel.guardarSesion(idUsuario, tituloSesion, fechaHoy)
+                                viewModel.guardarSesion(idUsuario, tituloSesion)
                             },
                             modifier = Modifier.fillMaxWidth().height(56.dp),
                             enabled = uiState !is SesionUiState.Loading
@@ -157,20 +141,9 @@ fun NuevaSesionScreen(
                 // Vista Vertical (Portrait)
                 Column(modifier = Modifier.padding(padding).fillMaxSize().padding(horizontal = 16.dp)) {
                     OutlinedTextField(value = tituloSesion, onValueChange = { tituloSesion = it }, label = { Text("Nombre del entrenamiento") }, modifier = Modifier.fillMaxWidth().padding(top = 16.dp))
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    // BOTÓN COPIAR ÚLTIMA (Portrait)
-                    OutlinedButton(
-                        onClick = { viewModel.copiarUltimaSesion(idUsuario) },
-                        modifier = Modifier.fillMaxWidth().height(48.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)
-                    ) {
-                        Icon(Icons.Default.ContentCopy, null)
-                        Spacer(Modifier.width(8.dp))
-                        Text("CARGAR ÚLTIMA SESIÓN")
-                    }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(24.dp)) // Aumentado un poco el espacio tras quitar el botón
+
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(onClick = { viewModel.agruparUltimos(2) }, modifier = Modifier.weight(1f)) { Text("Biserie") }
                         Button(onClick = { viewModel.agruparUltimos(3) }, modifier = Modifier.weight(1f)) { Text("Triserie") }

@@ -114,7 +114,7 @@ fun ContenidoEntreno(sesion: SesionEntrenamiento, isDarkMode: Boolean, onFinaliz
             item {
                 Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
                     Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
-                        Text("Fecha: ${sesion.fechaProgramada}", style = MaterialTheme.typography.labelLarge)
+                        Text("Rutina: ${sesion.titulo ?: "Sin título"}", style = MaterialTheme.typography.labelLarge)
                         Text(
                             text = "Sesión de Entrenamiento",
                             style = MaterialTheme.typography.headlineSmall,

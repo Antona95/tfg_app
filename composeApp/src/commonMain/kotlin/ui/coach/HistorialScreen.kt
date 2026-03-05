@@ -91,7 +91,7 @@ fun HistorialScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = sesion.fechaProgramada,
+                                        text = sesion.titulo ?: "Rutina",
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary
