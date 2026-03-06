@@ -21,8 +21,10 @@ import viewmodel.SesionUiState
 import viewmodel.SesionViewModel
 import model.EjercicioDraft
 import model.SesionEntrenamiento
-// IMPORTAMOS LA LÓGICA UNIVERSAL DE COLORES QUE CREAMOS ANTES
+// IMPORTAMOS LA LÓGICA UNIVERSAL DE COLORES, ALERTAS Y VALIDACIONES
 import ui.components.obtenerColorBloqueUniversal
+import ui.components.Validaciones
+import ui.components.DialogoAlerta
 
 // Lógica de letras adaptada para EjercicioDraft (porque el universal usa DetalleSesion)
 fun obtenerInfoVisualBloqueDraft(lista: List<EjercicioDraft>, indexActual: Int): Pair<Char, Int> {
@@ -58,6 +60,10 @@ fun NuevaSesionScreen(
         mutableStateOf(if (sesionBase != null) "Copia de ${sesionBase.titulo}" else "")
     }
 
+    // ESTADOS PARA CONTROLAR EL CUADRO DE ERROR EMERGENTE
+    var mostrarErrorValidacion by remember { mutableStateOf(false) }
+    var mensajeErrorValidacion by remember { mutableStateOf("") }
+
     LaunchedEffect(Unit) {
         viewModel.inicializarConSesionBase(sesionBase)
     }
@@ -66,6 +72,19 @@ fun NuevaSesionScreen(
         if (uiState is SesionUiState.Success) {
             onNavigateBack()
             viewModel.resetState()
+        }
+    }
+
+    // FUNCIÓN DE ADUANA QUE SE EJECUTA AL PULSAR "GUARDAR"
+    val intentarGuardar = {
+        val error = Validaciones.validarFormularioSesion(tituloSesion, listaEjercicios)
+        if (error != null) {
+            // Pillado: mostramos popup
+            mensajeErrorValidacion = error
+            mostrarErrorValidacion = true
+        } else {
+            // OK: Guardamos
+            viewModel.guardarSesion(idUsuario, tituloSesion)
         }
     }
 
@@ -83,9 +102,7 @@ fun NuevaSesionScreen(
                 if (!isLandscape) {
                     Box(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
                         Button(
-                            onClick = {
-                                viewModel.guardarSesion(idUsuario, tituloSesion)
-                            },
+                            onClick = intentarGuardar, // USAMOS LA FUNCIÓN VALIDADORA
                             modifier = Modifier.fillMaxWidth().height(56.dp),
                             enabled = uiState !is SesionUiState.Loading
                         ) {
@@ -117,9 +134,7 @@ fun NuevaSesionScreen(
                             ) { Icon(Icons.Default.Add, null); Spacer(Modifier.width(8.dp)); Text("Añadir Ejercicio") }
                         }
                         Button(
-                            onClick = {
-                                viewModel.guardarSesion(idUsuario, tituloSesion)
-                            },
+                            onClick = intentarGuardar, // USAMOS LA FUNCIÓN VALIDADORA
                             modifier = Modifier.fillMaxWidth().height(56.dp),
                             enabled = uiState !is SesionUiState.Loading
                         ) { Text("GUARDAR", fontWeight = FontWeight.Bold) }
@@ -171,6 +186,14 @@ fun NuevaSesionScreen(
                     }
                 }
             }
+
+            // LLAMADA AL COMPONENTE DE ALERTA REUTILIZABLE
+            DialogoAlerta(
+                mostrarDialogo = mostrarErrorValidacion,
+                titulo = "Revisa los datos",
+                mensaje = mensajeErrorValidacion,
+                onDismiss = { mostrarErrorValidacion = false }
+            )
         }
     }
 }

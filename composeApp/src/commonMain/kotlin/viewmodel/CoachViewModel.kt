@@ -9,19 +9,22 @@ import network.EntrenamientoRepository
 
 class CoachViewModel(private val repository: EntrenamientoRepository) : ViewModel() {
 
-    // Lista original sin filtrar
     private val _todosLosAlumnos = MutableStateFlow<List<Persona>>(emptyList())
-    
-    // Lista filtrada que se muestra en la UI
     private val _alumnosFiltrados = MutableStateFlow<List<Persona>>(emptyList())
     val alumnos = _alumnosFiltrados.asStateFlow()
 
-    // Texto de búsqueda
     private val _textoBusqueda = MutableStateFlow("")
     val textoBusqueda = _textoBusqueda.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
+
+    // NUEVOS ESTADOS PARA CONTROLAR EL REGISTRO Y ERRORES DEL BACKEND
+    private val _errorRegistro = MutableStateFlow<String?>(null)
+    val errorRegistro = _errorRegistro.asStateFlow()
+
+    private val _registroExitoso = MutableStateFlow(false)
+    val registroExitoso = _registroExitoso.asStateFlow()
 
     init {
         cargarAlumnos()
@@ -33,16 +36,9 @@ class CoachViewModel(private val repository: EntrenamientoRepository) : ViewMode
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                // Obtenemos la lista directamente del repositorio.
-                // El repositorio ya se encarga de quitar al "ENTRENADOR".
                 val lista = repository.obtenerTodosLosUsuarios()
-
                 _todosLosAlumnos.value = lista
                 aplicarFiltro()
-
-                // DEBUG: Útil para ver qué llega en los logs de Android Studio
-                println("ALUMNOS CARGADOS: ${lista.size}")
-
             } catch (e: Exception) {
                 println("Error cargando alumnos: ${e.message}")
             } finally {
@@ -51,38 +47,50 @@ class CoachViewModel(private val repository: EntrenamientoRepository) : ViewMode
         }
     }
 
-    // Funcion para actualizar el texto y filtrar
     fun buscar(nuevoTexto: String) {
         _textoBusqueda.value = nuevoTexto
         aplicarFiltro()
     }
 
     fun eliminarAlumno(nickname: String) {
-        // SEGURIDAD: No permitimos que el Coach se borre a sí mismo
         if (nickname.equals("MasterCoach", ignoreCase = true)) {
             println("Acción bloqueada: No puedes borrar al administrador")
             return
         }
-
         viewModelScope.launch {
             val exito = repository.eliminarAlumno(nickname)
-            if (exito) {
-                cargarAlumnos()
-            }
+            if (exito) cargarAlumnos()
         }
     }
 
+    // MODIFICADO: Ahora controlamos los estados de éxito/error
     fun crearNuevoAlumno(nickname: String, pass: String, nombre: String, apellidos: String) {
         viewModelScope.launch {
             _isLoading.value = true
-            val exito = repository.crearAlumno(nickname, pass, nombre, apellidos)
-            if (exito) {
+            _errorRegistro.value = null // Limpiamos errores previos
+            _registroExitoso.value = false
+
+            // Intentamos crear
+            val resultado = repository.crearAlumno(nickname, pass, nombre, apellidos)
+
+            // Si el repositorio devuelve un String, asumimos que es un error (ej: "El nickname ya existe")
+            // Si devuelve un Boolean true, es que fue éxito. (Ajusta esto según cómo funcione tu repository)
+            if (resultado == true) {
+                _registroExitoso.value = true
                 cargarAlumnos()
             } else {
-                println("El servidor rechazó la creación del alumno")
+                // Si tu repository.crearAlumno devuelve un boolean (false) cuando falla,
+                // ponemos un mensaje genérico. Si tu repo te permite devolver el error del server, ponlo aquí.
+                _errorRegistro.value = "Error al crear el alumno. Asegúrate de que el nickname no esté ya en uso."
             }
             _isLoading.value = false
         }
+    }
+
+    // Función para limpiar los estados cuando el usuario cierra el cuadro a mano
+    fun resetRegistroState() {
+        _errorRegistro.value = null
+        _registroExitoso.value = false
     }
 
     private fun aplicarFiltro() {
@@ -92,8 +100,8 @@ class CoachViewModel(private val repository: EntrenamientoRepository) : ViewMode
         } else {
             _alumnosFiltrados.value = _todosLosAlumnos.value.filter {
                 it.nickname.lowercase().contains(texto) ||
-                it.nombre.lowercase().contains(texto) ||
-                it.apellidos.lowercase().contains(texto)
+                        it.nombre.lowercase().contains(texto) ||
+                        it.apellidos.lowercase().contains(texto)
             }
         }
     }

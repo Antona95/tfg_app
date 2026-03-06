@@ -24,6 +24,11 @@ import app_tfg.composeapp.generated.resources.Res
 import app_tfg.composeapp.generated.resources.imagen_inicial
 import org.jetbrains.compose.resources.painterResource
 
+// AÑADIMOS NUESTROS COMPONENTES PROPIOS
+import ui.components.DialogoAlerta
+import ui.components.Validaciones
+import ui.components.CamposRegistro
+
 @Composable
 fun LoginScreen(
     onLoginClick: (String, String) -> Unit,
@@ -51,12 +56,10 @@ fun LoginScreen(
                         )
                     }
                     Column(
-                        // SE MANTIENE TU SCROLL, PERO AJUSTAMOS PADDING PARA QUE OCUPE MÁS
                         modifier = Modifier.weight(0.6f).fillMaxHeight().padding(horizontal = 16.dp).verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // Pasamos errorBackend aquí
                         FormularioAuth(onLoginClick, onRegistroClick, mensajeExito, errorBackend)
                     }
                 }
@@ -68,14 +71,13 @@ fun LoginScreen(
                     Image(
                         painter = painterResource(Res.drawable.imagen_inicial),
                         contentDescription = "Logo Aplicacion",
-                        modifier = Modifier.fillMaxWidth().height(250.dp).padding(bottom = 16.dp), // Reducido el bottom padding
+                        modifier = Modifier.fillMaxWidth().height(250.dp).padding(bottom = 16.dp),
                         contentScale = ContentScale.Crop
                     )
                     Column(
-                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp), // Ajustado el padding vertical
+                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // Pasamos errorBackend aquí también
                         FormularioAuth(onLoginClick, onRegistroClick, mensajeExito, errorBackend)
                     }
                 }
@@ -113,104 +115,94 @@ fun FormularioAuth(
     var nombre by remember { mutableStateOf("") }
     var apellidos by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
 
+    var mostrarErrorValidacion by remember { mutableStateOf(false) }
+    var mensajeErrorValidacion by remember { mutableStateOf("") }
 
-    // Sincronizacion de exito: Vuelve al login al registrar correctamente
     LaunchedEffect(mensajeExito) {
         if (mensajeExito != null) {
             isRegistering = false
-            errorMessage = null
-            // Limpiamos campos para seguridad del usuario
+            mostrarErrorValidacion = false
             password = ""
         }
     }
 
-    // AÑADIDO: Un Column que envuelve todo el formulario para compactarlo.
-    // Usamos spacedBy(8.dp) para eliminar todos los Spacer() sueltos que comían mucha altura.
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp) // Espaciado automático y más pequeño
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
             text = if (isRegistering) "Registro de Usuario" else "Inicio de Sesion",
-            style = MaterialTheme.typography.headlineSmall, // Reducido un poco para que quepa mejor en apaisado
+            style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(bottom = 8.dp)
         )
 
         if (isRegistering) {
+            // USAMOS NUESTRO COMPONENTE REUTILIZABLE
+            CamposRegistro(
+                nombre = nombre, onNombreChange = { nombre = it },
+                apellidos = apellidos, onApellidosChange = { apellidos = it },
+                nickname = nickname, onNicknameChange = { nickname = it },
+                password = password, onPasswordChange = { password = it },
+                passwordVisible = passwordVisible,
+                onPasswordVisibilityChange = { passwordVisible = !passwordVisible }
+            )
+        } else {
+            // Si es Login, solo pintamos los dos campos básicos
             OutlinedTextField(
-                value = nombre,
-                onValueChange = { nombre = it },
-                label = { Text("Nombre real") },
+                value = nickname,
+                onValueChange = { nickname = it },
+                label = { Text("Nickname") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
+
             OutlinedTextField(
-                value = apellidos,
-                onValueChange = { apellidos = it },
-                label = { Text("Apellidos") },
+                value = password,
+                onValueChange = { password = it },
+                label = { Text("Password") },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                trailingIcon = {
+                    val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(imageVector = image, contentDescription = "Mostrar contrasena")
+                    }
+                }
             )
         }
 
-        OutlinedTextField(
-            value = nickname,
-            onValueChange = { nickname = it },
-            label = { Text("Nickname") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
-
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Password") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            trailingIcon = {
-                val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(imageVector = image, contentDescription = "Mostrar contrasena")
-                }
-            }
-        )
-
-        // Botón principal
         Button(
             onClick = {
-                // Limpiamos el error local al intentar de nuevo
-                errorMessage = null
-
                 if (isRegistering) {
-                    if (nickname.isNotEmpty() && password.isNotEmpty() && nombre.isNotEmpty() && apellidos.isNotEmpty()) {
-                        onRegistroClick(nickname, password, nombre, apellidos)
+                    val error = Validaciones.validarRegistro(nickname, password, nombre, apellidos)
+                    if (error != null) {
+                        mensajeErrorValidacion = error
+                        mostrarErrorValidacion = true
                     } else {
-                        errorMessage = "Debe completar todos los campos"
+                        onRegistroClick(nickname, password, nombre, apellidos)
                     }
                 } else {
-                    if (nickname.isNotEmpty() && password.isNotEmpty()) {
-                        onLoginClick(nickname, password)
+                    if (nickname.isBlank() || password.isBlank()) {
+                        mensajeErrorValidacion = "Debes rellenar tu Nickname y Password para poder entrar."
+                        mostrarErrorValidacion = true
                     } else {
-                        errorMessage = "Credenciales incompletas"
+                        onLoginClick(nickname, password)
                     }
                 }
             },
-            modifier = Modifier.fillMaxWidth().height(48.dp).padding(top = 8.dp) // Añadido padding superior en lugar de Spacer
+            modifier = Modifier.fillMaxWidth().height(48.dp).padding(top = 8.dp)
         ) {
             Text(if (isRegistering) "CREAR CUENTA" else "ENTRAR")
         }
 
-        //  Mostrar el error (ya sea local o del backend)
-        val errorAMostrar = errorMessage ?: errorBackend
-        if (errorAMostrar != null) {
+        if (errorBackend != null) {
             Text(
-                text = errorAMostrar,
+                text = errorBackend,
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(top = 8.dp)
             )
@@ -228,9 +220,16 @@ fun FormularioAuth(
 
         TextButton(onClick = {
             isRegistering = !isRegistering
-            errorMessage = null
+            mostrarErrorValidacion = false
         }) {
             Text(if (isRegistering) "Volver al inicio de sesion" else "No tengo cuenta, quiero registrarme")
         }
+
+        DialogoAlerta(
+            mostrarDialogo = mostrarErrorValidacion,
+            titulo = "Campos incompletos",
+            mensaje = mensajeErrorValidacion,
+            onDismiss = { mostrarErrorValidacion = false }
+        )
     }
 }

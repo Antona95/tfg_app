@@ -7,14 +7,17 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.* // Importante para remember y getValue
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.* import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import model.Persona
 import viewmodel.CoachViewModel
+
+import ui.components.DialogoAlerta
+import ui.components.Validaciones
+import ui.components.CamposRegistro
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,17 +32,53 @@ fun CoachScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val textoBusqueda by viewModel.textoBusqueda.collectAsState()
 
-    // Estado para controlar la visibilidad del diálogo
-    var mostrarDialogoCrear by remember { mutableStateOf(false) }
+    // NUEVOS ESTADOS OBSERVADOS DESDE EL VIEWMODEL
+    val errorRegistro by viewModel.errorRegistro.collectAsState()
+    val registroExitoso by viewModel.registroExitoso.collectAsState()
 
-    // Mostrar el diálogo si el estado es true
+    var mostrarDialogoCrear by remember { mutableStateOf(false) }
+    var alumnoAEliminar by remember { mutableStateOf<Persona?>(null) }
+
+    // Si el registro fue exitoso, cerramos el cuadro y reseteamos el estado
+    LaunchedEffect(registroExitoso) {
+        if (registroExitoso) {
+            mostrarDialogoCrear = false
+            viewModel.resetRegistroState()
+        }
+    }
+
     if (mostrarDialogoCrear) {
         DialogoCrearAlumno(
+            // Le pasamos el error del servidor al formulario
+            errorServidor = errorRegistro,
             onConfirmar = { nick, pass, nom, ape ->
+                // OJO: Ya no cerramos el diálogo aquí. Dejamos que el ViewModel lo decida
                 viewModel.crearNuevoAlumno(nick, pass, nom, ape)
-                mostrarDialogoCrear = false
             },
-            onDescartar = { mostrarDialogoCrear = false }
+            onDescartar = {
+                mostrarDialogoCrear = false
+                viewModel.resetRegistroState() // Limpiamos por si canceló después de un error
+            }
+        )
+    }
+
+    if (alumnoAEliminar != null) {
+        AlertDialog(
+            onDismissRequest = { alumnoAEliminar = null },
+            title = { Text("Confirmar eliminación", fontWeight = FontWeight.Bold) },
+            text = { Text("¿Estás seguro de que quieres eliminar a ${alumnoAEliminar!!.nombre} ${alumnoAEliminar!!.apellidos}? Se borrará todo su historial y rutinas de la base de datos de forma permanente.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.eliminarAlumno(alumnoAEliminar!!.nickname)
+                        alumnoAEliminar = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) { Text("Eliminar definitivamente") }
+            },
+            dismissButton = {
+                TextButton(onClick = { alumnoAEliminar = null }) { Text("Cancelar") }
+            }
         )
     }
 
@@ -48,7 +87,6 @@ fun CoachScreen(
             TopAppBar(
                 title = { Text("Panel Entrenador", fontWeight = FontWeight.Bold) },
                 actions = {
-                    // BOTÓN PARA AÑADIR NUEVO ALUMNO
                     IconButton(onClick = { mostrarDialogoCrear = true }) {
                         Icon(Icons.Default.PersonAdd, "Nuevo Alumno", tint = MaterialTheme.colorScheme.primary)
                     }
@@ -58,31 +96,18 @@ fun CoachScreen(
                         onCheckedChange = { onThemeToggle() },
                         modifier = Modifier.padding(end = 8.dp),
                         thumbContent = {
-                            if (isDarkMode) {
-                                Icon(Icons.Default.DarkMode, "Modo Oscuro", modifier = Modifier.size(SwitchDefaults.IconSize))
-                            } else {
-                                Icon(Icons.Default.LightMode, "Modo Claro", modifier = Modifier.size(SwitchDefaults.IconSize))
-                            }
+                            if (isDarkMode) { Icon(Icons.Default.DarkMode, "Modo Oscuro", modifier = Modifier.size(SwitchDefaults.IconSize)) }
+                            else { Icon(Icons.Default.LightMode, "Modo Claro", modifier = Modifier.size(SwitchDefaults.IconSize)) }
                         }
                     )
 
-                    IconButton(onClick = { viewModel.cargarAlumnos() }) {
-                        Icon(Icons.Default.Refresh, "Recargar")
-                    }
-                    IconButton(onClick = onLogoutClick) {
-                        Icon(
-                            imageVector = Icons.Default.ExitToApp,
-                            contentDescription = "Cerrar Sesión",
-                            tint = MaterialTheme.colorScheme.error
-                        )
-                    }
+                    IconButton(onClick = { viewModel.cargarAlumnos() }) { Icon(Icons.Default.Refresh, "Recargar") }
+                    IconButton(onClick = onLogoutClick) { Icon(Icons.Default.ExitToApp, "Cerrar Sesión", tint = MaterialTheme.colorScheme.error) }
                 }
             )
         },
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
-
-            // --- BUSCADOR ---
             OutlinedTextField(
                 value = textoBusqueda,
                 onValueChange = { viewModel.buscar(it) },
@@ -91,16 +116,13 @@ fun CoachScreen(
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 trailingIcon = {
                     if (textoBusqueda.isNotEmpty()) {
-                        IconButton(onClick = { viewModel.buscar("") }) {
-                            Icon(Icons.Default.Clear, contentDescription = "Limpiar")
-                        }
+                        IconButton(onClick = { viewModel.buscar("") }) { Icon(Icons.Default.Clear, "Limpiar") }
                     }
                 },
                 singleLine = true,
                 shape = MaterialTheme.shapes.medium
             )
 
-            // --- LISTA ---
             Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 if (isLoading) {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
@@ -120,7 +142,7 @@ fun CoachScreen(
                                 AlumnoItem(
                                     alumno = alumno,
                                     onClick = { onAlumnoClick(alumno) },
-                                    onDelete = { viewModel.eliminarAlumno(alumno.nickname) }
+                                    onDelete = { alumnoAEliminar = alumno }
                                 )
                             }
                         }
@@ -142,42 +164,18 @@ fun AlumnoItem(alumno: Persona, onClick: () -> Unit, onDelete: () -> Unit) {
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Surface(
-                modifier = Modifier.size(40.dp),
-                shape = MaterialTheme.shapes.small,
-                color = MaterialTheme.colorScheme.primary
-            ) {
+            Surface(modifier = Modifier.size(40.dp), shape = MaterialTheme.shapes.small, color = MaterialTheme.colorScheme.primary) {
                 Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = alumno.nombre.take(1).uppercase(),
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text(text = alumno.nombre.take(1).uppercase(), color = Color.White, fontWeight = FontWeight.Bold)
                 }
             }
-
             Spacer(modifier = Modifier.width(16.dp))
-
             Column {
-                Text(
-                    text = "${alumno.nombre} ${alumno.apellidos}",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "@${alumno.nickname}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray
-                )
+                Text(text = "${alumno.nombre} ${alumno.apellidos}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(text = "@${alumno.nickname}", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
             }
-
             Spacer(modifier = Modifier.weight(1f))
-
-            // BOTÓN ELIMINAR
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, "Eliminar Alumno", tint = MaterialTheme.colorScheme.error)
-            }
-
+            IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, "Eliminar Alumno", tint = MaterialTheme.colorScheme.error) }
             Icon(Icons.Default.KeyboardArrowRight, contentDescription = null)
         }
     }
@@ -185,6 +183,7 @@ fun AlumnoItem(alumno: Persona, onClick: () -> Unit, onDelete: () -> Unit) {
 
 @Composable
 fun DialogoCrearAlumno(
+    errorServidor: String?, // <--- AÑADIDO: Recibe el error del Node.js
     onConfirmar: (String, String, String, String) -> Unit,
     onDescartar: () -> Unit
 ) {
@@ -192,35 +191,54 @@ fun DialogoCrearAlumno(
     var pass by remember { mutableStateOf("") }
     var nombre by remember { mutableStateOf("") }
     var apellidos by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+
+    var mostrarErrorValidacion by remember { mutableStateOf(false) }
+    var mensajeErrorValidacion by remember { mutableStateOf("") }
 
     AlertDialog(
         onDismissRequest = onDescartar,
         title = { Text("Nuevo Alumno") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(value = nombre, onValueChange = { nombre = it }, label = { Text("Nombre") })
-                OutlinedTextField(value = apellidos, onValueChange = { apellidos = it }, label = { Text("Apellidos") })
-                OutlinedTextField(value = nick, onValueChange = { nick = it }, label = { Text("Nickname") })
-                OutlinedTextField(value = pass, onValueChange = { pass = it }, label = { Text("Password") })
+            Column {
+                CamposRegistro(
+                    nombre = nombre, onNombreChange = { nombre = it },
+                    apellidos = apellidos, onApellidosChange = { apellidos = it },
+                    nickname = nick, onNicknameChange = { nick = it },
+                    password = pass, onPasswordChange = { pass = it },
+                    passwordVisible = passwordVisible,
+                    onPasswordVisibilityChange = { passwordVisible = !passwordVisible }
+                )
+                // Si hay un error del servidor, lo pintamos en rojito aquí abajo
+                if (errorServidor != null) {
+                    Text(
+                        text = errorServidor,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    // Añadimos la misma lógica que tu Zod
-                    if(nick.length >= 3 && pass.length >= 4 && nombre.isNotBlank()) {
-                        onConfirmar(nick, pass, nombre, apellidos)
+                    val error = Validaciones.validarRegistro(nick, pass, nombre, apellidos)
+                    if (error != null) {
+                        mensajeErrorValidacion = error
+                        mostrarErrorValidacion = true
                     } else {
-                        // Aquí podrías poner un toast o un texto de error
-                        println("Datos inválidos para el backend")
+                        onConfirmar(nick, pass, nombre, apellidos)
                     }
                 }
-            ) {
-                Text("Crear")
-            }
+            ) { Text("Crear") }
         },
-        dismissButton = {
-            TextButton(onClick = onDescartar) { Text("Cancelar") }
-        }
+        dismissButton = { TextButton(onClick = onDescartar) { Text("Cancelar") } }
+    )
+
+    DialogoAlerta(
+        mostrarDialogo = mostrarErrorValidacion,
+        titulo = "Revisa los datos",
+        mensaje = mensajeErrorValidacion,
+        onDismiss = { mostrarErrorValidacion = false }
     )
 }
