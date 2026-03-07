@@ -1,5 +1,6 @@
 package com.example.app_tfg
 
+import ui.components.BackHandler
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import dev.icerock.moko.mvvm.compose.getViewModel
@@ -90,10 +91,19 @@ fun App() {
                     }
                 }
 
+                /* * NOTA DEL PROFESOR:
+                 * Como estamos navegando cambiando variables (y no usando NavHost nativo),
+                 * Android no sabe que hemos "cambiado de pantalla". Si el usuario pulsa el botón
+                 * físico de atrás de su móvil, Android cerrará la app de golpe.
+                 * * Solución: Usamos BackHandler {} para "secuestrar" el botón físico y obligarle a
+                 * que, en lugar de cerrar la app, simplemente cambie nuestra variable de estado.
+                 */
+
                 // Máquina de estados rudimentaria pero efectiva para manejar las pantallas del Coach
                 when {
                     // 1. Ver detalle de una sesión concreta (viene de la lista del historial)
                     sesionSeleccionada != null -> {
+                        BackHandler { sesionSeleccionada = null } // Secuestro del botón atrás
                         DetalleSesionScreen(
                             sesion = sesionSeleccionada!!,
                             isDarkMode = isDarkMode,
@@ -102,6 +112,10 @@ fun App() {
                     }
                     // 2. Crear una nueva sesión (desde cero o duplicando una base)
                     creandoSesion && usuarioSeleccionado != null -> {
+                        BackHandler {
+                            creandoSesion = false
+                            sesionParaDuplicar = null
+                        } // Secuestro del botón atrás
                         NuevaSesionScreen(
                             idUsuario = usuarioSeleccionado!!.id,
                             viewModel = sesionVM,
@@ -117,17 +131,19 @@ fun App() {
                     }
                     // 3. Ver la lista de entrenamientos pasados (Historial del alumno seleccionado)
                     viendoHistorial && usuarioSeleccionado != null -> {
+                        BackHandler { viendoHistorial = false } // Secuestro del botón atrás
                         HistorialScreen(
                             idUsuario = usuarioSeleccionado!!.id,
                             repository = repository,
                             viewModel = historialCoachVM,
-                            isDarkMode = isDarkMode, // <--- AÑADIDO
+                            isDarkMode = isDarkMode,
                             onBack = { viendoHistorial = false },
                             onSesionClick = { sesion -> sesionSeleccionada = sesion }
                         )
                     }
                     // 4. Menú de opciones de un alumno (Pantalla puente)
                     usuarioSeleccionado != null -> {
+                        BackHandler { usuarioSeleccionado = null } // Secuestro del botón atrás
                         UserOptionsScreen(
                             usuario = usuarioSeleccionado!!,
                             // Pasamos el booleano comprobando si la lista de sesiones pre-cargada tiene contenido
@@ -149,6 +165,10 @@ fun App() {
                     }
                     // 5. Pantalla principal del Coach: Lista del buscador de alumnos
                     else -> {
+                        /* * NOTA: En la pantalla principal no ponemos BackHandler.
+                         * Aquí sí queremos que si el usuario pulsa atrás, se salga de la app
+                         * o la minimice (comportamiento estándar y esperado de Android).
+                         */
                         CoachScreen(
                             viewModel = coachViewModel,
                             onLogoutClick = { loginViewModel.cerrarSesion() },
@@ -179,7 +199,7 @@ fun App() {
                 var sesionDetalleAlumno by remember { mutableStateOf<model.SesionEntrenamiento?>(null) }
 
                 when (pantallaAlumno) {
-                    // Dashboard principal con botones de acceso
+                    // Dashboard principal con botones de acceso (Al igual que la principal del Coach, no interceptamos aquí)
                     "MENU" -> AlumnoHomeScreen(
                         usuario = usuario,
                         onVerHoy = { pantallaAlumno = "HOY" },
@@ -189,26 +209,37 @@ fun App() {
                         onThemeToggle = { isDarkMode = !isDarkMode }
                     )
                     // Pantalla para ejecutar el entrenamiento asignado para el día actual
-                    "HOY" -> HoyScreen(
-                        idUsuario = usuario.id,
-                        viewModel = hoyViewModel,
-                        isDarkMode = isDarkMode,
-                        onNavigateBack = { pantallaAlumno = "MENU" }
-                    )
+                    "HOY" -> {
+                        BackHandler { pantallaAlumno = "MENU" } // Secuestro del botón atrás
+                        HoyScreen(
+                            idUsuario = usuario.id,
+                            viewModel = hoyViewModel,
+                            isDarkMode = isDarkMode,
+                            onNavigateBack = { pantallaAlumno = "MENU" }
+                        )
+                    }
                     // Consulta de rutinas antiguas
-                    "HISTORIAL" -> HistorialScreen(
-                        idUsuario = usuario.id,
-                        repository = repository,
-                        viewModel = historialViewModel,
-                        isDarkMode = isDarkMode, // <--- AÑADIDO
-                        onBack = { pantallaAlumno = "MENU" },
-                        onSesionClick = { sesion ->
-                            sesionDetalleAlumno = sesion
-                            pantallaAlumno = "DETALLE"
-                        }
-                    )
+                    "HISTORIAL" -> {
+                        BackHandler { pantallaAlumno = "MENU" } // Secuestro del botón atrás
+                        HistorialScreen(
+                            idUsuario = usuario.id,
+                            repository = repository,
+                            viewModel = historialViewModel,
+                            isDarkMode = isDarkMode,
+                            onBack = { pantallaAlumno = "MENU" },
+                            onSesionClick = { sesion ->
+                                sesionDetalleAlumno = sesion
+                                pantallaAlumno = "DETALLE"
+                            }
+                        )
+                    }
                     // Reutilizamos el componente visual de DetalleSesionScreen para ver el interior del historial
                     "DETALLE" -> {
+                        BackHandler {
+                            pantallaAlumno = "HISTORIAL"
+                            sesionDetalleAlumno = null
+                        } // Si está viendo un detalle y pulsa atrás, lo devolvemos a la lista, no al menú principal.
+
                         if (sesionDetalleAlumno != null) {
                             DetalleSesionScreen(
                                 sesion = sesionDetalleAlumno!!,
@@ -230,6 +261,7 @@ fun App() {
             // PANTALLA DE LOGIN Y REGISTRO
             // ==========================================
             LoginScreen(
+                isLoading = state.isLoading,
                 onLoginClick = { nick, pass -> loginViewModel.onLoginClick(nick, pass) },
                 onRegistroClick = { nick, pass, nom, ape -> loginViewModel.onRegistroClick(nick, pass, nom, ape) },
                 mensajeExito = state.mensajeExito,

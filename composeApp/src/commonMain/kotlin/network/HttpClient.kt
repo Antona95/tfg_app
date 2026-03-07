@@ -1,23 +1,23 @@
 package network
 
 import io.ktor.client.HttpClient
+import io.ktor.client.engine.HttpClientEngine // <--- IMPORTANTE
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
-// Esta función configura el cliente HTTP para toda la app
+// 1. LA PROMESA: Le decimos a KMP que cada sistema (Android/iOS) pondrá su motor
+expect fun crearMotorDeRed(): HttpClientEngine
+
+// 2. CONFIGURACIÓN GLOBAL: Sigue siendo común, pero ahora le inyectamos el motor
 fun createHttpClient(): HttpClient {
-    return HttpClient {
+    return HttpClient(crearMotorDeRed()) { // <--- Le pasamos el motor específico
         install(ContentNegotiation) {
             json(Json {
-                // Imprime el JSON bonito si lo logueas
                 prettyPrint = true
-                // Permite comillas relajadas o formatos ligeramente incorrectos
                 isLenient = true
-                // CRUCIAL: Si tu API de Mongo devuelve campos que no tienes en tu clase Kotlin,
-                // esto evita que la app se rompa.
-                ignoreUnknownKeys = true  // Si el servidor manda basura extra (__v), la ignora
-                coerceInputValues = true  // Si viene un null y esperamos default, lo arregla
+                ignoreUnknownKeys = true
+                coerceInputValues = true
             })
         }
     }

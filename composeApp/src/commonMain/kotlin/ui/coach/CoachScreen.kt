@@ -7,7 +7,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.* import androidx.compose.ui.Alignment
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -32,14 +33,12 @@ fun CoachScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val textoBusqueda by viewModel.textoBusqueda.collectAsState()
 
-    // NUEVOS ESTADOS OBSERVADOS DESDE EL VIEWMODEL
     val errorRegistro by viewModel.errorRegistro.collectAsState()
     val registroExitoso by viewModel.registroExitoso.collectAsState()
 
     var mostrarDialogoCrear by remember { mutableStateOf(false) }
     var alumnoAEliminar by remember { mutableStateOf<Persona?>(null) }
 
-    // Si el registro fue exitoso, cerramos el cuadro y reseteamos el estado
     LaunchedEffect(registroExitoso) {
         if (registroExitoso) {
             mostrarDialogoCrear = false
@@ -49,15 +48,14 @@ fun CoachScreen(
 
     if (mostrarDialogoCrear) {
         DialogoCrearAlumno(
-            // Le pasamos el error del servidor al formulario
             errorServidor = errorRegistro,
+            isLoading = isLoading, // <--- APUNTE: Le pasamos el estado de carga para bloquear el formulario
             onConfirmar = { nick, pass, nom, ape ->
-                // OJO: Ya no cerramos el diálogo aquí. Dejamos que el ViewModel lo decida
                 viewModel.crearNuevoAlumno(nick, pass, nom, ape)
             },
             onDescartar = {
                 mostrarDialogoCrear = false
-                viewModel.resetRegistroState() // Limpiamos por si canceló después de un error
+                viewModel.resetRegistroState()
             }
         )
     }
@@ -124,7 +122,7 @@ fun CoachScreen(
             )
 
             Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                if (isLoading) {
+                if (isLoading && alumnos.isEmpty()) {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 } else {
                     if (alumnos.isEmpty()) {
@@ -181,9 +179,15 @@ fun AlumnoItem(alumno: Persona, onClick: () -> Unit, onDelete: () -> Unit) {
     }
 }
 
+// =========================================================================
+// APUNTE DE CLASE: PROTECCIÓN ANTI-DOBLE CLIC
+// Hemos modificado los botones de "Crear" y "Cancelar" para que se desactiven
+// cuando isLoading es true. Además, impedimos que se cierre pulsando fuera.
+// =========================================================================
 @Composable
 fun DialogoCrearAlumno(
-    errorServidor: String?, // <--- AÑADIDO: Recibe el error del Node.js
+    errorServidor: String?,
+    isLoading: Boolean, // <--- NUEVO
     onConfirmar: (String, String, String, String) -> Unit,
     onDescartar: () -> Unit
 ) {
@@ -197,7 +201,10 @@ fun DialogoCrearAlumno(
     var mensajeErrorValidacion by remember { mutableStateOf("") }
 
     AlertDialog(
-        onDismissRequest = onDescartar,
+        onDismissRequest = {
+            // Si está cargando, bloqueamos que el usuario cierre el cuadro tocando la pantalla gris
+            if (!isLoading) onDescartar()
+        },
         title = { Text("Nuevo Alumno") },
         text = {
             Column {
@@ -209,7 +216,6 @@ fun DialogoCrearAlumno(
                     passwordVisible = passwordVisible,
                     onPasswordVisibilityChange = { passwordVisible = !passwordVisible }
                 )
-                // Si hay un error del servidor, lo pintamos en rojito aquí abajo
                 if (errorServidor != null) {
                     Text(
                         text = errorServidor,
@@ -229,10 +235,22 @@ fun DialogoCrearAlumno(
                     } else {
                         onConfirmar(nick, pass, nombre, apellidos)
                     }
+                },
+                enabled = !isLoading // <--- BLOQUEO ANTI-DOBLE CLIC
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
+                } else {
+                    Text("Crear")
                 }
-            ) { Text("Crear") }
+            }
         },
-        dismissButton = { TextButton(onClick = onDescartar) { Text("Cancelar") } }
+        dismissButton = {
+            TextButton(
+                onClick = onDescartar,
+                enabled = !isLoading // <--- BLOQUEAMOS TAMBIÉN EL BOTÓN CANCELAR
+            ) { Text("Cancelar") }
+        }
     )
 
     DialogoAlerta(

@@ -5,11 +5,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.WifiOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.icerock.moko.mvvm.compose.getViewModel
 import dev.icerock.moko.mvvm.compose.viewModelFactory
@@ -26,7 +29,7 @@ fun HistorialScreen(
     idUsuario: String,
     repository: EntrenamientoRepository,
     viewModel: HistorialViewModel? = null,
-    isDarkMode: Boolean, // <--- AÑADIDO PARA PASÁRSELO A LA TARJETA
+    isDarkMode: Boolean,
     onBack: () -> Unit,
     onSesionClick: (SesionEntrenamiento) -> Unit
 ) {
@@ -37,6 +40,7 @@ fun HistorialScreen(
 
     val sesiones by historialVM.sesiones.collectAsState()
     val isLoading by historialVM.isLoading.collectAsState()
+    val error by historialVM.error.collectAsState() // <--- NUEVO: Escuchamos si hay fallos de red
 
     LaunchedEffect(idUsuario) {
         historialVM.cargarHistorial(idUsuario, forzarRecarga = true)
@@ -58,8 +62,34 @@ fun HistorialScreen(
             modifier = Modifier.padding(padding).fillMaxSize(),
             contentAlignment = Alignment.TopCenter
         ) {
-            // USAMOS LOS NUEVOS COMPONENTES DE ESTADO
-            if (isLoading && sesiones.isEmpty()) {
+            // NUEVO BLOQUE: MANEJO DEL ERROR VISUAL
+            if (error != null) {
+                Column(
+                    modifier = Modifier.fillMaxSize().padding(16.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.WifiOff,
+                        contentDescription = "Sin Red",
+                        modifier = Modifier.size(64.dp),
+                        tint = Color.Gray
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = error!!,
+                        color = MaterialTheme.colorScheme.error,
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Button(onClick = { historialVM.cargarHistorial(idUsuario, true) }) {
+                        Text("Reintentar conexión")
+                    }
+                }
+            }
+            // EL RESTO SIGUE IGUAL
+            else if (isLoading && sesiones.isEmpty()) {
                 PantallaCargando()
             } else if (!isLoading && sesiones.isEmpty()) {
                 PantallaVacia(icono = "📭", mensaje = "No hay sesiones registradas")
@@ -73,7 +103,6 @@ fun HistorialScreen(
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     items(sesiones) { sesion ->
-                        // USAMOS LA NUEVA TARJETA REUTILIZABLE
                         SesionResumenCard(
                             sesion = sesion,
                             isDarkMode = isDarkMode,

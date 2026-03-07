@@ -31,6 +31,7 @@ import ui.components.CamposRegistro
 
 @Composable
 fun LoginScreen(
+    isLoading: Boolean, // <--- NUEVO: Recibimos el estado de carga
     onLoginClick: (String, String) -> Unit,
     onRegistroClick: (String, String, String, String) -> Unit,
     mensajeExito: String? = null,
@@ -60,7 +61,8 @@ fun LoginScreen(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        FormularioAuth(onLoginClick, onRegistroClick, mensajeExito, errorBackend)
+                        // Le pasamos el isLoading al formulario
+                        FormularioAuth(isLoading, onLoginClick, onRegistroClick, mensajeExito, errorBackend)
                     }
                 }
             } else {
@@ -78,7 +80,8 @@ fun LoginScreen(
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        FormularioAuth(onLoginClick, onRegistroClick, mensajeExito, errorBackend)
+                        // Le pasamos el isLoading al formulario
+                        FormularioAuth(isLoading, onLoginClick, onRegistroClick, mensajeExito, errorBackend)
                     }
                 }
             }
@@ -104,6 +107,7 @@ fun LoginScreen(
 
 @Composable
 fun FormularioAuth(
+    isLoading: Boolean, // <--- NUEVO: Recibimos el estado de carga
     onLoginClick: (String, String) -> Unit,
     onRegistroClick: (String, String, String, String) -> Unit,
     mensajeExito: String?,
@@ -140,7 +144,6 @@ fun FormularioAuth(
         )
 
         if (isRegistering) {
-            // USAMOS NUESTRO COMPONENTE REUTILIZABLE
             CamposRegistro(
                 nombre = nombre, onNombreChange = { nombre = it },
                 apellidos = apellidos, onApellidosChange = { apellidos = it },
@@ -150,7 +153,6 @@ fun FormularioAuth(
                 onPasswordVisibilityChange = { passwordVisible = !passwordVisible }
             )
         } else {
-            // Si es Login, solo pintamos los dos campos básicos
             OutlinedTextField(
                 value = nickname,
                 onValueChange = { nickname = it },
@@ -176,6 +178,9 @@ fun FormularioAuth(
             )
         }
 
+        // =========================================================================
+        // APUNTE DE CLASE: BLOQUEO DEL BOTÓN PRINCIPAL
+        // =========================================================================
         Button(
             onClick = {
                 if (isRegistering) {
@@ -195,9 +200,19 @@ fun FormularioAuth(
                     }
                 }
             },
-            modifier = Modifier.fillMaxWidth().height(48.dp).padding(top = 8.dp)
+            modifier = Modifier.fillMaxWidth().height(48.dp).padding(top = 8.dp),
+            enabled = !isLoading // <--- BLOQUEAMOS EL BOTÓN MIENTRAS CARGA
         ) {
-            Text(if (isRegistering) "CREAR CUENTA" else "ENTRAR")
+            // MOSTRAMOS LA RUEDITA O EL TEXTO
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Text(if (isRegistering) "CREAR CUENTA" else "ENTRAR")
+            }
         }
 
         if (errorBackend != null) {
@@ -218,10 +233,13 @@ fun FormularioAuth(
             )
         }
 
-        TextButton(onClick = {
-            isRegistering = !isRegistering
-            mostrarErrorValidacion = false
-        }) {
+        TextButton(
+            onClick = {
+                isRegistering = !isRegistering
+                mostrarErrorValidacion = false
+            },
+            enabled = !isLoading // <--- TAMBIÉN BLOQUEAMOS ESTO PARA QUE NO CAMBIEN DE MODO MIENTRAS CARGA
+        ) {
             Text(if (isRegistering) "Volver al inicio de sesion" else "No tengo cuenta, quiero registrarme")
         }
 

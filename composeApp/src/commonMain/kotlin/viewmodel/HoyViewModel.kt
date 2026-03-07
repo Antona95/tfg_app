@@ -26,16 +26,15 @@ class HoyViewModel(private val repository: EntrenamientoRepository) : ViewModel(
         viewModelScope.launch {
             _uiState.value = HoyUiState.Loading
             try {
-                // CAMBIO CLAVE: En vez de obtenerSesionHoy, pedimos la última sesión creada
                 val sesion = repository.obtenerUltimaSesion(idUsuario)
-
                 if (sesion != null) {
                     _uiState.value = HoyUiState.Success(sesion)
                 } else {
                     _uiState.value = HoyUiState.Empty
                 }
             } catch (e: Exception) {
-                _uiState.value = HoyUiState.Error("No se pudo conectar con el servidor")
+                // MODIFICADO: Ahora extraemos el mensaje real del Repositorio ("No hay conexión...")
+                _uiState.value = HoyUiState.Error(e.message ?: "Error de red al conectar")
             }
         }
     }
@@ -44,7 +43,6 @@ class HoyViewModel(private val repository: EntrenamientoRepository) : ViewModel(
         viewModelScope.launch {
             val estado = _uiState.value
             if (estado is HoyUiState.Success) {
-
                 val ejerciciosParaEnviar = estado.sesion.ejercicios.map { detalle ->
                     model.CrearEjercicioRequest(
                         nombre = detalle.nombre ?: "",
@@ -55,22 +53,21 @@ class HoyViewModel(private val repository: EntrenamientoRepository) : ViewModel(
                     )
                 }
 
-                val exito = repository.finalizarSesion(idSesion, ejerciciosParaEnviar)
-
-                if (exito) {
-                    _uiState.value = HoyUiState.Loading
-                    try {
-                       //al refrescar, volvemos a pedir la última sesión
+                try {
+                    val exito = repository.finalizarSesion(idSesion, ejerciciosParaEnviar)
+                    if (exito) {
+                        _uiState.value = HoyUiState.Loading
                         val sesionNueva = repository.obtenerUltimaSesion(idUsuario)
                         if (sesionNueva != null) {
                             _uiState.value = HoyUiState.Success(sesionNueva)
                         } else {
                             _uiState.value = HoyUiState.Empty
                         }
-                    } catch (e: Exception) {
-                        _uiState.value = HoyUiState.Error("Error al refrescar")
+                        onExito()
                     }
-                    onExito()
+                } catch (e: Exception) {
+                    // MODIFICADO: Mostramos error si falla al finalizar
+                    _uiState.value = HoyUiState.Error(e.message ?: "Fallo al finalizar la sesión")
                 }
             }
         }

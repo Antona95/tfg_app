@@ -8,7 +8,7 @@ import kotlinx.coroutines.launch
 import model.Persona
 import network.EntrenamientoRepository
 
-// Representacion del estado de la pantalla de acceso
+// Representación del estado de la pantalla de acceso
 data class LoginUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
@@ -21,41 +21,45 @@ class LoginViewModel(private val repository: EntrenamientoRepository) : ViewMode
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState = _uiState.asStateFlow()
 
-    // Gestion de la validacion de credenciales
+    // Gestión de la validación de credenciales
     fun onLoginClick(nickname: String, pass: String) {
-        // 1. LIMPIEZA: Eliminamos espacios accidentales que el teclado movil suele añadir
+        // 1. LIMPIEZA: Eliminamos espacios accidentales que el teclado móvil suele añadir
         val nickLimpio = nickname.trim()
         val passLimpia = pass.trim()
 
-        // Iniciamos carga y limpiamos errores previos
+        // Iniciamos carga y limpiamos errores previos en la UI
         _uiState.update { it.copy(isLoading = true, error = null, mensajeExito = null) }
 
         viewModelScope.launch {
             try {
-                // DEBUG: Para ver en Logcat exactamente que enviamos
-                println(">>> INTENTO LOGIN: '$nickLimpio' / '$passLimpia'")
-
+                // 2. Pedimos los datos al repositorio
                 val persona = repository.login(nickLimpio, passLimpia)
 
                 if (persona != null) {
                     // Login exitoso: guardamos el usuario
                     _uiState.update { it.copy(usuarioLogueado = persona, isLoading = false) }
                 } else {
-                    // Fallo de credenciales
-                    _uiState.update { it.copy(error = "Nickname o contrasena incorrectos", isLoading = false) }
+                    // Si el repo devuelve null sin lanzar excepción, es que el backend
+                    // devolvió un error de credenciales (HTTP 401/404).
+                    _uiState.update { it.copy(error = "Nickname o contraseña incorrectos", isLoading = false) }
                 }
             } catch (e: Exception) {
-                // Error de red o servidor
-                _uiState.update { it.copy(error = "Error de conexion: ${e.message}", isLoading = false) }
+                // =======================================================
+                // APUNTE DE CLASE: CAPTURA DEL FALLO DE RED
+                // 3. Si salta a este catch, es porque el Repositorio detectó que no
+                // hay Internet y lanzó un "throw Exception". Extraemos su mensaje
+                // (e.message) y se lo mandamos a la UI para que lo pinte de rojo.
+                // =======================================================
+                _uiState.update { it.copy(error = e.message ?: "Error desconocido de red", isLoading = false) }
             }
         }
     }
 
-    // Gestion de la creacion de nuevas cuentas
+    // Gestión de la creación de nuevas cuentas
     fun onRegistroClick(nickname: String, pass: String, nombre: String, apellidos: String) {
         val nickLimpio = nickname.trim()
         val passLimpia = pass.trim()
-        
+
         // Iniciamos carga y limpiamos estados anteriores
         _uiState.update { it.copy(isLoading = true, error = null, mensajeExito = null) }
 
@@ -63,30 +67,30 @@ class LoginViewModel(private val repository: EntrenamientoRepository) : ViewMode
             try {
                 val exito = repository.registrarUsuario(nickLimpio, passLimpia, nombre, apellidos)
                 if (exito) {
-                    // Registro exitoso: actualizamos mensajeExito para que la UI cambie al modo Login
+                    // Registro exitoso
                     _uiState.update {
                         it.copy(
-                            mensajeExito = "Cuenta creada con exito. Ahora puedes iniciar sesion.",
+                            mensajeExito = "Cuenta creada con éxito. Ahora puedes iniciar sesión.",
                             isLoading = false
                         )
                     }
                 } else {
-                    // Fallo en la creacion (posible duplicidad)
-                    _uiState.update { it.copy(error = "No se pudo crear la cuenta. El usuario ya existe.", isLoading = false) }
+                    // Fallo en la creación (HTTP 409 - posible duplicidad u otros)
+                    _uiState.update { it.copy(error = "No se pudo crear la cuenta. Revisa los datos.", isLoading = false) }
                 }
             } catch (e: Exception) {
-                // Error en la comunicacion con la API
-                _uiState.update { it.copy(error = "Error al procesar el registro", isLoading = false) }
+                // Captura el fallo de red del repositorio ("No hay conexión con el servidor...")
+                _uiState.update { it.copy(error = e.message ?: "Error de red al procesar registro", isLoading = false) }
             }
         }
     }
 
-    // Restablece el estado completo (util para Logout)
+    // Restablece el estado completo (útil para Logout)
     fun cerrarSesion() {
         _uiState.value = LoginUiState()
     }
 
-    // Limpia los mensajes de error y exito sin afectar al usuario logueado
+    // Limpia los mensajes de error y éxito sin afectar al usuario logueado
     fun limpiarMensajes() {
         _uiState.update { it.copy(error = null, mensajeExito = null) }
     }

@@ -15,62 +15,56 @@ class HistorialViewModel(private val repository: EntrenamientoRepository) : View
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
 
-    // Variable para evitar peticiones infinitas si falla
+    // NUEVO: Estado para guardar errores de red
+    private val _error = MutableStateFlow<String?>(null)
+    val error = _error.asStateFlow()
+
     private var ultimoUsuarioCargado: String? = null
 
     fun cargarHistorial(idUsuario: String, forzarRecarga: Boolean = false) {
-        // Si forzarRecarga es true, saltamos el 'return' y vamos al servidor
         if (!forzarRecarga && ultimoUsuarioCargado == idUsuario && _sesiones.value.isNotEmpty()) {
             return
         }
 
         viewModelScope.launch {
-            _isLoading.value = true // Mostramos carga para confirmar que algo pasa
+            _isLoading.value = true
+            _error.value = null // Limpiamos errores viejos al reintentar
             try {
-                // Esto pide los datos frescos de MongoDB
                 val lista = repository.obtenerHistorialSesiones(idUsuario)
                 _sesiones.value = lista
                 ultimoUsuarioCargado = idUsuario
-                println("HISTORIAL CARGADO: Se han encontrado ${lista.size} sesiones")
             } catch (e: Exception) {
-                println("Error en historial: ${e.message}")
+                // MODIFICADO: En lugar del println, mandamos el error a la pantalla
+                _error.value = e.message ?: "No se pudo cargar el historial."
             } finally {
                 _isLoading.value = false
             }
         }
     }
 
-    /**
-     * Limpia el historial actual para asegurar que al cambiar de alumno se carguen datos frescos.
-     */
     fun limpiarHistorial() {
         _sesiones.value = emptyList()
         ultimoUsuarioCargado = null
+        _error.value = null
     }
 
+    // (El método marcarComoFinalizada se queda igual, pero le añadimos try/catch)
     fun marcarComoFinalizada(idSesion: String, idUsuario: String) {
         viewModelScope.launch {
-            // 1. Buscamos la sesión en tu lista de _sesiones
             val sesionEncontrada = _sesiones.value.find { it.idSesion == idSesion }
-
             if (sesionEncontrada != null) {
-                // 2. CONVERSIÓN MANUAL: Creamos la lista que el Repo espera
-                // Pasamos de 'DetalleSesion' a 'CrearEjercicioRequest'
                 val ejerciciosParaEnviar = sesionEncontrada.ejercicios.map { detalle ->
                     model.CrearEjercicioRequest(
-                        nombre = detalle.nombre ?: "",
-                        series = detalle.series,
-                        repeticiones = detalle.repeticiones,
-                        peso = detalle.peso ?: 0.0,
+                        nombre = detalle.nombre ?: "", series = detalle.series,
+                        repeticiones = detalle.repeticiones, peso = detalle.peso ?: 0.0,
                         bloque = detalle.bloque
                     )
                 }
-
-                // 3. Ahora el Repo NO se quejará porque le pasas lo que pide
-                val exito = repository.finalizarSesion(idSesion, ejerciciosParaEnviar)
-
-                if (exito) {
-                    cargarHistorial(idUsuario, forzarRecarga = true)
+                try {
+                    val exito = repository.finalizarSesion(idSesion, ejerciciosParaEnviar)
+                    if (exito) cargarHistorial(idUsuario, forzarRecarga = true)
+                } catch (e: Exception) {
+                    _error.value = e.message
                 }
             }
         }
