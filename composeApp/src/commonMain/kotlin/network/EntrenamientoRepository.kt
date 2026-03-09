@@ -12,6 +12,20 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import model.*
 
+/**
+ * ============================================================================
+ * FUENTE DE DATOS PRINCIPAL: INTEGRACIÓN CON API REST (NODE.JS + MONGODB)
+ * ============================================================================
+ * Esta clase actúa como la capa de repositorio remoto de la aplicación.
+ * Para garantizar la ligereza del cliente móvil, la app NO almacena bases
+ * de datos complejas localmente.
+ * Todo el flujo de datos (usuarios, sesiones, historial) se consume de forma
+ * dinámica desde una API RESTful propia desplegada en el servidor.
+ * Utiliza Ktor Client [HttpClient] para realizar peticiones HTTP asíncronas
+ * y transformar las respuestas JSON en Data Classes nativas de Kotlin.
+ */
+
+
 class EntrenamientoRepository(
     private val client: HttpClient
 ) {
