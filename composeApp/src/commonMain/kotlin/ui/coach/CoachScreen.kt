@@ -15,7 +15,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import model.Persona
 import viewmodel.CoachViewModel
-
 import ui.components.DialogoAlerta
 import ui.components.Validaciones
 import ui.components.CamposRegistro

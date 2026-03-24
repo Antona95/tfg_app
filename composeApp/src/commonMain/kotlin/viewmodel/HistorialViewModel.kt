@@ -48,7 +48,7 @@ class HistorialViewModel(private val repository: EntrenamientoRepository) : View
         _error.value = null
     }
 
-    // (El método marcarComoFinalizada se queda igual, pero le añadimos try/catch)
+
     fun marcarComoFinalizada(idSesion: String, idUsuario: String) {
         viewModelScope.launch {
             val sesionEncontrada = _sesiones.value.find { it.idSesion == idSesion }
@@ -62,7 +62,11 @@ class HistorialViewModel(private val repository: EntrenamientoRepository) : View
                 }
                 try {
                     val exito = repository.finalizarSesion(idSesion, ejerciciosParaEnviar)
-                    if (exito) cargarHistorial(idUsuario, forzarRecarga = true)
+                    if (exito) {
+                        cargarHistorial(idUsuario, forzarRecarga = true)
+                    } else {
+                        _error.value = "No se pudo finalizar la sesión."
+                    }
                 } catch (e: Exception) {
                     _error.value = e.message
                 }

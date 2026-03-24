@@ -16,7 +16,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import network.EntrenamientoRepository
 import viewmodel.SesionUiState
 import viewmodel.SesionViewModel
 import model.EjercicioDraft
@@ -64,7 +63,7 @@ fun NuevaSesionScreen(
     var mostrarErrorValidacion by remember { mutableStateOf(false) }
     var mensajeErrorValidacion by remember { mutableStateOf("") }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(sesionBase) {
         viewModel.inicializarConSesionBase(sesionBase)
     }
 

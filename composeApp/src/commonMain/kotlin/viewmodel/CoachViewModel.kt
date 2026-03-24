@@ -19,7 +19,6 @@ class CoachViewModel(private val repository: EntrenamientoRepository) : ViewMode
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
 
-    // NUEVOS ESTADOS PARA CONTROLAR EL REGISTRO Y ERRORES DEL BACKEND
     private val _errorRegistro = MutableStateFlow<String?>(null)
     val errorRegistro = _errorRegistro.asStateFlow()
 
@@ -57,37 +56,44 @@ class CoachViewModel(private val repository: EntrenamientoRepository) : ViewMode
             println("Acción bloqueada: No puedes borrar al administrador")
             return
         }
+
         viewModelScope.launch {
-            val exito = repository.eliminarAlumno(nickname)
-            if (exito) cargarAlumnos()
+            try {
+                val exito = repository.eliminarAlumno(nickname)
+                if (exito) {
+                    cargarAlumnos()
+                }
+            } catch (e: Exception) {
+                println("Error al eliminar alumno: ${e.message}")
+            }
         }
     }
 
-    // MODIFICADO: Ahora controlamos los estados de éxito/error
     fun crearNuevoAlumno(nickname: String, pass: String, nombre: String, apellidos: String) {
         viewModelScope.launch {
             _isLoading.value = true
-            _errorRegistro.value = null // Limpiamos errores previos
+            _errorRegistro.value = null
             _registroExitoso.value = false
 
-            // Intentamos crear
-            val resultado = repository.crearAlumno(nickname, pass, nombre, apellidos)
+            try {
+                val resultado = repository.crearAlumno(nickname, pass, nombre, apellidos)
 
-            // Si el repositorio devuelve un String, asumimos que es un error (ej: "El nickname ya existe")
-            // Si devuelve un Boolean true, es que fue éxito. (Ajusta esto según cómo funcione tu repository)
-            if (resultado == true) {
-                _registroExitoso.value = true
-                cargarAlumnos()
-            } else {
-                // Si tu repository.crearAlumno devuelve un boolean (false) cuando falla,
-                // ponemos un mensaje genérico. Si tu repo te permite devolver el error del server, ponlo aquí.
-                _errorRegistro.value = "Error al crear el alumno. Asegúrate de que el nickname no esté ya en uso."
+                if (resultado) {
+                    _registroExitoso.value = true
+                    _isLoading.value = false
+                    cargarAlumnos()
+                } else {
+                    _errorRegistro.value =
+                        "Error al crear el alumno. Asegúrate de que el nickname no esté ya en uso."
+                    _isLoading.value = false
+                }
+            } catch (e: Exception) {
+                _errorRegistro.value = e.message ?: "Error de red al crear el alumno."
+                _isLoading.value = false
             }
-            _isLoading.value = false
         }
     }
 
-    // Función para limpiar los estados cuando el usuario cierra el cuadro a mano
     fun resetRegistroState() {
         _errorRegistro.value = null
         _registroExitoso.value = false
@@ -95,14 +101,15 @@ class CoachViewModel(private val repository: EntrenamientoRepository) : ViewMode
 
     private fun aplicarFiltro() {
         val texto = _textoBusqueda.value.lowercase()
-        if (texto.isEmpty()) {
-            _alumnosFiltrados.value = _todosLosAlumnos.value
-        } else {
-            _alumnosFiltrados.value = _todosLosAlumnos.value.filter {
-                it.nickname.lowercase().contains(texto) ||
-                        it.nombre.lowercase().contains(texto) ||
-                        it.apellidos.lowercase().contains(texto)
+        _alumnosFiltrados.value =
+            if (texto.isEmpty()) {
+                _todosLosAlumnos.value
+            } else {
+                _todosLosAlumnos.value.filter {
+                    it.nickname.lowercase().contains(texto) ||
+                            it.nombre.lowercase().contains(texto) ||
+                            it.apellidos.lowercase().contains(texto)
+                }
             }
-        }
     }
 }

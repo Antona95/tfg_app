@@ -3,6 +3,7 @@ package viewmodel
 import dev.icerock.moko.mvvm.viewmodel.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import network.EntrenamientoRepository
 import model.CrearSesionRequest
@@ -22,10 +23,10 @@ class SesionViewModel(
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<SesionUiState>(SesionUiState.Idle)
-    val uiState: StateFlow<SesionUiState> = _uiState
+    val uiState: StateFlow<SesionUiState> = _uiState.asStateFlow()
 
     private val _listaEjercicios = MutableStateFlow<List<EjercicioDraft>>(emptyList())
-    val listaEjercicios: StateFlow<List<EjercicioDraft>> = _listaEjercicios
+    val listaEjercicios: StateFlow<List<EjercicioDraft>> = _listaEjercicios.asStateFlow()
 
     private var ultimoBloqueId = 0
 
@@ -44,7 +45,13 @@ class SesionViewModel(
     }
 
     fun agregarEjercicio() {
-        _listaEjercicios.value = _listaEjercicios.value + EjercicioDraft(nombre = "", series = "3", repeticiones = "10", peso = "0.0", bloque = 0)
+        _listaEjercicios.value = _listaEjercicios.value + EjercicioDraft(
+            nombre = "",
+            series = "3",
+            repeticiones = "10",
+            peso = "0.0",
+            bloque = 0
+        )
     }
 
     fun eliminarEjercicio(index: Int) {
@@ -75,7 +82,7 @@ class SesionViewModel(
         }
     }
 
-    fun guardarSesion(idUsuario: String, titulo: String) { // Quitamos 'fecha'
+    fun guardarSesion(idUsuario: String, titulo: String) {
         viewModelScope.launch {
             try {
                 _uiState.value = SesionUiState.Loading
@@ -95,7 +102,6 @@ class SesionViewModel(
                     )
                 }
 
-                // Quitamos la fecha del request
                 val request = CrearSesionRequest(idUsuario, titulo, ejerciciosParaEnviar)
                 if (repository.crearSesion(request)) {
                     _uiState.value = SesionUiState.Success
@@ -108,15 +114,12 @@ class SesionViewModel(
         }
     }
 
-    /**
-     * Lógica delegada desde App.kt para obtener la última sesión y prepararla para duplicar.
-     */
     fun prepararDuplicado(idUsuario: String, onExito: (SesionEntrenamiento) -> Unit) {
         viewModelScope.launch {
             try {
                 val historial = repository.obtenerHistorialSesiones(idUsuario)
                 if (historial.isNotEmpty()) {
-                    val ultima = historial.last() // Cogemos la última de la lista
+                    val ultima = historial.first()
                     onExito(ultima)
                 }
             } catch (e: Exception) {

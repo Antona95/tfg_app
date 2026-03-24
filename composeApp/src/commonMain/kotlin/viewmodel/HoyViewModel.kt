@@ -26,14 +26,13 @@ class HoyViewModel(private val repository: EntrenamientoRepository) : ViewModel(
         viewModelScope.launch {
             _uiState.value = HoyUiState.Loading
             try {
-                val sesion = repository.obtenerUltimaSesion(idUsuario)
+                val sesion = repository.obtenerSesionHoy(idUsuario)
                 if (sesion != null) {
                     _uiState.value = HoyUiState.Success(sesion)
                 } else {
                     _uiState.value = HoyUiState.Empty
                 }
             } catch (e: Exception) {
-                // MODIFICADO: Ahora extraemos el mensaje real del Repositorio ("No hay conexión...")
                 _uiState.value = HoyUiState.Error(e.message ?: "Error de red al conectar")
             }
         }
@@ -57,16 +56,17 @@ class HoyViewModel(private val repository: EntrenamientoRepository) : ViewModel(
                     val exito = repository.finalizarSesion(idSesion, ejerciciosParaEnviar)
                     if (exito) {
                         _uiState.value = HoyUiState.Loading
-                        val sesionNueva = repository.obtenerUltimaSesion(idUsuario)
+                        val sesionNueva = repository.obtenerSesionHoy(idUsuario)
                         if (sesionNueva != null) {
                             _uiState.value = HoyUiState.Success(sesionNueva)
                         } else {
                             _uiState.value = HoyUiState.Empty
                         }
                         onExito()
+                    } else {
+                        _uiState.value = HoyUiState.Error("No se pudo finalizar la sesión")
                     }
                 } catch (e: Exception) {
-                    // MODIFICADO: Mostramos error si falla al finalizar
                     _uiState.value = HoyUiState.Error(e.message ?: "Fallo al finalizar la sesión")
                 }
             }

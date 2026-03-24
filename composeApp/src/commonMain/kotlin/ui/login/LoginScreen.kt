@@ -18,20 +18,19 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app_tfg.composeapp.generated.resources.Res
 import app_tfg.composeapp.generated.resources.imagen_inicial
 import org.jetbrains.compose.resources.painterResource
-
-// AÑADIMOS NUESTROS COMPONENTES PROPIOS
 import ui.components.DialogoAlerta
 import ui.components.Validaciones
 import ui.components.CamposRegistro
 
 @Composable
 fun LoginScreen(
-    isLoading: Boolean, // <--- NUEVO: Recibimos el estado de carga
+    isLoading: Boolean,
     onLoginClick: (String, String) -> Unit,
     onRegistroClick: (String, String, String, String) -> Unit,
     mensajeExito: String? = null,
@@ -46,46 +45,70 @@ fun LoginScreen(
             if (isLandscape) {
                 Row(modifier = Modifier.fillMaxSize()) {
                     Box(
-                        modifier = Modifier.weight(0.4f).fillMaxHeight().padding(16.dp),
+                        modifier = Modifier
+                            .weight(0.4f)
+                            .fillMaxHeight()
+                            .padding(16.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
                             painter = painterResource(Res.drawable.imagen_inicial),
-                            contentDescription = "Logo Aplicacion",
+                            contentDescription = "Logo Aplicación",
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Fit
                         )
                     }
+
                     Column(
-                        modifier = Modifier.weight(0.6f).fillMaxHeight().padding(horizontal = 16.dp).verticalScroll(rememberScrollState()),
+                        modifier = Modifier
+                            .weight(0.6f)
+                            .fillMaxHeight()
+                            .padding(horizontal = 16.dp)
+                            .verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // Le pasamos el isLoading al formulario
-                        FormularioAuth(isLoading, onLoginClick, onRegistroClick, mensajeExito, errorBackend)
+                        FormularioAuth(
+                            isLoading,
+                            onLoginClick,
+                            onRegistroClick,
+                            mensajeExito,
+                            errorBackend
+                        )
                     }
                 }
             } else {
                 Column(
-                    modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Image(
                         painter = painterResource(Res.drawable.imagen_inicial),
-                        contentDescription = "Logo Aplicacion",
-                        modifier = Modifier.fillMaxWidth().height(250.dp).padding(bottom = 16.dp),
+                        contentDescription = "Logo Aplicación",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(250.dp)
+                            .padding(bottom = 16.dp),
                         contentScale = ContentScale.Crop
                     )
+
                     Column(
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // Le pasamos el isLoading al formulario
-                        FormularioAuth(isLoading, onLoginClick, onRegistroClick, mensajeExito, errorBackend)
+                        FormularioAuth(
+                            isLoading,
+                            onLoginClick,
+                            onRegistroClick,
+                            mensajeExito,
+                            errorBackend
+                        )
                     }
                 }
             }
-            // EL INTERRUPTOR FLOTANTE
+
             Switch(
                 checked = isDarkMode,
                 onCheckedChange = { onThemeToggle() },
@@ -94,9 +117,17 @@ fun LoginScreen(
                     .padding(16.dp),
                 thumbContent = {
                     if (isDarkMode) {
-                        Icon(Icons.Default.DarkMode, "Modo Oscuro", modifier = Modifier.size(SwitchDefaults.IconSize))
+                        Icon(
+                            Icons.Default.DarkMode,
+                            "Modo Oscuro",
+                            modifier = Modifier.size(SwitchDefaults.IconSize)
+                        )
                     } else {
-                        Icon(Icons.Default.LightMode, "Modo Claro", modifier = Modifier.size(SwitchDefaults.IconSize))
+                        Icon(
+                            Icons.Default.LightMode,
+                            "Modo Claro",
+                            modifier = Modifier.size(SwitchDefaults.IconSize)
+                        )
                     }
                 }
             )
@@ -104,10 +135,9 @@ fun LoginScreen(
     }
 }
 
-
 @Composable
 fun FormularioAuth(
-    isLoading: Boolean, // <--- NUEVO: Recibimos el estado de carga
+    isLoading: Boolean,
     onLoginClick: (String, String) -> Unit,
     onRegistroClick: (String, String, String, String) -> Unit,
     mensajeExito: String?,
@@ -137,7 +167,7 @@ fun FormularioAuth(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
-            text = if (isRegistering) "Registro de Usuario" else "Inicio de Sesion",
+            text = if (isRegistering) "Registro de Usuario" else "Inicio de Sesión",
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(bottom = 8.dp)
@@ -145,10 +175,14 @@ fun FormularioAuth(
 
         if (isRegistering) {
             CamposRegistro(
-                nombre = nombre, onNombreChange = { nombre = it },
-                apellidos = apellidos, onApellidosChange = { apellidos = it },
-                nickname = nickname, onNicknameChange = { nickname = it },
-                password = password, onPasswordChange = { password = it },
+                nombre = nombre,
+                onNombreChange = { nombre = it },
+                apellidos = apellidos,
+                onApellidosChange = { apellidos = it },
+                nickname = nickname,
+                onNicknameChange = { nickname = it },
+                password = password,
+                onPasswordChange = { password = it },
                 passwordVisible = passwordVisible,
                 onPasswordVisibilityChange = { passwordVisible = !passwordVisible }
             )
@@ -167,20 +201,21 @@ fun FormularioAuth(
                 label = { Text("Password") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                visualTransformation = if (passwordVisible) {
+                    VisualTransformation.None
+                } else {
+                    PasswordVisualTransformation()
+                },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 trailingIcon = {
                     val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(imageVector = image, contentDescription = "Mostrar contrasena")
+                        Icon(imageVector = image, contentDescription = "Mostrar contraseña")
                     }
                 }
             )
         }
 
-        // =========================================================================
-        // APUNTE DE CLASE: BLOQUEO DEL BOTÓN PRINCIPAL
-        // =========================================================================
         Button(
             onClick = {
                 if (isRegistering) {
@@ -193,17 +228,20 @@ fun FormularioAuth(
                     }
                 } else {
                     if (nickname.isBlank() || password.isBlank()) {
-                        mensajeErrorValidacion = "Debes rellenar tu Nickname y Password para poder entrar."
+                        mensajeErrorValidacion =
+                            "Debes rellenar tu Nickname y Password para poder entrar."
                         mostrarErrorValidacion = true
                     } else {
                         onLoginClick(nickname, password)
                     }
                 }
             },
-            modifier = Modifier.fillMaxWidth().height(48.dp).padding(top = 8.dp),
-            enabled = !isLoading // <--- BLOQUEAMOS EL BOTÓN MIENTRAS CARGA
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+                .padding(top = 8.dp),
+            enabled = !isLoading
         ) {
-            // MOSTRAMOS LA RUEDITA O EL TEXTO
             if (isLoading) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
@@ -228,7 +266,7 @@ fun FormularioAuth(
                 text = mensajeExito,
                 color = MaterialTheme.colorScheme.primary,
                 fontSize = 16.sp,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -238,9 +276,15 @@ fun FormularioAuth(
                 isRegistering = !isRegistering
                 mostrarErrorValidacion = false
             },
-            enabled = !isLoading // <--- TAMBIÉN BLOQUEAMOS ESTO PARA QUE NO CAMBIEN DE MODO MIENTRAS CARGA
+            enabled = !isLoading
         ) {
-            Text(if (isRegistering) "Volver al inicio de sesion" else "No tengo cuenta, quiero registrarme")
+            Text(
+                if (isRegistering) {
+                    "Volver al inicio de sesión"
+                } else {
+                    "No tengo cuenta, quiero registrarme"
+                }
+            )
         }
 
         DialogoAlerta(

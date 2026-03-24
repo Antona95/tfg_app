@@ -11,7 +11,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import model.DetalleSesion
 
-// 1. Lógica para agrupar biseries/triseries (Extraída de tu CoachScreen)
 fun agruparEjercicios(ejercicios: List<DetalleSesion>): List<List<DetalleSesion>> {
     val grupos = mutableListOf<List<DetalleSesion>>()
     var grupoActual = mutableListOf<DetalleSesion>()
@@ -37,29 +36,37 @@ fun agruparEjercicios(ejercicios: List<DetalleSesion>): List<List<DetalleSesion>
             }
         }
     }
+
     if (grupoActual.isNotEmpty()) {
         grupos.add(grupoActual)
     }
+
     return grupos
 }
 
-// 2. Lógica universal de colores
 fun obtenerColorBloqueUniversal(numeroBloque: Int, isDarkMode: Boolean): Color {
     val indexColor = ((numeroBloque - 1) % 5) + 1
     return if (isDarkMode) {
         when (indexColor) {
-            1 -> Color(0xFF0D47A1); 2 -> Color(0xFF1B5E20); 3 -> Color(0xFFB71C1C)
-            4 -> Color(0xFF4A148C); 5 -> Color(0xFFE65100); else -> Color(0xFF2C2C2C)
+            1 -> Color(0xFF0D47A1)
+            2 -> Color(0xFF1B5E20)
+            3 -> Color(0xFFB71C1C)
+            4 -> Color(0xFF4A148C)
+            5 -> Color(0xFFE65100)
+            else -> Color(0xFF2C2C2C)
         }
     } else {
         when (indexColor) {
-            1 -> Color(0xFFE3F2FD); 2 -> Color(0xFFE8F5E9); 3 -> Color(0xFFFFF3E0)
-            4 -> Color(0xFFF3E5F5); 5 -> Color(0xFFEFEBE9); else -> Color(0xFFF5F5F5)
+            1 -> Color(0xFFE3F2FD)
+            2 -> Color(0xFFE8F5E9)
+            3 -> Color(0xFFFFF3E0)
+            4 -> Color(0xFFF3E5F5)
+            5 -> Color(0xFFEFEBE9)
+            else -> Color(0xFFF5F5F5)
         }
     }
 }
 
-// 3. Tarjeta visual universal
 @Composable
 fun EjercicioUniversalCard(
     ejercicio: DetalleSesion,
@@ -84,7 +91,10 @@ fun EjercicioUniversalCard(
                     modifier = Modifier.weight(1f),
                     color = colorTexto
                 )
-                Surface(color = MaterialTheme.colorScheme.primary, shape = RoundedCornerShape(4.dp)) {
+                Surface(
+                    color = MaterialTheme.colorScheme.primary,
+                    shape = RoundedCornerShape(4.dp)
+                ) {
                     Text(
                         text = if (isLandscape) "$letraBloque" else "Bloque $letraBloque",
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
@@ -94,11 +104,17 @@ fun EjercicioUniversalCard(
                     )
                 }
             }
+
             Spacer(modifier = Modifier.height(12.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
                 DatoUniversal(if (isLandscape) "S" else "Series", "${ejercicio.series}", colorTexto)
-                DatoUniversal(if (isLandscape) "R" else "Reps", ejercicio.repeticiones, colorTexto)
-                val pesoText = if (ejercicio.peso != null && ejercicio.peso > 0) "${ejercicio.peso}" else "--"
+                DatoUniversal(if (isLandscape) "R" else "Reps", "${ejercicio.repeticiones}", colorTexto)
+                val pesoText =
+                    if (ejercicio.peso != null && ejercicio.peso > 0) "${ejercicio.peso}" else "--"
                 DatoUniversal(if (isLandscape) "Kg" else "Peso", pesoText, colorTexto)
             }
         }
@@ -108,7 +124,16 @@ fun EjercicioUniversalCard(
 @Composable
 fun DatoUniversal(label: String, value: String, color: Color) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = label, style = MaterialTheme.typography.labelSmall, color = color.copy(alpha = 0.6f))
-        Text(text = value, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = color)
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = color.copy(alpha = 0.6f)
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Bold,
+            color = color
+        )
     }
 }

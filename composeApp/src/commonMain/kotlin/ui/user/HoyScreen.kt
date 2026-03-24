@@ -50,7 +50,6 @@ fun HoyScreen(
         BoxWithConstraints(modifier = Modifier.padding(padding).fillMaxSize()) {
             val isLandscape = maxWidth > maxHeight
 
-            // ¡MIRA QUÉ LIMPIO QUEDA AHORA EL MANEJO DE ESTADOS!
             when (val state = uiState) {
                 is HoyUiState.Loading -> PantallaCargando()
                 is HoyUiState.Empty -> PantallaVacia(icono = "💤", mensaje = "Hoy toca descanso")

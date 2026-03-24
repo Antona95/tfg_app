@@ -3,52 +3,27 @@ package model
 import kotlinx.serialization.Serializable
 import kotlin.random.Random
 
-/**
- * Utilizo esta clase para empaquetar los datos de la sesión completa
- * que voy a enviar al servidor.
- */
 @Serializable
 data class CrearSesionRequest(
-    val idUsuario: String,       // El ID de MongoDB del alumno
-    val titulo: String,          // (ej: "1 de marzo")
-    val ejercicios: List<CrearEjercicioRequest> // La lista de ejercicios
+    val idUsuario: String,
+    val titulo: String,
+    val ejercicios: List<CrearEjercicioRequest>
 )
 
-/**
- * Utilizo esta clase para definir cada ejercicio individual dentro de la sesión.
- * Es una versión simplificada de DetalleSesion, sin IDs ni objetos complejos.
- */
 @Serializable
 data class CrearEjercicioRequest(
-    val nombre: String, // Solo envío el nombre, el backend buscará si existe
-    val series: Int,     // El servidor espera un número entero
-    val repeticiones: String, // String por si pongo rangos (ej: "10-12")
-    val peso: Double? = null, // Puede ser nulo si no asigno peso
-    val bloque: Int= 0,
+    val nombre: String,
+    val series: Int,
+    val repeticiones: String,
+    val peso: Double? = null,
+    val bloque: Int = 0,
 )
-/**
- * Clase auxiliar para la Interfaz de Usuario (UI).
- * Representa una fila temporal del formulario de "Crear Sesión".
- *
- * No lleva @Serializable porque nunca se envía al servidor directamente;
- * el Repositorio la convierte primero a CrearEjercicioRequest.
- */
-@Serializable
+
 data class EjercicioDraft(
-// Esto genera un número aleatorio único para usar como clave en la lista.
     val id: String = Random.nextLong().toString(),
-    // Uso var (variables) porque el usuario va a escribir y modificar estos datos.
-    // Uso String en todo porque los campos de texto (TextField) devuelven texto.
-    // Luego el repositorio se encarga de pasar "10" (texto) a 10 (entero).
     var nombre: String = "",
     var series: String = "",
     var repeticiones: String = "",
     var peso: String = "",
     val bloque: Int = 0
 )
-
-/**
- * CrearSesionRequest (Para enviar a la API).
- * CrearEjercicioRequest (Para enviar a la API).
- * EjercicioDraft (Para manejar el formulario en la pantalla).
- */
