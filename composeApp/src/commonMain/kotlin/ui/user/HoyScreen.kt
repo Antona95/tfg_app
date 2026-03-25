@@ -1,6 +1,7 @@
 package ui.user
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
@@ -47,7 +48,11 @@ fun HoyScreen(
             )
         }
     ) { padding ->
-        BoxWithConstraints(modifier = Modifier.padding(padding).fillMaxSize()) {
+        BoxWithConstraints(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+        ) {
             val isLandscape = maxWidth > maxHeight
 
             when (val state = uiState) {
@@ -67,16 +72,28 @@ fun HoyScreen(
 }
 
 @Composable
-fun ContenidoEntreno(sesion: SesionEntrenamiento, isDarkMode: Boolean, isLandscape: Boolean, onFinalizar: () -> Unit) {
-    val gruposDeEjercicios = remember(sesion.ejercicios) { agruparEjercicios(sesion.ejercicios) }
+fun ContenidoEntreno(
+    sesion: SesionEntrenamiento,
+    isDarkMode: Boolean,
+    isLandscape: Boolean,
+    onFinalizar: () -> Unit
+) {
+    val gruposDeEjercicios = remember(sesion.ejercicios) {
+        agruparEjercicios(sesion.ejercicios)
+    }
 
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.TopCenter
+    ) {
         LazyColumn(
-            modifier = Modifier.fillMaxHeight().widthIn(max = 900.dp).fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxHeight()
+                .widthIn(max = 900.dp)
+                .fillMaxWidth(),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // USAMOS LA NUEVA CABECERA CENTRALIZADA
             item {
                 CabeceraEstadoSesion(sesion = sesion, isDarkMode = isDarkMode)
             }
@@ -86,17 +103,35 @@ fun ContenidoEntreno(sesion: SesionEntrenamiento, isDarkMode: Boolean, isLandsca
                 val letraBloque = (numeroBloque + 64).toChar()
 
                 if (isLandscape) {
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
                         for (ejercicio in grupo) {
                             Box(modifier = Modifier.weight(1f)) {
-                                EjercicioUniversalCard(ejercicio, isDarkMode, isLandscape = true, letraBloque, numeroBloque)
+                                EjercicioUniversalCard(
+                                    ejercicio,
+                                    isDarkMode,
+                                    isLandscape = true,
+                                    letraBloque,
+                                    numeroBloque
+                                )
                             }
                         }
                     }
                 } else {
-                    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
                         for (ejercicio in grupo) {
-                            EjercicioUniversalCard(ejercicio, isDarkMode, isLandscape = false, letraBloque, numeroBloque)
+                            EjercicioUniversalCard(
+                                ejercicio,
+                                isDarkMode,
+                                isLandscape = false,
+                                letraBloque,
+                                numeroBloque
+                            )
                         }
                     }
                 }
@@ -106,7 +141,11 @@ fun ContenidoEntreno(sesion: SesionEntrenamiento, isDarkMode: Boolean, isLandsca
                 if (!sesion.finalizada) {
                     Button(
                         onClick = onFinalizar,
-                        modifier = Modifier.fillMaxWidth().height(56.dp).padding(top = 8.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .padding(top = 8.dp)
+                            .navigationBarsPadding()
                     ) {
                         Text("FINALIZAR ENTRENAMIENTO", fontWeight = FontWeight.Bold)
                     }

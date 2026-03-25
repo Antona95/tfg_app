@@ -1,7 +1,13 @@
 package com.example.app_tfg
 
-import ui.components.BackHandler
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
+import ui.components.BackHandler
 import androidx.compose.runtime.*
 import dev.icerock.moko.mvvm.compose.getViewModel
 import dev.icerock.moko.mvvm.compose.viewModelFactory
@@ -21,42 +27,59 @@ import ui.coach.DetalleSesionScreen
 import ui.user.HoyScreen
 import ui.user.AlumnoHomeScreen
 import model.Persona
-import kotlinx.coroutines.launch
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.saveable.rememberSaveable
 
 @Composable
 fun App() {
-    // Control del modo oscuro. Usamos rememberSaveable para que el estado sobreviva a
-    // rotaciones de pantalla o si el sistema mata la activity por falta de memoria.
     var isDarkMode by rememberSaveable { mutableStateOf(false) }
+    var mostrarDialogoSalir by remember { mutableStateOf(false) }
+
     val colorScheme = if (isDarkMode) darkColorScheme() else lightColorScheme()
 
     MaterialTheme(colorScheme = colorScheme) {
-        // Inicializamos el cliente Ktor y nuestro Repositorio central.
-        // Usamos remember para no instanciarlo cada vez que Jetpack Compose repinta la UI (recomposición).
         val client = remember { createHttpClient() }
         val repository = remember { EntrenamientoRepository(client) }
 
-        // Inyectamos el ViewModel del Login usando Moko MVVM para Kotlin Multiplatform
         val loginViewModel = getViewModel(
             key = "login-screen",
             factory = viewModelFactory { LoginViewModel(repository) }
         )
 
-        // Observamos el estado del login (si hay usuario logueado, errores de API, etc.)
         val state by loginViewModel.uiState.collectAsState()
 
-        // Ruteo principal: Si hay un usuario logueado, entramos a la app; si no, al Login.
+        if (mostrarDialogoSalir) {
+            AlertDialog(
+                onDismissRequest = { mostrarDialogoSalir = false },
+                title = {
+                    Text("Confirmar salida")
+                },
+                text = {
+                    Text("¿Seguro que quieres salir?")
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            mostrarDialogoSalir = false
+                            loginViewModel.cerrarSesion()
+                        }
+                    ) {
+                        Text("Sí, salir")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { mostrarDialogoSalir = false }
+                    ) {
+                        Text("Cancelar")
+                    }
+                }
+            )
+        }
+
         if (state.usuarioLogueado != null) {
             val usuario = state.usuarioLogueado!!
 
-            // ==========================================
-            // FLUJO DEL ENTRENADOR (MASTERCOACH)
-            // ==========================================
             if (usuario.rol == "ENTRENADOR") {
-                // Instanciamos los ViewModels necesarios para el flujo del entrenador
                 val coachViewModel = getViewModel(
                     key = "coach-screen",
                     factory = viewModelFactory { CoachViewModel(repository) }
@@ -70,20 +93,14 @@ fun App() {
                     factory = viewModelFactory { SesionViewModel(repository) }
                 )
 
-                // NUEVO: Observamos las sesiones del alumno para saber si la lista está vacía o no.
-                // Esto nos servirá luego para bloquear el botón de "Copiar Sesión" si es un alumno nuevo.
                 val sesionesAlumno by historialCoachVM.sesiones.collectAsState()
 
-                // Variables de estado para controlar la navegación manual del entrenador sin usar librerías complejas
                 var usuarioSeleccionado by remember { mutableStateOf<Persona?>(null) }
                 var creandoSesion by rememberSaveable { mutableStateOf(false) }
                 var viendoHistorial by rememberSaveable { mutableStateOf(false) }
                 var sesionSeleccionada by remember { mutableStateOf<model.SesionEntrenamiento?>(null) }
                 var sesionParaDuplicar by remember { mutableStateOf<model.SesionEntrenamiento?>(null) }
 
-                // TRUCO PARA MEJORAR LA UX: Cuando el coach hace clic en un alumno, lanzamos un efecto.
-                // 1. Limpiamos datos viejos para que no vea la sesión de otro alumno por error.
-                // 2. Pre-cargamos su historial en segundo plano. Así la lista carga al instante al navegar.
                 LaunchedEffect(usuarioSeleccionado) {
                     if (usuarioSeleccionado != null) {
                         historialCoachVM.limpiarHistorial()
@@ -91,31 +108,21 @@ fun App() {
                     }
                 }
 
-                /* * NOTA DEL PROFESOR:
-                 * Como estamos navegando cambiando variables (y no usando NavHost nativo),
-                 * Android no sabe que hemos "cambiado de pantalla". Si el usuario pulsa el botón
-                 * físico de atrás de su móvil, Android cerrará la app de golpe.
-                 * * Solución: Usamos BackHandler {} para "secuestrar" el botón físico y obligarle a
-                 * que, en lugar de cerrar la app, simplemente cambie nuestra variable de estado.
-                 */
-
-                // Máquina de estados rudimentaria pero efectiva para manejar las pantallas del Coach
                 when {
-                    // 1. Ver detalle de una sesión concreta (viene de la lista del historial)
                     sesionSeleccionada != null -> {
-                        BackHandler { sesionSeleccionada = null } // Secuestro del botón atrás
+                        BackHandler { sesionSeleccionada = null }
                         DetalleSesionScreen(
                             sesion = sesionSeleccionada!!,
                             isDarkMode = isDarkMode,
                             onBack = { sesionSeleccionada = null }
                         )
                     }
-                    // 2. Crear una nueva sesión (desde cero o duplicando una base)
+
                     creandoSesion && usuarioSeleccionado != null -> {
                         BackHandler {
                             creandoSesion = false
                             sesionParaDuplicar = null
-                        } // Secuestro del botón atrás
+                        }
                         NuevaSesionScreen(
                             idUsuario = usuarioSeleccionado!!.id,
                             viewModel = sesionVM,
@@ -124,14 +131,16 @@ fun App() {
                             onNavigateBack = {
                                 creandoSesion = false
                                 sesionParaDuplicar = null
-                                // Forzamos recarga del historial por si el coach acaba de guardar una rutina nueva
-                                historialCoachVM.cargarHistorial(usuarioSeleccionado!!.id, forzarRecarga = true)
+                                historialCoachVM.cargarHistorial(
+                                    usuarioSeleccionado!!.id,
+                                    forzarRecarga = true
+                                )
                             }
                         )
                     }
-                    // 3. Ver la lista de entrenamientos pasados (Historial del alumno seleccionado)
+
                     viendoHistorial && usuarioSeleccionado != null -> {
-                        BackHandler { viendoHistorial = false } // Secuestro del botón atrás
+                        BackHandler { viendoHistorial = false }
                         HistorialScreen(
                             idUsuario = usuarioSeleccionado!!.id,
                             repository = repository,
@@ -141,12 +150,11 @@ fun App() {
                             onSesionClick = { sesion -> sesionSeleccionada = sesion }
                         )
                     }
-                    // 4. Menú de opciones de un alumno (Pantalla puente)
+
                     usuarioSeleccionado != null -> {
-                        BackHandler { usuarioSeleccionado = null } // Secuestro del botón atrás
+                        BackHandler { usuarioSeleccionado = null }
                         UserOptionsScreen(
                             usuario = usuarioSeleccionado!!,
-                            // Pasamos el booleano comprobando si la lista de sesiones pre-cargada tiene contenido
                             tieneSesiones = sesionesAlumno.isNotEmpty(),
                             onBack = { usuarioSeleccionado = null },
                             onNuevaSesion = {
@@ -154,37 +162,28 @@ fun App() {
                                 creandoSesion = true
                             },
                             onDuplicarSesion = {
-                                // Llamamos al backend para preparar la última sesión y copiar sus datos
                                 sesionVM.prepararDuplicado(usuarioSeleccionado!!.id) { sesion ->
-                                    sesionParaDuplicar = sesion
-                                    creandoSesion = true
+                                    if (sesion != null) {
+                                        sesionParaDuplicar = sesion
+                                        creandoSesion = true
+                                    }
                                 }
                             },
                             onVerHistorial = { viendoHistorial = true }
                         )
                     }
-                    // 5. Pantalla principal del Coach: Lista del buscador de alumnos
+
                     else -> {
-                        /* * NOTA: En la pantalla principal no ponemos BackHandler.
-                         * Aquí sí queremos que si el usuario pulsa atrás, se salga de la app
-                         * o la minimice (comportamiento estándar y esperado de Android).
-                         */
                         CoachScreen(
                             viewModel = coachViewModel,
-                            onLogoutClick = { loginViewModel.cerrarSesion() },
+                            onLogoutClick = { mostrarDialogoSalir = true },
                             onAlumnoClick = { alumno -> usuarioSeleccionado = alumno },
                             isDarkMode = isDarkMode,
                             onThemeToggle = { isDarkMode = !isDarkMode }
                         )
                     }
                 }
-
             } else {
-                // ==========================================
-                // FLUJO DEL ALUMNO (USUARIO NORMAL)
-                // ==========================================
-
-                // Instanciamos los ViewModels específicos para el deportista
                 val hoyViewModel = getViewModel(
                     key = "hoy-screen-vm",
                     factory = viewModelFactory { HoyViewModel(repository) }
@@ -194,23 +193,21 @@ fun App() {
                     factory = viewModelFactory { HistorialViewModel(repository) }
                 )
 
-                // En el alumno usamos un String como clave de estado para la navegación (otra forma válida de ruteo)
                 var pantallaAlumno by rememberSaveable { mutableStateOf("MENU") }
                 var sesionDetalleAlumno by remember { mutableStateOf<model.SesionEntrenamiento?>(null) }
 
                 when (pantallaAlumno) {
-                    // Dashboard principal con botones de acceso (Al igual que la principal del Coach, no interceptamos aquí)
                     "MENU" -> AlumnoHomeScreen(
                         usuario = usuario,
                         onVerHoy = { pantallaAlumno = "HOY" },
                         onVerHistorial = { pantallaAlumno = "HISTORIAL" },
-                        onLogout = { loginViewModel.cerrarSesion() },
+                        onLogout = { mostrarDialogoSalir = true },
                         isDarkMode = isDarkMode,
                         onThemeToggle = { isDarkMode = !isDarkMode }
                     )
-                    // Pantalla para ejecutar el entrenamiento asignado para el día actual
+
                     "HOY" -> {
-                        BackHandler { pantallaAlumno = "MENU" } // Secuestro del botón atrás
+                        BackHandler { pantallaAlumno = "MENU" }
                         HoyScreen(
                             idUsuario = usuario.id,
                             viewModel = hoyViewModel,
@@ -218,9 +215,9 @@ fun App() {
                             onNavigateBack = { pantallaAlumno = "MENU" }
                         )
                     }
-                    // Consulta de rutinas antiguas
+
                     "HISTORIAL" -> {
-                        BackHandler { pantallaAlumno = "MENU" } // Secuestro del botón atrás
+                        BackHandler { pantallaAlumno = "MENU" }
                         HistorialScreen(
                             idUsuario = usuario.id,
                             repository = repository,
@@ -233,12 +230,12 @@ fun App() {
                             }
                         )
                     }
-                    // Reutilizamos el componente visual de DetalleSesionScreen para ver el interior del historial
+
                     "DETALLE" -> {
                         BackHandler {
                             pantallaAlumno = "HISTORIAL"
                             sesionDetalleAlumno = null
-                        } // Si está viendo un detalle y pulsa atrás, lo devolvemos a la lista, no al menú principal.
+                        }
 
                         if (sesionDetalleAlumno != null) {
                             DetalleSesionScreen(
@@ -250,20 +247,18 @@ fun App() {
                                 }
                             )
                         } else {
-                            // Ojo con esto para que no pete: por seguridad, si el detalle llega nulo, lo mandamos al menú
                             pantallaAlumno = "MENU"
                         }
                     }
                 }
             }
         } else {
-            // ==========================================
-            // PANTALLA DE LOGIN Y REGISTRO
-            // ==========================================
             LoginScreen(
                 isLoading = state.isLoading,
                 onLoginClick = { nick, pass -> loginViewModel.onLoginClick(nick, pass) },
-                onRegistroClick = { nick, pass, nom, ape -> loginViewModel.onRegistroClick(nick, pass, nom, ape) },
+                onRegistroClick = { nick, pass, nom, ape ->
+                    loginViewModel.onRegistroClick(nick, pass, nom, ape)
+                },
                 mensajeExito = state.mensajeExito,
                 errorBackend = state.error,
                 isDarkMode = isDarkMode,

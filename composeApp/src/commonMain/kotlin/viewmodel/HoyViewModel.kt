@@ -26,7 +26,7 @@ class HoyViewModel(private val repository: EntrenamientoRepository) : ViewModel(
         viewModelScope.launch {
             _uiState.value = HoyUiState.Loading
             try {
-                val sesion = repository.obtenerSesionHoy(idUsuario)
+                val sesion = repository.obtenerUltimaSesion(idUsuario)
                 if (sesion != null) {
                     _uiState.value = HoyUiState.Success(sesion)
                 } else {
@@ -56,7 +56,7 @@ class HoyViewModel(private val repository: EntrenamientoRepository) : ViewModel(
                     val exito = repository.finalizarSesion(idSesion, ejerciciosParaEnviar)
                     if (exito) {
                         _uiState.value = HoyUiState.Loading
-                        val sesionNueva = repository.obtenerSesionHoy(idUsuario)
+                        val sesionNueva = repository.obtenerUltimaSesion(idUsuario)
                         if (sesionNueva != null) {
                             _uiState.value = HoyUiState.Success(sesionNueva)
                         } else {

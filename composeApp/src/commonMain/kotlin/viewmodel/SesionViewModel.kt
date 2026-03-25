@@ -114,16 +114,19 @@ class SesionViewModel(
         }
     }
 
-    fun prepararDuplicado(idUsuario: String, onExito: (SesionEntrenamiento) -> Unit) {
+    fun prepararDuplicado(idUsuario: String, onResultado: (SesionEntrenamiento?) -> Unit) {
         viewModelScope.launch {
             try {
                 val historial = repository.obtenerHistorialSesiones(idUsuario)
                 if (historial.isNotEmpty()) {
                     val ultima = historial.first()
-                    onExito(ultima)
+                    onResultado(ultima)
+                } else {
+                    onResultado(null)
                 }
             } catch (e: Exception) {
                 println("Error al preparar duplicado: ${e.message}")
+                onResultado(null)
             }
         }
     }
