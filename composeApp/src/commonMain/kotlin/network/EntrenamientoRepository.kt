@@ -84,7 +84,7 @@ class EntrenamientoRepository(
     suspend fun obtenerUltimaSesion(idUsuario: String): SesionEntrenamiento? {
         return try {
             val historial = obtenerHistorialSesiones(idUsuario)
-            historial.firstOrNull()
+            historial.firstOrNull { !it.finalizada }
         } catch (e: Exception) {
             throw Exception("Fallo de red al buscar la última sesión.")
         }

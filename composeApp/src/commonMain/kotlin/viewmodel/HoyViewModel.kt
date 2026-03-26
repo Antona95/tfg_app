@@ -55,13 +55,8 @@ class HoyViewModel(private val repository: EntrenamientoRepository) : ViewModel(
                 try {
                     val exito = repository.finalizarSesion(idSesion, ejerciciosParaEnviar)
                     if (exito) {
-                        _uiState.value = HoyUiState.Loading
-                        val sesionNueva = repository.obtenerUltimaSesion(idUsuario)
-                        if (sesionNueva != null) {
-                            _uiState.value = HoyUiState.Success(sesionNueva)
-                        } else {
-                            _uiState.value = HoyUiState.Empty
-                        }
+                        val sesionFinalizada = estado.sesion.copy(finalizada = true)
+                        _uiState.value = HoyUiState.Success(sesionFinalizada)
                         onExito()
                     } else {
                         _uiState.value = HoyUiState.Error("No se pudo finalizar la sesión")

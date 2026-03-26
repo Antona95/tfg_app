@@ -12,15 +12,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import viewmodel.HoyUiState
-import viewmodel.HoyViewModel
 import model.SesionEntrenamiento
-import ui.components.EjercicioUniversalCard
-import ui.components.agruparEjercicios
 import ui.components.CabeceraEstadoSesion
+import ui.components.EjercicioUniversalCard
 import ui.components.PantallaCargando
 import ui.components.PantallaError
 import ui.components.PantallaVacia
+import ui.components.agruparEjercicios
+import viewmodel.HoyUiState
+import viewmodel.HoyViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,6 +36,8 @@ fun HoyScreen(
         viewModel.cargarEntrenamiento(idUsuario)
     }
 
+    val sesionActual = (uiState as? HoyUiState.Success)?.sesion
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -46,6 +48,29 @@ fun HoyScreen(
                     }
                 }
             )
+        },
+        bottomBar = {
+            if (sesionActual != null && !sesionActual.finalizada) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                ) {
+                    Button(
+                        onClick = {
+                            viewModel.finalizarEntrenamiento(sesionActual.idSesion, idUsuario) {
+                                println("Finalizado")
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                    ) {
+                        Text("FINALIZAR ENTRENAMIENTO", fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
         }
     ) { padding ->
         BoxWithConstraints(
@@ -60,11 +85,11 @@ fun HoyScreen(
                 is HoyUiState.Empty -> PantallaVacia(icono = "💤", mensaje = "Hoy toca descanso")
                 is HoyUiState.Error -> PantallaError(mensaje = state.mensaje)
                 is HoyUiState.Success -> {
-                    ContenidoEntreno(state.sesion, isDarkMode, isLandscape) {
-                        viewModel.finalizarEntrenamiento(state.sesion.idSesion, idUsuario) {
-                            println("Finalizado")
-                        }
-                    }
+                    ContenidoEntreno(
+                        sesion = state.sesion,
+                        isDarkMode = isDarkMode,
+                        isLandscape = isLandscape
+                    )
                 }
             }
         }
@@ -75,8 +100,7 @@ fun HoyScreen(
 fun ContenidoEntreno(
     sesion: SesionEntrenamiento,
     isDarkMode: Boolean,
-    isLandscape: Boolean,
-    onFinalizar: () -> Unit
+    isLandscape: Boolean
 ) {
     val gruposDeEjercicios = remember(sesion.ejercicios) {
         agruparEjercicios(sesion.ejercicios)
@@ -138,18 +162,7 @@ fun ContenidoEntreno(
             }
 
             item {
-                if (!sesion.finalizada) {
-                    Button(
-                        onClick = onFinalizar,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp)
-                            .padding(top = 8.dp)
-                            .navigationBarsPadding()
-                    ) {
-                        Text("FINALIZAR ENTRENAMIENTO", fontWeight = FontWeight.Bold)
-                    }
-                }
+                Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }
