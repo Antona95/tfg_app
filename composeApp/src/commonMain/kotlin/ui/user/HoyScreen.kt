@@ -30,19 +30,28 @@ fun HoyScreen(
     isDarkMode: Boolean,
     onNavigateBack: () -> Unit
 ) {
+    // aqui observo el estado de la pantalla desde el viewmodel.
+    // segun este estado luego muestro carga, error, vacio o exito.
     val uiState by viewModel.uiState.collectAsState()
 
+    // este efecto se ejecuta cuando cambia el id del usuario.
+    // lo uso para cargar su entrenamiento al entrar en la pantalla.
     LaunchedEffect(idUsuario) {
         viewModel.cargarEntrenamiento(idUsuario)
     }
 
+    // aqui intento sacar la sesion actual solo si el estado es success.
+    // me viene bien para decidir si tengo que mostrar el boton de finalizar o no.
     val sesionActual = (uiState as? HoyUiState.Success)?.sesion
 
+    // scaffold me da la estructura general de la pantalla:
+    // barra superior, barra inferior y contenido principal.
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Mi Entrenamiento de Hoy", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
+                    // este boton me permite volver a la pantalla anterior.
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
                     }
@@ -50,15 +59,24 @@ fun HoyScreen(
             )
         },
         bottomBar = {
+
+            // solo muestro el boton de finalizar si tengo una sesion cargada
+            // y esa sesion aun no esta finalizada.
             if (sesionActual != null && !sesionActual.finalizada) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
+
+                        // esto sirve para que el boton no quede tapado por la barra
+                        // inferior del movil ni por los botones del sistema.
                         .navigationBarsPadding()
                         .padding(horizontal = 16.dp, vertical = 12.dp)
                 ) {
                     Button(
                         onClick = {
+
+                            // al pulsar, llamo al viewmodel para finalizar la sesion.
+                            // le paso el id de la sesion y el id del usuario.
                             viewModel.finalizarEntrenamiento(sesionActual.idSesion, idUsuario) {
                                 println("Finalizado")
                             }
@@ -73,17 +91,29 @@ fun HoyScreen(
             }
         }
     ) { padding ->
+
+        // boxwithconstraints me permite saber si estoy en vertical u horizontal.
         BoxWithConstraints(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
         ) {
+            // si el ancho es mayor que el alto, considero que estoy en landscape.
             val isLandscape = maxWidth > maxHeight
 
+            // aqui hago el cambio de interfaz segun el estado actual.
             when (val state = uiState) {
+
+                // si esta cargando, muestro la pantalla de carga.
                 is HoyUiState.Loading -> PantallaCargando()
+
+                // si no hay ninguna sesion activa, muestro una pantalla vacia.
                 is HoyUiState.Empty -> PantallaVacia(icono = "💤", mensaje = "Hoy toca descanso")
+
+                // si hay error de red o del backend, muestro el mensaje de error.
                 is HoyUiState.Error -> PantallaError(mensaje = state.mensaje)
+
+                // si ha ido bien, muestro el contenido de la sesion.
                 is HoyUiState.Success -> {
                     ContenidoEntreno(
                         sesion = state.sesion,
@@ -102,6 +132,9 @@ fun ContenidoEntreno(
     isDarkMode: Boolean,
     isLandscape: Boolean
 ) {
+    // aqui agrupo los ejercicios por bloques.
+    // esto me sirve para representar bien ejercicios normales, biseries o triseries.
+    // uso remember para no recalcularlo si la sesion no cambia.
     val gruposDeEjercicios = remember(sesion.ejercicios) {
         agruparEjercicios(sesion.ejercicios)
     }
@@ -110,28 +143,43 @@ fun ContenidoEntreno(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.TopCenter
     ) {
+
+        // uso una lazycolumn para que la lista de ejercicios pueda hacer scroll.
         LazyColumn(
             modifier = Modifier
                 .fillMaxHeight()
+
+                // limito el ancho maximo para que en pantallas grandes no quede demasiado estirado.
                 .widthIn(max = 900.dp)
                 .fillMaxWidth(),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+
+            // arriba del todo muestro una cabecera con el titulo y el estado de la sesion.
             item {
                 CabeceraEstadoSesion(sesion = sesion, isDarkMode = isDarkMode)
             }
 
+            // aqui recorro cada grupo de ejercicios.
             itemsIndexed(gruposDeEjercicios) { indexGrupo, grupo ->
+
+                // calculo el numero de bloque empezando en 1.
                 val numeroBloque = indexGrupo + 1
+
+                // convierto ese numero en letra para mostrar algo tipo a, b, c...
                 val letraBloque = (numeroBloque + 64).toChar()
 
                 if (isLandscape) {
+
+                    // si estoy en horizontal, intento colocar los ejercicios del grupo en fila.
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         for (ejercicio in grupo) {
+
+                            // uso weight para que todas las tarjetas del grupo ocupen un ancho parecido.
                             Box(modifier = Modifier.weight(1f)) {
                                 EjercicioUniversalCard(
                                     ejercicio,
@@ -144,6 +192,8 @@ fun ContenidoEntreno(
                         }
                     }
                 } else {
+
+                    // si estoy en vertical, coloco los ejercicios uno debajo de otro.
                     Column(
                         modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -161,6 +211,7 @@ fun ContenidoEntreno(
                 }
             }
 
+            // dejo un pequeño espacio final para que el contenido no quede pegado abajo.
             item {
                 Spacer(modifier = Modifier.height(8.dp))
             }

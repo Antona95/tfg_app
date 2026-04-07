@@ -30,25 +30,37 @@ fun AlumnoHomeScreen(
     isDarkMode: Boolean,
     onThemeToggle: () -> Unit
 ) {
-    // 1. LA SOLUCIÓN MULTIPLATAFORMA: BoxWithConstraints
+    // aqui uso boxwithconstraints para saber el tamaño disponible de la pantalla.
+    // esto me permite adaptar el diseño si el móvil está en vertical o en horizontal.
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+
+        // si el ancho es mayor que el alto, considero que la pantalla está en horizontal.
         val isLandscape = maxWidth > maxHeight
 
+        // scaffold me sirve como estructura base de la pantalla.
+        // aquí coloco la barra superior y debajo el contenido principal.
         Scaffold(
             topBar = {
                 TopAppBar(
                     title = {
+
+                        // en el título muestro un saludo personalizado con el nombre del usuario.
                         Column {
                             Text("Hola, ${usuario.nombre} 👋", fontWeight = FontWeight.Bold)
                             Text("Vamos a por todas", style = MaterialTheme.typography.labelMedium)
                         }
                     },
                     actions = {
+
+                        // este switch cambia entre modo claro y modo oscuro.
+                        // lo dejo en la parte superior porque es un ajuste global de la app.
                         Switch(
                             checked = isDarkMode,
                             onCheckedChange = { onThemeToggle() },
                             modifier = Modifier.padding(end = 8.dp),
                             thumbContent = {
+
+                                // cambio el icono del switch según el tema actual.
                                 if (isDarkMode) {
                                     Icon(Icons.Default.DarkMode, "Modo Oscuro", modifier = Modifier.size(SwitchDefaults.IconSize))
                                 } else {
@@ -57,6 +69,7 @@ fun AlumnoHomeScreen(
                             }
                         )
 
+                        // este botón sirve para cerrar la sesión del usuario.
                         IconButton(onClick = onLogout) {
                             Icon(Icons.Default.ExitToApp, "Cerrar Sesión")
                         }
@@ -64,17 +77,28 @@ fun AlumnoHomeScreen(
                 )
             }
         ) { padding ->
-            // 2. LA CUADRÍCULA SE ADAPTA AL BoxWithConstraints
+
+            // aquí construyo el menú principal del alumno en forma de cuadrícula.
+            // uso lazyverticalgrid porque quiero que sea adaptable y eficiente.
             LazyVerticalGrid(
+
+                // si estoy en horizontal muestro 2 columnas.
+                // si estoy en vertical muestro 1.
                 columns = GridCells.Fixed(if (isLandscape) 2 else 1),
                 modifier = Modifier
                     .padding(padding)
                     .fillMaxSize()
                     .padding(24.dp),
+
+                // dejo separación vertical y horizontal entre tarjetas para que respire la interfaz.
                 verticalArrangement = Arrangement.spacedBy(24.dp),
                 horizontalArrangement = Arrangement.spacedBy(24.dp),
+
+                // en vertical añado más espacio arriba y abajo para que visualmente quede mejor.
                 contentPadding = PaddingValues(vertical = if (!isLandscape) 32.dp else 0.dp)
             ) {
+
+                // esta tarjeta lleva al entrenamiento actual del usuario.
                 item {
                     AlumnoMenuCard(
                         titulo = "Entrenamiento de Hoy",
@@ -86,6 +110,7 @@ fun AlumnoHomeScreen(
                     )
                 }
 
+                // esta tarjeta lleva al historial de sesiones del usuario.
                 item {
                     AlumnoMenuCard(
                         titulo = "Historial de Sesiones",
@@ -111,23 +136,53 @@ fun AlumnoMenuCard(
     colorTexto: Color,
     onClick: () -> Unit
 ) {
+    // esta función representa una tarjeta reutilizable del menú del alumno.
+    // la he separado para no repetir código y para que el diseño sea consistente.
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth().height(140.dp),
+
+        // redondeo las esquinas para que la tarjeta tenga un estilo más moderno.
         shape = RoundedCornerShape(16.dp),
+
+        // el color de fondo lo recibo por parámetro para poder reutilizar la misma tarjeta
+        // con distintos estilos.
         colors = CardDefaults.cardColors(containerColor = colorFondo),
+
+        // añado una pequeña elevación para que visualmente se separe del fondo.
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxSize().padding(20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+
+            // en la parte izquierda muestro el título y el subtítulo.
             Column(modifier = Modifier.weight(1f)) {
-                Text(titulo, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = colorTexto)
+                Text(
+                    titulo,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = colorTexto
+                )
+
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(subtitulo, style = MaterialTheme.typography.bodyMedium, color = colorTexto.copy(alpha = 0.8f))
+
+                // el subtítulo lo dejo un poco más suave bajando la opacidad.
+                Text(
+                    subtitulo,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colorTexto.copy(alpha = 0.8f)
+                )
             }
-            Icon(icono, contentDescription = null, tint = colorTexto, modifier = Modifier.size(40.dp))
+
+            // en la parte derecha muestro el icono de la opción.
+            Icon(
+                icono,
+                contentDescription = null,
+                tint = colorTexto,
+                modifier = Modifier.size(40.dp)
+            )
         }
     }
 }
