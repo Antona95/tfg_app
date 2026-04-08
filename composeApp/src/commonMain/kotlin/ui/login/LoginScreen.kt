@@ -39,9 +39,17 @@ fun LoginScreen(
     isDarkMode: Boolean,
     onThemeToggle: () -> Unit
 ) {
-    // aqui guardo todos los estados del formulario en la pantalla padre.
-    // lo hago asi porque si los dejo dentro de formularioauth,
-    // al girar el movil cambia la rama del if/else y compose puede perderlos.
+    // aqui guardo todos los estados del formulario en el composable padre.
+    // esto significa que el estado "vive" en loginscreen y no dentro de formularioauth.
+    //
+    // lo hago asi porque esta pantalla cambia de estructura cuando giro el movil:
+    // - en vertical sale imagen arriba y formulario abajo
+    // - en horizontal sale imagen a la izquierda y formulario a la derecha
+    //
+    // si el estado estuviera dentro de formularioauth, al cambiar la estructura
+    // compose podria reconstruirlo y perder lo escrito.
+    //
+    // remembersaveable sirve para conservar estos datos incluso si hay rotacion.
     var isRegistering by rememberSaveable { mutableStateOf(false) }
     var nickname by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
@@ -49,10 +57,20 @@ fun LoginScreen(
     var apellidos by rememberSaveable { mutableStateOf("") }
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
 
+    // estos dos estados controlan el cuadro emergente de error de validacion.
+    //
+    // mostrarerrorvalidacion decide si el dialogo se ve o no.
+    // mensajeerrorvalidacion guarda el texto que quiero enseñar en ese dialogo.
     var mostrarErrorValidacion by rememberSaveable { mutableStateOf(false) }
     var mensajeErrorValidacion by rememberSaveable { mutableStateOf("") }
 
-    // cuando el registro sale bien, vuelvo al modo login y limpio la contraseña.
+    // launchedeffect se ejecuta cuando cambia mensajeexito.
+    //
+    // aqui lo uso para detectar que el registro ha salido bien.
+    // si hay mensaje de exito:
+    // - vuelvo al modo login
+    // - cierro posibles errores de validacion
+    // - limpio la contraseña
     LaunchedEffect(mensajeExito) {
         if (mensajeExito != null) {
             isRegistering = false
@@ -61,16 +79,23 @@ fun LoginScreen(
         }
     }
 
+    // boxwithconstraints me permite conocer el tamaño disponible del contenedor.
+    // gracias a eso puedo saber si la pantalla esta en vertical u horizontal.
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        // con esto detecto si estoy en horizontal o en vertical.
+
+        // si el ancho es mayor que el alto, considero que el movil está girado.
         val isLandscape = maxWidth > maxHeight
 
+        // surface es un contenedor visual con el color de fondo del tema.
         Surface(color = MaterialTheme.colorScheme.background) {
             if (isLandscape) {
-                // en horizontal reparto la pantalla en dos: imagen y formulario.
+                // en horizontal reparto la pantalla en dos zonas.
+                // row coloca elementos uno al lado del otro.
                 Row(modifier = Modifier.fillMaxSize()) {
                     Box(
                         modifier = Modifier
+                            // weight reparte el espacio proporcionalmente.
+                            // esta caja ocupa un 40 por ciento aproximadamente.
                             .weight(0.4f)
                             .fillMaxHeight()
                             .padding(16.dp),
@@ -80,19 +105,29 @@ fun LoginScreen(
                             painter = painterResource(Res.drawable.imagen_inicial),
                             contentDescription = "logo aplicación",
                             modifier = Modifier.fillMaxSize(),
+
+                            // fit intenta meter la imagen entera sin recortarla.
                             contentScale = ContentScale.Fit
                         )
                     }
 
                     Column(
                         modifier = Modifier
+                            // esta columna ocupa el resto del espacio, un 60 por ciento.
                             .weight(0.6f)
                             .fillMaxHeight()
                             .padding(horizontal = 16.dp)
+
+                            // verticalscroll permite hacer scroll si no cabe el contenido.
                             .verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
+                        // llamo al formulario y le paso todos los datos y funciones.
+                        //
+                        // esto es importante:
+                        // formularioauth no decide nada por si solo,
+                        // solo pinta y usa lo que le manda loginscreen.
                         FormularioAuth(
                             isLoading = isLoading,
                             onLoginClick = onLoginClick,
@@ -100,9 +135,18 @@ fun LoginScreen(
                             mensajeExito = mensajeExito,
                             errorBackend = errorBackend,
                             isRegistering = isRegistering,
+
+                            // este callback sirve para cambiar entre login y registro.
+                            // cuando formularioauth lo invoque, realmente cambiara
+                            // la variable isregistering de arriba.
                             onIsRegisteringChange = { isRegistering = it },
+
                             nickname = nickname,
+
+                            // onnicknamechange es una funcion que recibe un string.
+                            // se usa para actualizar el estado cuando escribo en el textfield.
                             onNicknameChange = { nickname = it },
+
                             password = password,
                             onPasswordChange = { password = it },
                             nombre = nombre,
@@ -119,7 +163,7 @@ fun LoginScreen(
                     }
                 }
             } else {
-                // en vertical pongo imagen arriba y formulario abajo.
+                // en vertical pongo la imagen arriba y el formulario debajo.
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -133,6 +177,8 @@ fun LoginScreen(
                             .fillMaxWidth()
                             .height(250.dp)
                             .padding(bottom = 16.dp),
+
+                        // crop llena el espacio aunque recorte un poco la imagen.
                         contentScale = ContentScale.Crop
                     )
 
@@ -140,6 +186,8 @@ fun LoginScreen(
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
+                        // vuelvo a usar el mismo formulario.
+                        // da igual vertical u horizontal: el estado es el mismo.
                         FormularioAuth(
                             isLoading = isLoading,
                             onLoginClick = onLoginClick,
@@ -167,7 +215,13 @@ fun LoginScreen(
                 }
             }
 
-            // este switch cambia entre modo claro y oscuro.
+            // este switch cambia el tema claro/oscuro.
+            //
+            // checked indica el valor actual.
+            // oncheckedchange es la funcion que se ejecuta cuando el usuario lo pulsa.
+            //
+            // en este caso no cambio yo el estado aqui directamente,
+            // sino que llamo a onthemetoggle, que viene de la pantalla superior.
             Switch(
                 checked = isDarkMode,
                 onCheckedChange = { onThemeToggle() },
@@ -218,8 +272,16 @@ fun FormularioAuth(
     mensajeErrorValidacion: String,
     onMensajeErrorValidacionChange: (String) -> Unit
 ) {
-    // este composable ya no guarda estado propio.
-    // ahora solo pinta la interfaz y usa los datos que le pasa loginscreen.
+    // este composable no tiene estado propio.
+    //
+    // eso significa que:
+    // - no guarda variables internas con remember
+    // - solo muestra datos
+    // - y avisa al padre cuando hay cambios
+    //
+    // este patrón me ayuda a separar:
+    // - quien guarda el estado: loginscreen
+    // - quien dibuja la interfaz: formularioauth
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -234,6 +296,7 @@ fun FormularioAuth(
         )
 
         if (isRegistering) {
+            // si estoy en modo registro, muestro el componente con todos los campos.
             CamposRegistro(
                 nombre = nombre,
                 onNombreChange = onNombreChange,
@@ -244,11 +307,21 @@ fun FormularioAuth(
                 password = password,
                 onPasswordChange = onPasswordChange,
                 passwordVisible = passwordVisible,
+
+                // aqui no paso directamente una variable,
+                // sino una funcion que cambia el valor actual al contrario.
+                //
+                // si passwordvisible es true, lo pongo false.
+                // si era false, lo pongo true.
                 onPasswordVisibilityChange = { onPasswordVisibleChange(!passwordVisible) }
             )
         } else {
             OutlinedTextField(
                 value = nickname,
+
+                // onvaluechange se ejecuta cada vez que el usuario escribe algo.
+                // el nuevo texto entra como parametro "it".
+                // yo lo reenvio al padre para actualizar nickname.
                 onValueChange = onNicknameChange,
                 label = { Text("Nickname") },
                 modifier = Modifier.fillMaxWidth(),
@@ -261,16 +334,26 @@ fun FormularioAuth(
                 label = { Text("Password") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
+
+                // visualtransformation cambia la forma de mostrar el texto.
+                // no cambia el valor real, solo cómo se ve en pantalla.
                 visualTransformation = if (passwordVisible) {
                     VisualTransformation.None
                 } else {
                     PasswordVisualTransformation()
                 },
+
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 trailingIcon = {
                     val image =
                         if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
-                    IconButton(onClick = { onPasswordVisibleChange(!passwordVisible) }) {
+
+                    IconButton(
+                        onClick = {
+                            // al pulsar el icono, cambio si se ve o no la contraseña.
+                            onPasswordVisibleChange(!passwordVisible)
+                        }
+                    ) {
                         Icon(imageVector = image, contentDescription = "mostrar contraseña")
                     }
                 }
@@ -280,20 +363,27 @@ fun FormularioAuth(
         Button(
             onClick = {
                 if (isRegistering) {
+                    // si estoy registrando, valido localmente antes de mandar nada.
                     val error = Validaciones.validarRegistro(nickname, password, nombre, apellidos)
+
                     if (error != null) {
+                        // si hay error, guardo el mensaje y abro el dialogo.
                         onMensajeErrorValidacionChange(error)
                         onMostrarErrorValidacionChange(true)
                     } else {
+                        // si no hay error, llamo al callback de registro.
+                        // este callback lo definio el padre y normalmente acaba en el viewmodel.
                         onRegistroClick(nickname, password, nombre, apellidos)
                     }
                 } else {
+                    // si estoy en login, compruebo que al menos no estén vacios.
                     if (nickname.isBlank() || password.isBlank()) {
                         onMensajeErrorValidacionChange(
                             "Debes rellenar tu Nickname y Password para poder entrar."
                         )
                         onMostrarErrorValidacionChange(true)
                     } else {
+                        // si todo está bien, lanzo el callback de login.
                         onLoginClick(nickname, password)
                     }
                 }
@@ -305,6 +395,7 @@ fun FormularioAuth(
             enabled = !isLoading
         ) {
             if (isLoading) {
+                // si isloading es true, enseño el spinner.
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
                     color = MaterialTheme.colorScheme.onPrimary,
@@ -316,6 +407,8 @@ fun FormularioAuth(
         }
 
         if (errorBackend != null) {
+            // este error no es de validacion local.
+            // viene del backend o del viewmodel, por ejemplo credenciales incorrectas.
             Text(
                 text = errorBackend,
                 color = MaterialTheme.colorScheme.error,
@@ -324,6 +417,7 @@ fun FormularioAuth(
         }
 
         if (mensajeExito != null) {
+            // este mensaje suele aparecer al registrarse correctamente.
             Text(
                 text = mensajeExito,
                 color = MaterialTheme.colorScheme.primary,
@@ -335,7 +429,10 @@ fun FormularioAuth(
 
         TextButton(
             onClick = {
+                // aqui cambio entre login y registro.
                 onIsRegisteringChange(!isRegistering)
+
+                // y cierro cualquier dialogo de validacion que hubiera abierto.
                 onMostrarErrorValidacionChange(false)
             },
             enabled = !isLoading
@@ -353,6 +450,16 @@ fun FormularioAuth(
             mostrarDialogo = mostrarErrorValidacion,
             titulo = "Campos incompletos",
             mensaje = mensajeErrorValidacion,
+
+            // ondismiss es una función callback que se ejecuta cuando el dialogo se cierra.
+            //
+            // dismiss significa "cerrar" o "descartar".
+            // por ejemplo, se ejecuta cuando:
+            // - pulso el boton del propio dialogo
+            // - o el componente decide cerrarse
+            //
+            // aqui lo que hago es poner mostrarerrorvalidacion en false
+            // para que el dialogo deje de verse.
             onDismiss = { onMostrarErrorValidacionChange(false) }
         )
     }
