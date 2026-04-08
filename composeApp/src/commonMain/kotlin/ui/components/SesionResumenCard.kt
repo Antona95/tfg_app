@@ -20,40 +20,101 @@ fun SesionResumenCard(
     isDarkMode: Boolean,
     onClick: () -> Unit
 ) {
+    // este composable me sirve para mostrar una tarjeta resumen de una sesion.
+    //
+    // la uso sobre todo en pantallas de historial, donde necesito listar muchas sesiones
+    // y al pulsar una de ellas entrar al detalle.
+    //
+    // la idea es enseñar de forma compacta:
+    // - el titulo
+    // - si esta finalizada o pendiente
+    // - una flecha para indicar que se puede abrir
+
     Card(
+        // redondeo las esquinas para que la tarjeta tenga un aspecto mas moderno y limpio.
         shape = RoundedCornerShape(12.dp),
+
         modifier = Modifier
             .fillMaxWidth()
+
+            // clickable hace que toda la tarjeta responda al toque.
+            // cuando pulso, ejecuto la funcion onclick que me llega por parametro.
             .clickable { onClick() },
+
         colors = CardDefaults.cardColors(
+            // uso un color secundario del tema para diferenciarla del fondo
+            // pero sin destacar demasiado.
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         ),
+
+        // añado una elevacion pequeña para separar visualmente la tarjeta del fondo.
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
+
+            // centro verticalmente el contenido de la fila.
             verticalAlignment = Alignment.CenterVertically,
+
+            // spacebetween coloca el bloque de texto a la izquierda
+            // y la flecha a la derecha.
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Column(modifier = Modifier.weight(1f)) {
+            Column(
+                // con weight hago que esta columna ocupe el espacio principal de la fila
+                // y deje la flecha al extremo derecho.
+                modifier = Modifier.weight(1f)
+            ) {
                 Text(
+                    // aqui muestro el titulo de la sesion.
+                    // si por algun motivo no tiene titulo, enseño un texto por defecto.
                     text = sesion.titulo ?: "Sesión sin título",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
+
+                    // uso el color de texto asociado a surfacevariant para que combine bien con la tarjeta.
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+
+                // dejo una pequeña separacion entre el titulo y el estado.
                 Spacer(modifier = Modifier.height(6.dp))
+
+                // aqui muestro el estado de la sesion.
                 if (sesion.finalizada) {
-                    Text("✅ Finalizada", color = Color(0xFF2E7D32), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                    Text(
+                        "✅ Finalizada",
+
+                        // si está finalizada uso verde porque transmite visualmente "hecho" o "correcto".
+                        color = Color(0xFF2E7D32),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold
+                    )
                 } else {
-                    Text("⏳ Pendiente", color = if(isDarkMode) Color(0xFFFFB74D) else Color(0xFFE65100), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                    Text(
+                        "⏳ Pendiente",
+
+                        // si esta pendiente cambio el color segun el tema.
+                        //
+                        // en oscuro uso un naranja mas claro para que tenga contraste.
+                        // en claro uso un naranja mas intenso.
+                        color = if(isDarkMode) Color(0xFFFFB74D) else Color(0xFFE65100),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
+
+            // esta flecha indica que la tarjeta se puede abrir o navegar.
+            //
+            // uso automirrored para que si algun dia hubiera soporte rtl
+            // la flecha se adapte automaticamente a la direccion correcta.
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = "Ver detalles",
+
+                // uso el color primario del tema para que la flecha destaque un poco.
                 tint = MaterialTheme.colorScheme.primary
             )
         }

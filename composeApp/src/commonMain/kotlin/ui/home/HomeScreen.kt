@@ -1,3 +1,4 @@
+/*
 package ui.home
 
 import androidx.compose.foundation.background
@@ -18,13 +19,13 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import network.EntrenamientoRepository
 import model.Persona
+import network.EntrenamientoRepository
 import viewmodel.CoachViewModel
 
-// ---------------------------------------------------------
-// 1. EL CEREBRO PRINCIPAL
-// ---------------------------------------------------------
+// este archivo define una pantalla home general.
+// su funcion principal es decidir qué vista muestro según el rol del usuario.
+
 @Composable
 fun HomeScreen(
     usuario: Persona,
@@ -33,22 +34,28 @@ fun HomeScreen(
     isDarkMode: Boolean,
     onThemeToggle: () -> Unit
 ) {
-    val rol = usuario.rol?.uppercase() ?: "USUARIO"
+    val rol = usuario.rol.uppercase()
 
     if (rol == "ENTRENADOR") {
-        VistaEntrenador(usuario, repository, onLogoutClick, isDarkMode, onThemeToggle)
+        VistaEntrenador(
+            repository = repository,
+            onLogoutClick = onLogoutClick,
+            isDarkMode = isDarkMode,
+            onThemeToggle = onThemeToggle
+        )
     } else {
-        VistaCliente(usuario, onLogoutClick, isDarkMode, onThemeToggle)
+        VistaCliente(
+            usuario = usuario,
+            onLogoutClick = onLogoutClick,
+            isDarkMode = isDarkMode,
+            onThemeToggle = onThemeToggle
+        )
     }
 }
 
-// ---------------------------------------------------------
-// 2. VISTA ENTRENADOR (CON NAVEGACIÓN)
-// ---------------------------------------------------------
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VistaEntrenador(
-    usuario: Persona,
     repository: EntrenamientoRepository,
     onLogoutClick: () -> Unit,
     isDarkMode: Boolean,
@@ -81,9 +88,17 @@ fun VistaEntrenador(
                             modifier = Modifier.padding(end = 8.dp),
                             thumbContent = {
                                 if (isDarkMode) {
-                                    Icon(Icons.Default.DarkMode, "Modo Oscuro", modifier = Modifier.size(SwitchDefaults.IconSize))
+                                    Icon(
+                                        Icons.Default.DarkMode,
+                                        contentDescription = "Modo Oscuro",
+                                        modifier = Modifier.size(SwitchDefaults.IconSize)
+                                    )
                                 } else {
-                                    Icon(Icons.Default.LightMode, "Modo Claro", modifier = Modifier.size(SwitchDefaults.IconSize))
+                                    Icon(
+                                        Icons.Default.LightMode,
+                                        contentDescription = "Modo Claro",
+                                        modifier = Modifier.size(SwitchDefaults.IconSize)
+                                    )
                                 }
                             }
                         )
@@ -96,7 +111,9 @@ fun VistaEntrenador(
             }
         ) { padding ->
             Box(
-                modifier = Modifier.fillMaxSize().padding(padding),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
                 contentAlignment = Alignment.TopCenter
             ) {
                 Column(
@@ -115,11 +132,17 @@ fun VistaEntrenador(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     if (cargando) {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
                             CircularProgressIndicator()
                         }
                     } else if (listaAlumnos.isEmpty()) {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
                             Text("No tienes alumnos asignados aún")
                         }
                     } else {
@@ -141,9 +164,6 @@ fun VistaEntrenador(
     }
 }
 
-// ---------------------------------------------------------
-// 3. TARJETA DE ALUMNO (CLICABLE)
-// ---------------------------------------------------------
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AlumnoCard(
@@ -153,19 +173,28 @@ fun AlumnoCard(
     Card(
         onClick = onClick,
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
-                modifier = Modifier.size(50.dp).background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+                modifier = Modifier
+                    .size(50.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = CircleShape
+                    ),
                 contentAlignment = Alignment.Center
             ) {
-                val nombreSeguro = alumno.nombre ?: "?"
-                val inicial = if (nombreSeguro.isNotEmpty()) nombreSeguro.take(1).uppercase() else "?"
+                val nombreSeguro = alumno.nombre.ifBlank { "?" }
+                val inicial = nombreSeguro.take(1).uppercase()
 
                 Text(
                     text = inicial,
@@ -179,12 +208,12 @@ fun AlumnoCard(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "${alumno.nombre ?: "Sin Nombre"} ${alumno.apellidos ?: ""}",
+                    text = "${alumno.nombre} ${alumno.apellidos}",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "@${alumno.nickname ?: "anonimo"}",
+                    text = "@${alumno.nickname}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.Gray
                 )
@@ -195,9 +224,6 @@ fun AlumnoCard(
     }
 }
 
-// ---------------------------------------------------------
-// 4. VISTA CLIENTE
-// ---------------------------------------------------------
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VistaCliente(
@@ -221,9 +247,17 @@ fun VistaCliente(
                         modifier = Modifier.padding(end = 8.dp),
                         thumbContent = {
                             if (isDarkMode) {
-                                Icon(Icons.Default.DarkMode, "Modo Oscuro", modifier = Modifier.size(SwitchDefaults.IconSize))
+                                Icon(
+                                    Icons.Default.DarkMode,
+                                    contentDescription = "Modo Oscuro",
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
                             } else {
-                                Icon(Icons.Default.LightMode, "Modo Claro", modifier = Modifier.size(SwitchDefaults.IconSize))
+                                Icon(
+                                    Icons.Default.LightMode,
+                                    contentDescription = "Modo Claro",
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
                             }
                         }
                     )
@@ -236,7 +270,9 @@ fun VistaCliente(
         }
     ) { padding ->
         Box(
-            modifier = Modifier.fillMaxSize().padding(padding),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
             contentAlignment = Alignment.TopCenter
         ) {
             LazyColumn(
@@ -265,7 +301,7 @@ fun VistaCliente(
                         titulo = "Mi Rutina",
                         subtitulo = "Ver ejercicios de hoy",
                         icono = Icons.Default.DateRange,
-                        onClick = { /* Navegar a rutina */ }
+                        onClick = { }
                     )
                 }
 
@@ -274,7 +310,7 @@ fun VistaCliente(
                         titulo = "Mi Perfil",
                         subtitulo = "Datos físicos y progresos",
                         icono = Icons.Default.Person,
-                        onClick = { /* Navegar a perfil */ }
+                        onClick = { }
                     )
                 }
             }
@@ -282,9 +318,6 @@ fun VistaCliente(
     }
 }
 
-// ---------------------------------------------------------
-// 5. COMPONENTE COMPARTIDO (DASHBOARD)
-// ---------------------------------------------------------
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardCard(
@@ -296,12 +329,14 @@ fun DashboardCard(
     Card(
         onClick = onClick,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
         ),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier.padding(20.dp).fillMaxWidth(),
+            modifier = Modifier
+                .padding(20.dp)
+                .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -310,6 +345,7 @@ fun DashboardCard(
                 modifier = Modifier.size(40.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
+
             Column(modifier = Modifier.padding(start = 16.dp)) {
                 Text(
                     text = titulo,
@@ -325,9 +361,6 @@ fun DashboardCard(
     }
 }
 
-// ---------------------------------------------------------
-// 6. PANTALLA DE DETALLE DEL ALUMNO
-// ---------------------------------------------------------
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VistaDetalleAlumno(
@@ -337,7 +370,7 @@ fun VistaDetalleAlumno(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(alumno.nombre ?: "Alumno") },
+                title = { Text(alumno.nombre) },
                 navigationIcon = {
                     IconButton(onClick = onVolver) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
@@ -347,7 +380,9 @@ fun VistaDetalleAlumno(
         }
     ) { padding ->
         Box(
-            modifier = Modifier.fillMaxSize().padding(padding),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
             contentAlignment = Alignment.TopCenter
         ) {
             Column(
@@ -360,11 +395,16 @@ fun VistaDetalleAlumno(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Box(
-                    modifier = Modifier.size(100.dp).background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
+                    modifier = Modifier
+                        .size(100.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.secondaryContainer,
+                            shape = CircleShape
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = (alumno.nombre ?: "?").take(1).uppercase(),
+                        text = alumno.nombre.take(1).uppercase(),
                         fontSize = 40.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -377,13 +417,19 @@ fun VistaDetalleAlumno(
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
-                Text(text = "Cliente desde 2024", color = Color.Gray)
+
+                Text(
+                    text = "Cliente desde 2024",
+                    color = Color.Gray
+                )
 
                 Spacer(modifier = Modifier.height(32.dp))
 
                 Button(
-                    onClick = { /* TODO: Crear Rutina */ },
-                    modifier = Modifier.fillMaxWidth().height(50.dp)
+                    onClick = { },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
                 ) {
                     Icon(Icons.Default.Edit, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
@@ -393,8 +439,10 @@ fun VistaDetalleAlumno(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedButton(
-                    onClick = { /* TODO: Ver estadísticas */ },
-                    modifier = Modifier.fillMaxWidth().height(50.dp)
+                    onClick = { },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
                 ) {
                     Icon(Icons.Default.Info, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
@@ -406,3 +454,4 @@ fun VistaDetalleAlumno(
         }
     }
 }
+*/
