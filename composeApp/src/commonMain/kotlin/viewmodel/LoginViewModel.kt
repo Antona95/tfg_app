@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import model.Persona
-import network.EntrenamientoRepository
+import repository.AuthRepository
 
 // esta data class representa todo el estado de la pantalla de login.
 // la hago asi para tener en un solo objeto:
@@ -28,8 +28,7 @@ data class LoginUiState(
 )
 
 // este viewmodel controla toda la logica de la pantalla de login y registro.
-class LoginViewModel(private val repository: EntrenamientoRepository) : ViewModel() {
-
+class LoginViewModel(private val repository: AuthRepository) : ViewModel() {
     // aqui guardo el estado interno de la pantalla.
     // empiezo con un estado vacio por defecto.
     private val _uiState = MutableStateFlow(LoginUiState())

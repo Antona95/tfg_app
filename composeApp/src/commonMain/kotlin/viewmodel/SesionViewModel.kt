@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import network.EntrenamientoRepository
+import repository.SesionRepository
 import model.CrearSesionRequest
 import model.CrearEjercicioRequest
 import model.EjercicioDraft
@@ -22,8 +22,7 @@ sealed class SesionUiState {
 
 class SesionViewModel(
     // inyecto el repositorio para no meter aqui directamente la logica de red.
-    private val repository: EntrenamientoRepository
-) : ViewModel() {
+    private val repository: SesionRepository) : ViewModel() {
 
     // aqui guardo el estado general de la pantalla.
     // empiezo en idle porque al abrir la pantalla todavia no he hecho ninguna accion.

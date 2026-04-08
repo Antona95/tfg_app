@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import dev.icerock.moko.mvvm.compose.getViewModel
 import dev.icerock.moko.mvvm.compose.viewModelFactory
 import model.SesionEntrenamiento
-import network.EntrenamientoRepository
+import repository.SesionRepository
 import viewmodel.HistorialViewModel
 import ui.components.PantallaCargando
 import ui.components.PantallaVacia
@@ -27,7 +27,7 @@ import ui.components.SesionResumenCard
 @Composable
 fun HistorialScreen(
     idUsuario: String,
-    repository: EntrenamientoRepository,
+    repository: SesionRepository,
     viewModel: HistorialViewModel? = null,
     isDarkMode: Boolean,
     onBack: () -> Unit,

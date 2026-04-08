@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import model.SesionEntrenamiento
-import network.EntrenamientoRepository
+import repository.SesionRepository
 
 // esta sealed class representa todos los estados posibles de la pantalla "hoy".
 // me viene muy bien porque asi la ui no depende de booleanos sueltos,
@@ -28,7 +28,7 @@ sealed class HoyUiState {
 }
 
 // este viewmodel controla la logica de la pantalla del entrenamiento del alumno.
-class HoyViewModel(private val repository: EntrenamientoRepository) : ViewModel() {
+class HoyViewModel(private val repository: SesionRepository) : ViewModel() {
 
     // aqui guardo el estado actual de la pantalla.
     // empiezo en loading porque normalmente al abrir la pantalla voy a pedir datos.
