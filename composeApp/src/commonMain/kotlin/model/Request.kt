@@ -69,5 +69,9 @@ data class EjercicioDraft(
 
     // bloque al que pertenece este ejercicio.
     // me sirve para representar biseries o triseries en la interfaz.
-    val bloque: Int = 0
+    val bloque: Int = 0,
+
+    // este booleano solo lo uso en la interfaz.
+    // me permite marcar ejercicios para agruparlos o desagruparlos.
+    val seleccionado: Boolean = false
 )

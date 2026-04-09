@@ -1,5 +1,7 @@
 package ui.coach
 
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,28 +19,43 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import viewmodel.SesionUiState
-import viewmodel.SesionViewModel
 import model.EjercicioDraft
 import model.SesionEntrenamiento
-import ui.components.obtenerColorBloqueUniversal
-import ui.components.Validaciones
 import ui.components.DialogoAlerta
+import ui.components.Validaciones
+import ui.components.obtenerColorBloqueUniversal
+import viewmodel.SesionUiState
+import viewmodel.SesionViewModel
 
 fun obtenerInfoVisualBloqueDraft(lista: List<EjercicioDraft>, indexActual: Int): Pair<Char, Int> {
+    // esta funcion me sirve para calcular la letra y el numero visual del bloque.
+    //
+    // no uso directamente el valor real de "bloque" porque:
+    // - puede haber ejercicios sueltos con bloque 0
+    // - puede haber bloques agrupados mezclados con ejercicios normales
+    //
+    // por eso recorro la lista hasta la posicion actual y voy construyendo
+    // un numero de bloque visual que sea estable para la interfaz.
     var currentBlock = 1
     var lastDbBlock = -1
+
     for (i in 0..indexActual) {
         val ej = lista.getOrNull(i) ?: continue
+
         if (ej.bloque == 0) {
+            // si el ejercicio va solo, normalmente avanza a un nuevo bloque visual.
             if (i > 0 && lastDbBlock != -1) currentBlock++
             else if (i > 0 && lista[i - 1].bloque == 0) currentBlock++
+
             lastDbBlock = -1
         } else {
+            // si el ejercicio pertenece a un grupo, solo cambio de bloque visual
+            // cuando cambia el id de bloque real.
             if (i > 0 && ej.bloque != lastDbBlock) currentBlock++
             lastDbBlock = ej.bloque
         }
     }
+
     return Pair((currentBlock + 64).toChar(), currentBlock)
 }
 
@@ -51,20 +68,29 @@ fun NuevaSesionScreen(
     onNavigateBack: () -> Unit,
     sesionBase: SesionEntrenamiento? = null
 ) {
+    // aqui observo el estado general de la pantalla:
+    // idle, loading, success o error.
     val uiState by viewModel.uiState.collectAsState()
+
+    // aqui observo la lista editable de ejercicios que estoy montando.
     val listaEjercicios by viewModel.listaEjercicios.collectAsState()
 
+    // este estado local guarda el titulo de la sesion.
+    // si estoy duplicando una sesion, pongo un titulo inicial basado en ella.
     var tituloSesion by rememberSaveable {
         mutableStateOf(if (sesionBase != null) "Copia de ${sesionBase.titulo}" else "")
     }
 
+    // estos estados controlan un dialogo simple de validacion.
     var mostrarErrorValidacion by remember { mutableStateOf(false) }
     var mensajeErrorValidacion by remember { mutableStateOf("") }
 
+    // cuando entro con una sesion base, inicializo el formulario con sus ejercicios.
     LaunchedEffect(sesionBase) {
         viewModel.inicializarConSesionBase(sesionBase)
     }
 
+    // si guardar la sesion sale bien, vuelvo atras y limpio el estado del viewmodel.
     LaunchedEffect(uiState) {
         if (uiState is SesionUiState.Success) {
             onNavigateBack()
@@ -72,8 +98,10 @@ fun NuevaSesionScreen(
         }
     }
 
+    // esta lambda me sirve para validar y guardar.
     val intentarGuardar = {
         val error = Validaciones.validarFormularioSesion(tituloSesion, listaEjercicios)
+
         if (error != null) {
             mensajeErrorValidacion = error
             mostrarErrorValidacion = true
@@ -83,6 +111,7 @@ fun NuevaSesionScreen(
     }
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        // si el ancho es mayor que el alto, considero que estoy en horizontal.
         val isLandscape = maxWidth > maxHeight
 
         Scaffold(
@@ -102,6 +131,7 @@ fun NuevaSesionScreen(
                 )
             },
             bottomBar = {
+                // en vertical dejo el boton guardar abajo fijo para que sea mas accesible.
                 if (!isLandscape) {
                     Box(
                         modifier = Modifier
@@ -129,7 +159,10 @@ fun NuevaSesionScreen(
                 }
             }
         ) { padding ->
+
             if (isLandscape) {
+                // en horizontal reparto la pantalla en dos zonas:
+                // izquierda para acciones y derecha para lista de ejercicios.
                 Row(
                     modifier = Modifier
                         .padding(padding)
@@ -153,7 +186,12 @@ fun NuevaSesionScreen(
 
                             Spacer(modifier = Modifier.height(24.dp))
 
-                            Text("Agrupar últimos:", style = MaterialTheme.typography.labelSmall)
+                            // ahora ya no agrupo los ultimos ejercicios,
+                            // sino los ejercicios que el entrenador haya marcado.
+                            Text(
+                                "Agrupar seleccionados:",
+                                style = MaterialTheme.typography.labelSmall
+                            )
 
                             Row(
                                 modifier = Modifier
@@ -162,18 +200,51 @@ fun NuevaSesionScreen(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 Button(
-                                    onClick = { viewModel.agruparUltimos(2) },
+                                    onClick = {
+                                        val ok = viewModel.agruparSeleccionados(2)
+
+                                        if (!ok) {
+                                            mensajeErrorValidacion =
+                                                "debes seleccionar exactamente 2 ejercicios para crear una biserie."
+                                            mostrarErrorValidacion = true
+                                        }
+                                    },
                                     modifier = Modifier.weight(1f)
                                 ) {
                                     Text("Biserie")
                                 }
 
                                 Button(
-                                    onClick = { viewModel.agruparUltimos(3) },
+                                    onClick = {
+                                        val ok = viewModel.agruparSeleccionados(3)
+
+                                        if (!ok) {
+                                            mensajeErrorValidacion =
+                                                "debes seleccionar exactamente 3 ejercicios para crear una triserie."
+                                            mostrarErrorValidacion = true
+                                        }
+                                    },
                                     modifier = Modifier.weight(1f)
                                 ) {
                                     Text("Triserie")
                                 }
+                            }
+
+                            // este boton devuelve los ejercicios seleccionados a bloque 0.
+                            // o sea, vuelven a ser ejercicios sueltos.
+                            OutlinedButton(
+                                onClick = {
+                                    val ok = viewModel.desagruparSeleccionados()
+
+                                    if (!ok) {
+                                        mensajeErrorValidacion =
+                                            "selecciona al menos un ejercicio para dejarlo como ejercicio único."
+                                        mostrarErrorValidacion = true
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text("Ejercicio único")
                             }
 
                             Spacer(modifier = Modifier.height(16.dp))
@@ -198,7 +269,14 @@ fun NuevaSesionScreen(
                                 .navigationBarsPadding(),
                             enabled = uiState !is SesionUiState.Loading
                         ) {
-                            Text("GUARDAR", fontWeight = FontWeight.Bold)
+                            if (uiState is SesionUiState.Loading) {
+                                CircularProgressIndicator(
+                                    color = Color.White,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            } else {
+                                Text("GUARDAR", fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
 
@@ -208,22 +286,41 @@ fun NuevaSesionScreen(
                             .fillMaxHeight()
                     ) {
                         itemsIndexed(listaEjercicios) { index, ej ->
-                            val (letra, numBloque) = obtenerInfoVisualBloqueDraft(listaEjercicios, index)
+                            val (letra, numBloque) =
+                                obtenerInfoVisualBloqueDraft(listaEjercicios, index)
+
                             EjercicioItemCard(
                                 ejercicio = ej,
-                                unidoArriba = ej.bloque != 0 && ej.bloque == listaEjercicios.getOrNull(index - 1)?.bloque,
-                                unidoAbajo = ej.bloque != 0 && ej.bloque == listaEjercicios.getOrNull(index + 1)?.bloque,
+
+                                // esto me permite redondear o unir visualmente tarjetas
+                                // cuando pertenecen al mismo bloque.
+                                unidoArriba = ej.bloque != 0 &&
+                                        ej.bloque == listaEjercicios.getOrNull(index - 1)?.bloque,
+                                unidoAbajo = ej.bloque != 0 &&
+                                        ej.bloque == listaEjercicios.getOrNull(index + 1)?.bloque,
+
                                 isDarkMode = isDarkMode,
                                 letraBloque = letra,
                                 numeroBloque = numBloque,
+
+                                // eliminar borra la fila completa.
                                 onDelete = { viewModel.eliminarEjercicio(index) },
-                                onUpdate = { nuevo -> viewModel.actualizarEjercicio(index, nuevo) }
+
+                                // actualizar modifica los datos escritos por el coach.
+                                onUpdate = { nuevo -> viewModel.actualizarEjercicio(index, nuevo) },
+
+                                // esto permite marcar o desmarcar una tarjeta.
+                                onToggleSeleccion = {
+                                    viewModel.toggleSeleccionEjercicio(index)
+                                }
                             )
                         }
+
                         item { Spacer(modifier = Modifier.height(32.dp)) }
                     }
                 }
             } else {
+                // en vertical coloco todo en columna.
                 Column(
                     modifier = Modifier
                         .padding(padding)
@@ -241,37 +338,78 @@ fun NuevaSesionScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
+                    // aqui tambien agrupo por seleccion.
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Button(
-                            onClick = { viewModel.agruparUltimos(2) },
+                            onClick = {
+                                val ok = viewModel.agruparSeleccionados(2)
+
+                                if (!ok) {
+                                    mensajeErrorValidacion =
+                                        "debes seleccionar exactamente 2 ejercicios para crear una biserie."
+                                    mostrarErrorValidacion = true
+                                }
+                            },
                             modifier = Modifier.weight(1f)
                         ) {
                             Text("Biserie")
                         }
 
                         Button(
-                            onClick = { viewModel.agruparUltimos(3) },
+                            onClick = {
+                                val ok = viewModel.agruparSeleccionados(3)
+
+                                if (!ok) {
+                                    mensajeErrorValidacion =
+                                        "debes seleccionar exactamente 3 ejercicios para crear una triserie."
+                                    mostrarErrorValidacion = true
+                                }
+                            },
                             modifier = Modifier.weight(1f)
                         ) {
                             Text("Triserie")
                         }
                     }
 
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    OutlinedButton(
+                        onClick = {
+                            val ok = viewModel.desagruparSeleccionados()
+
+                            if (!ok) {
+                                mensajeErrorValidacion =
+                                    "selecciona al menos un ejercicio para dejarlo como ejercicio único."
+                                mostrarErrorValidacion = true
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Ejercicio único")
+                    }
+
                     LazyColumn(modifier = Modifier.weight(1f)) {
                         itemsIndexed(listaEjercicios) { index, ej ->
-                            val (letra, numBloque) = obtenerInfoVisualBloqueDraft(listaEjercicios, index)
+                            val (letra, numBloque) =
+                                obtenerInfoVisualBloqueDraft(listaEjercicios, index)
+
                             EjercicioItemCard(
                                 ejercicio = ej,
-                                unidoArriba = ej.bloque != 0 && ej.bloque == listaEjercicios.getOrNull(index - 1)?.bloque,
-                                unidoAbajo = ej.bloque != 0 && ej.bloque == listaEjercicios.getOrNull(index + 1)?.bloque,
+                                unidoArriba = ej.bloque != 0 &&
+                                        ej.bloque == listaEjercicios.getOrNull(index - 1)?.bloque,
+                                unidoAbajo = ej.bloque != 0 &&
+                                        ej.bloque == listaEjercicios.getOrNull(index + 1)?.bloque,
                                 isDarkMode = isDarkMode,
                                 letraBloque = letra,
                                 numeroBloque = numBloque,
                                 onDelete = { viewModel.eliminarEjercicio(index) },
-                                onUpdate = { nuevo -> viewModel.actualizarEjercicio(index, nuevo) }
+                                onUpdate = { nuevo -> viewModel.actualizarEjercicio(index, nuevo) },
+                                onToggleSeleccion = {
+                                    viewModel.toggleSeleccionEjercicio(index)
+                                }
                             )
                         }
 
@@ -285,10 +423,13 @@ fun NuevaSesionScreen(
                                 Text("Añadir ejercicio")
                             }
                         }
+
+                        item { Spacer(modifier = Modifier.height(16.dp)) }
                     }
                 }
             }
 
+            // este dialogo muestra errores de validacion o de uso.
             DialogoAlerta(
                 mostrarDialogo = mostrarErrorValidacion,
                 titulo = "Revisa los datos",
@@ -308,14 +449,19 @@ fun EjercicioItemCard(
     letraBloque: Char,
     numeroBloque: Int,
     onDelete: () -> Unit,
-    onUpdate: (EjercicioDraft) -> Unit
+    onUpdate: (EjercicioDraft) -> Unit,
+    onToggleSeleccion: () -> Unit
 ) {
+    // si el ejercicio no tiene bloque, uso un color neutro.
+    // si pertenece a un bloque, reutilizo el color del bloque visual.
     val colorFondo =
         if (ejercicio.bloque == 0) MaterialTheme.colorScheme.surfaceVariant
         else obtenerColorBloqueUniversal(numeroBloque, isDarkMode)
 
+    // adapto el color del texto segun el tema.
     val colorTexto = if (isDarkMode) Color.White else MaterialTheme.colorScheme.onSurface
 
+    // esta shape me deja unir visualmente tarjetas del mismo bloque.
     val shape = RoundedCornerShape(
         topStart = if (unidoArriba) 0.dp else 12.dp,
         topEnd = if (unidoArriba) 0.dp else 12.dp,
@@ -327,11 +473,36 @@ fun EjercicioItemCard(
         shape = shape,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = if (unidoArriba) 0.dp else 8.dp),
-        colors = CardDefaults.cardColors(containerColor = colorFondo, contentColor = colorTexto)
+            .padding(top = if (unidoArriba) 0.dp else 8.dp)
+
+            // si pulso la tarjeta, cambio su estado de seleccion.
+            .clickable { onToggleSeleccion() }
+
+            // cuando una tarjeta esta marcada, le dibujo un borde.
+            .border(
+                width = if (ejercicio.seleccionado) 2.dp else 0.dp,
+                color = if (ejercicio.seleccionado) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    Color.Transparent
+                },
+                shape = shape
+            ),
+        colors = CardDefaults.cardColors(
+            containerColor = colorFondo,
+            contentColor = colorTexto
+        )
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
+
+                // este checkbox sirve para marcar ejercicios que luego quiero agrupar.
+                Checkbox(
+                    checked = ejercicio.seleccionado,
+                    onCheckedChange = { onToggleSeleccion() }
+                )
+
+                // esta etiqueta muestra la letra visual del bloque.
                 Surface(
                     color = MaterialTheme.colorScheme.primary,
                     shape = RoundedCornerShape(4.dp)
@@ -346,6 +517,7 @@ fun EjercicioItemCard(
 
                 Spacer(Modifier.width(8.dp))
 
+                // estos colores adaptan los textfield al color del bloque.
                 val textFieldColors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = colorTexto,
                     unfocusedTextColor = colorTexto,
@@ -364,6 +536,7 @@ fun EjercicioItemCard(
                     colors = textFieldColors
                 )
 
+                // este boton elimina la tarjeta.
                 IconButton(onClick = onDelete) {
                     Icon(
                         Icons.Default.Delete,

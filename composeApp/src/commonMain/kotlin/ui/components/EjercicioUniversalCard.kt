@@ -134,7 +134,8 @@ fun EjercicioUniversalCard(
     isDarkMode: Boolean,
     isLandscape: Boolean,
     letraBloque: Char,
-    numeroBloque: Int
+    numeroBloque: Int,
+    modifier: Modifier = Modifier
 ) {
     // aqui calculo el color de fondo de la tarjeta según el bloque y el tema.
     val colorFondo = obtenerColorBloqueUniversal(numeroBloque, isDarkMode)
@@ -145,7 +146,7 @@ fun EjercicioUniversalCard(
     val colorTexto = if (isDarkMode) Color.White else MaterialTheme.colorScheme.onSurface
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
 
         // con cardcolors personalizo tanto el fondo como el color de contenido de la tarjeta.
         colors = CardDefaults.cardColors(containerColor = colorFondo, contentColor = colorTexto)

@@ -23,7 +23,7 @@ object Validaciones {
         return null // Todo correcto
     }
 
-    // NUEVO: Validación para el Registro de Usuarios
+    // Validación para el Registro de Usuarios
     fun validarRegistro(nick: String, pass: String, nombre: String, apellidos: String): String? {
         if (nombre.isBlank()) return "El nombre no puede estar vacío."
         if (apellidos.isBlank()) return "Los apellidos no pueden estar vacíos."

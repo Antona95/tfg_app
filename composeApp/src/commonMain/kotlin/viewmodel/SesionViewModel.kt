@@ -5,11 +5,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import repository.SesionRepository
-import model.CrearSesionRequest
 import model.CrearEjercicioRequest
+import model.CrearSesionRequest
 import model.EjercicioDraft
 import model.SesionEntrenamiento
+import repository.SesionRepository
 
 // esta sealed class representa los posibles estados de la pantalla de creacion de sesion.
 // me sirve para que la ui sepa si esta en reposo, cargando, si ha salido bien o si hay error.
@@ -22,7 +22,8 @@ sealed class SesionUiState {
 
 class SesionViewModel(
     // inyecto el repositorio para no meter aqui directamente la logica de red.
-    private val repository: SesionRepository) : ViewModel() {
+    private val repository: SesionRepository
+) : ViewModel() {
 
     // aqui guardo el estado general de la pantalla.
     // empiezo en idle porque al abrir la pantalla todavia no he hecho ninguna accion.
@@ -35,7 +36,7 @@ class SesionViewModel(
     val listaEjercicios: StateFlow<List<EjercicioDraft>> = _listaEjercicios.asStateFlow()
 
     // esta variable me sirve para asignar ids de bloque a las biseries o triseries.
-    // cada vez que agrupo ultimos ejercicios, aumento este contador.
+    // cada vez que creo una agrupacion nueva, aumento este contador.
     private var ultimoBloqueId = 0
 
     // este metodo inicializa el formulario.
@@ -53,11 +54,30 @@ class SesionViewModel(
                 series = detalle.series.toString(),
                 repeticiones = detalle.repeticiones,
                 peso = detalle.peso?.toString() ?: "0.0",
-                bloque = detalle.bloque
+
+                // mantengo el bloque que ya traiga la sesion base.
+                bloque = detalle.bloque,
+
+                // cuando duplico o cargo una sesion, ningun ejercicio empieza marcado.
+                seleccionado = false
             )
-        }
-                // si no hay sesion base, creo un ejercicio por defecto para que el formulario no salga vacio.
-            ?: listOf(EjercicioDraft(nombre = "", series = "3", repeticiones = "10", peso = "0.0", bloque = 0))
+        } ?: listOf(
+            // si no hay sesion base, creo un ejercicio por defecto
+            // para que el formulario no salga vacio.
+            EjercicioDraft(
+                nombre = "",
+                series = "3",
+                repeticiones = "10",
+                peso = "0.0",
+                bloque = 0,
+                seleccionado = false
+            )
+        )
+
+        // aqui recalculo el ultimo bloque usado.
+        // asi, si duplico una sesion que ya tenia bloques 1, 2 o 3,
+        // la siguiente agrupacion nueva no reutiliza esos ids.
+        ultimoBloqueId = _listaEjercicios.value.maxOfOrNull { it.bloque } ?: 0
     }
 
     // este metodo añade un ejercicio nuevo al formulario.
@@ -67,7 +87,8 @@ class SesionViewModel(
             series = "3",
             repeticiones = "10",
             peso = "0.0",
-            bloque = 0
+            bloque = 0,
+            seleccionado = false
         )
     }
 
@@ -93,24 +114,111 @@ class SesionViewModel(
         }
     }
 
-    // este metodo agrupa los ultimos ejercicios en un mismo bloque.
-    // lo uso para hacer biseries o triseries.
-    fun agruparUltimos(cantidad: Int) {
+    // este metodo marca o desmarca un ejercicio del formulario.
+    // lo usare cuando el coach pulse sobre una tarjeta o su checkbox.
+    fun toggleSeleccionEjercicio(index: Int) {
+        val listaMutable = _listaEjercicios.value.toMutableList()
 
-        // si no hay suficientes ejercicios, no hago nada.
-        if (_listaEjercicios.value.size < cantidad) return
+        if (index in listaMutable.indices) {
+            val actual = listaMutable[index]
+            listaMutable[index] = actual.copy(seleccionado = !actual.seleccionado)
+            _listaEjercicios.value = listaMutable
+        }
+    }
 
-        // incremento el id del bloque para que sea uno nuevo distinto a los anteriores.
+    // este metodo limpia la seleccion de todos los ejercicios.
+    // me sirve despues de agrupar o si quiero cancelar la seleccion.
+    fun limpiarSeleccion() {
+        _listaEjercicios.value = _listaEjercicios.value.map { it.copy(seleccionado = false) }
+    }
+
+    // este metodo agrupa exactamente los ejercicios seleccionados.
+    // si la cantidad no coincide, no hago nada y devuelvo false.
+    fun agruparSeleccionados(cantidad: Int): Boolean {
+
+        // aqui obtengo las posiciones de los ejercicios marcados.
+        val seleccionados = _listaEjercicios.value
+            .mapIndexedNotNull { index, ej ->
+                if (ej.seleccionado) index else null
+            }
+
+        // para biserie necesito 2 y para triserie necesito 3.
+        if (seleccionados.size != cantidad) return false
+
+        // creo un bloque nuevo distinto a los anteriores.
         ultimoBloqueId++
 
         _listaEjercicios.value = _listaEjercicios.value.mapIndexed { index, draft ->
-            // a los ultimos "cantidad" ejercicios les asigno el mismo bloque.
-            if (index >= _listaEjercicios.value.size - cantidad) {
-                draft.copy(bloque = ultimoBloqueId)
+            if (index in seleccionados) {
+                draft.copy(
+                    // a todos los seleccionados les asigno el mismo bloque.
+                    bloque = ultimoBloqueId,
+
+                    // despues de agrupar, dejo de marcarlos.
+                    seleccionado = false
+                )
             } else {
                 draft
             }
         }
+
+        return true
+    }
+
+    // este metodo quita la agrupacion de los ejercicios seleccionados.
+//
+// aqui no solo pongo a 0 los seleccionados,
+// sino que tambien reviso si algun bloque se queda "roto".
+//
+// ejemplos:
+// - si una triserie pierde 1 ejercicio, los otros 2 siguen agrupados
+// - si una biserie pierde 1 ejercicio, el que queda pasa a unico
+// - si una triserie pierde 2 ejercicios, el que queda tambien pasa a unico
+    fun desagruparSeleccionados(): Boolean {
+        val listaActual = _listaEjercicios.value
+
+        // primero compruebo si hay al menos un ejercicio marcado.
+        // si no hay ninguno, no hago nada.
+        val haySeleccion = listaActual.any { it.seleccionado }
+        if (!haySeleccion) return false
+
+        // aqui convierto en ejercicios unicos todos los seleccionados.
+        // ademas les quito la marca de seleccion.
+        val listaTrasDesagrupar = listaActual.map { draft ->
+            if (draft.seleccionado) {
+                draft.copy(
+                    bloque = 0,
+                    seleccionado = false
+                )
+            } else {
+                draft
+            }
+        }
+
+        // ahora agrupo los ejercicios que aun siguen teniendo bloque.
+        // esto me sirve para ver cuantos quedan en cada grupo despues del cambio.
+        val bloquesRestantes = listaTrasDesagrupar
+            .filter { it.bloque != 0 }
+            .groupBy { it.bloque }
+
+        // si en un bloque queda menos de 2 ejercicios,
+        // ese bloque ya no tiene sentido como agrupacion.
+        // por eso guardo esos ids de bloque para romperlos tambien.
+        val bloquesQueSeRompen = bloquesRestantes
+            .filterValues { ejercicios -> ejercicios.size < 2 }
+            .keys
+
+        // finalmente recorro la lista y convierto a ejercicio unico
+        // cualquier ejercicio que pertenezca a un bloque roto.
+        _listaEjercicios.value = listaTrasDesagrupar.map { draft ->
+            if (draft.bloque in bloquesQueSeRompen) {
+                draft.copy(bloque = 0)
+            } else {
+                draft
+            }
+        }
+
+        return true
     }
 
     // este metodo guarda una sesion nueva en el backend.
@@ -130,14 +238,20 @@ class SesionViewModel(
                 val ejerciciosParaEnviar = _listaEjercicios.value.map { borrador ->
                     CrearEjercicioRequest(
                         nombre = borrador.nombre,
+
                         // convierto series de string a int.
                         // si falla la conversion, pongo 0.
                         series = borrador.series.toIntOrNull() ?: 0,
+
                         repeticiones = borrador.repeticiones,
+
                         // convierto peso de string a double.
                         // si falla la conversion, pongo 0.0.
                         peso = borrador.peso.toDoubleOrNull() ?: 0.0,
-                        bloque = borrador.bloque,
+
+                        // este bloque es el que luego usa la api
+                        // para guardar ejercicios sueltos, biseries o triseries.
+                        bloque = borrador.bloque
                     )
                 }
 
