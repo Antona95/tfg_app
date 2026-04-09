@@ -93,13 +93,40 @@ class SesionViewModel(
     }
 
     // este metodo elimina un ejercicio concreto segun su posicion en la lista.
+    //
+    // ademas de borrar la fila, tambien reviso si algun bloque se queda roto.
+    // por ejemplo:
+    // - si una triserie pierde 1 ejercicio, los otros 2 pueden seguir como biserie
+    // - si una biserie pierde 1 ejercicio, el que queda pasa a ejercicio unico
     fun eliminarEjercicio(index: Int) {
         val listaMutable = _listaEjercicios.value.toMutableList()
 
         // compruebo que el indice exista para no provocar errores.
-        if (index in listaMutable.indices) {
-            listaMutable.removeAt(index)
-            _listaEjercicios.value = listaMutable
+        if (index !in listaMutable.indices) return
+
+        // borro el ejercicio en la posicion indicada.
+        listaMutable.removeAt(index)
+
+        // ahora reviso los bloques que siguen existiendo.
+        // solo me interesan los que no son 0, porque 0 significa ejercicio unico.
+        val bloquesRestantes = listaMutable
+            .filter { it.bloque != 0 }
+            .groupBy { it.bloque }
+
+        // si un bloque se queda con menos de 2 ejercicios,
+        // ya no tiene sentido como agrupacion.
+        // por eso esos ejercicios pasan a bloque 0.
+        val bloquesQueSeRompen = bloquesRestantes
+            .filterValues { ejercicios -> ejercicios.size < 2 }
+            .keys
+
+        // reconstruyo la lista final corrigiendo los bloques rotos.
+        _listaEjercicios.value = listaMutable.map { draft ->
+            if (draft.bloque in bloquesQueSeRompen) {
+                draft.copy(bloque = 0)
+            } else {
+                draft
+            }
         }
     }
 
