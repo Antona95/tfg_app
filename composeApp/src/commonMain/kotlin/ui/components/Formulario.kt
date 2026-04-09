@@ -12,6 +12,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.BoxWithConstraints
 
 @Composable
 fun CamposRegistro(
@@ -41,85 +42,188 @@ fun CamposRegistro(
     // no obligue siempre a pasarla si no hace falta.
     onPasswordVisibilityChange: () -> Unit = {}
 ) {
-    // este composable me sirve para reutilizar todos los campos del formulario de registro.
-    //
-    // en vez de escribir una y otra vez los cuatro textfields en distintas pantallas,
-    // los agrupo aqui y asi el codigo queda mas limpio y mas reutilizable.
-    Column(
-        // dejo una separacion vertical fija entre los campos para que no queden pegados.
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        OutlinedTextField(
-            // value es el texto actual que se ve en el campo.
-            value = nombre,
+    // uso boxwithconstraints para saber el ancho disponible.
+    // asi puedo decidir si pongo el formulario en una columna o en dos.
+    BoxWithConstraints {
 
-            // onvaluechange se ejecuta cada vez que el usuario escribe o borra.
-            // aqui reutilizo directamente la funcion que me llega por parametro.
-            onValueChange = onNombreChange,
+        // si tengo suficiente ancho, organizo el formulario en dos columnas.
+        // esto viene bien en horizontal para aprovechar mejor el espacio.
+        val dosColumnas = maxWidth >= 450.dp
 
-            // label es el texto flotante que identifica el campo.
-            label = { Text("Nombre real") },
+        if (dosColumnas) {
 
-            // hago que el campo ocupe todo el ancho disponible.
-            modifier = Modifier.fillMaxWidth(),
+            // en pantallas anchas coloco los campos en dos filas.
+            // primera fila: nombre + apellidos
+            // segunda fila: nickname + password
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedTextField(
+                        // value es el texto actual que se ve en el campo.
+                        value = nombre,
 
-            // con singleline obligo a que el textfield sea de una sola linea.
-            singleLine = true
-        )
+                        // onvaluechange se ejecuta cada vez que el usuario escribe o borra.
+                        // aqui reutilizo directamente la funcion que me llega por parametro.
+                        onValueChange = onNombreChange,
 
-        OutlinedTextField(
-            value = apellidos,
-            onValueChange = onApellidosChange,
-            label = { Text("Apellidos") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
+                        // label es el texto flotante que identifica el campo.
+                        label = { Text("Nombre real") },
 
-        OutlinedTextField(
-            value = nickname,
-            onValueChange = onNicknameChange,
-            label = { Text("Nickname") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
+                        // con weight reparto el ancho entre los dos campos de la fila.
+                        modifier = Modifier.weight(1f),
 
-        OutlinedTextField(
-            value = password,
-            onValueChange = onPasswordChange,
-            label = { Text("Password") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
+                        // con singleline obligo a que el textfield sea de una sola linea.
+                        singleLine = true
+                    )
 
-            // visualtransformation cambia como se muestra el texto en pantalla.
-            //
-            // si passwordvisible es true, enseño la contraseña tal cual.
-            // si es false, la oculto con puntitos usando passwordvisualtransformation.
-            visualTransformation = if (passwordVisible) {
-                VisualTransformation.None
-            } else {
-                PasswordVisualTransformation()
-            },
-
-            // aqui le digo al teclado del movil que este campo es de tipo contraseña.
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-
-            trailingIcon = {
-                // aqui decido qué icono enseño segun el estado actual.
-                val image = if (passwordVisible) {
-                    Icons.Filled.Visibility
-                } else {
-                    Icons.Filled.VisibilityOff
+                    OutlinedTextField(
+                        value = apellidos,
+                        onValueChange = onApellidosChange,
+                        label = { Text("Apellidos") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true
+                    )
                 }
 
-                // este iconbutton es el boton del ojito.
-                // cuando lo pulso, llamo a la funcion que me llega por parametro.
-                IconButton(onClick = onPasswordVisibilityChange) {
-                    Icon(
-                        imageVector = image,
-                        contentDescription = "Mostrar contraseña"
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedTextField(
+                        value = nickname,
+                        onValueChange = onNicknameChange,
+                        label = { Text("Nickname") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true
+                    )
+
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = onPasswordChange,
+                        label = { Text("Password") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+
+                        // visualtransformation cambia como se muestra el texto en pantalla.
+                        //
+                        // si passwordvisible es true, enseño la contraseña tal cual.
+                        // si es false, la oculto con puntitos usando passwordvisualtransformation.
+                        visualTransformation = if (passwordVisible) {
+                            VisualTransformation.None
+                        } else {
+                            PasswordVisualTransformation()
+                        },
+
+                        // aqui le digo al teclado del movil que este campo es de tipo contraseña.
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+
+                        trailingIcon = {
+                            // aqui decido qué icono enseño segun el estado actual.
+                            val image = if (passwordVisible) {
+                                Icons.Filled.Visibility
+                            } else {
+                                Icons.Filled.VisibilityOff
+                            }
+
+                            // este iconbutton es el boton del ojito.
+                            // cuando lo pulso, llamo a la funcion que me llega por parametro.
+                            IconButton(onClick = onPasswordVisibilityChange) {
+                                Icon(
+                                    imageVector = image,
+                                    contentDescription = "Mostrar contraseña"
+                                )
+                            }
+                        }
                     )
                 }
             }
-        )
+        } else {
+
+            // este composable me sirve para reutilizar todos los campos del formulario de registro.
+            //
+            // en vez de escribir una y otra vez los cuatro textfields en distintas pantallas,
+            // los agrupo aqui y asi el codigo queda mas limpio y mas reutilizable.
+            Column(
+                // dejo una separacion vertical fija entre los campos para que no queden pegados.
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedTextField(
+                    // value es el texto actual que se ve en el campo.
+                    value = nombre,
+
+                    // onvaluechange se ejecuta cada vez que el usuario escribe o borra.
+                    // aqui reutilizo directamente la funcion que me llega por parametro.
+                    onValueChange = onNombreChange,
+
+                    // label es el texto flotante que identifica el campo.
+                    label = { Text("Nombre real") },
+
+                    // hago que el campo ocupe todo el ancho disponible.
+                    modifier = Modifier.fillMaxWidth(),
+
+                    // con singleline obligo a que el textfield sea de una sola linea.
+                    singleLine = true
+                )
+
+                OutlinedTextField(
+                    value = apellidos,
+                    onValueChange = onApellidosChange,
+                    label = { Text("Apellidos") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+
+                OutlinedTextField(
+                    value = nickname,
+                    onValueChange = onNicknameChange,
+                    label = { Text("Nickname") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = onPasswordChange,
+                    label = { Text("Password") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+
+                    // visualtransformation cambia como se muestra el texto en pantalla.
+                    //
+                    // si passwordvisible es true, enseño la contraseña tal cual.
+                    // si es false, la oculto con puntitos usando passwordvisualtransformation.
+                    visualTransformation = if (passwordVisible) {
+                        VisualTransformation.None
+                    } else {
+                        PasswordVisualTransformation()
+                    },
+
+                    // aqui le digo al teclado del movil que este campo es de tipo contraseña.
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+
+                    trailingIcon = {
+                        // aqui decido qué icono enseño segun el estado actual.
+                        val image = if (passwordVisible) {
+                            Icons.Filled.Visibility
+                        } else {
+                            Icons.Filled.VisibilityOff
+                        }
+
+                        // este iconbutton es el boton del ojito.
+                        // cuando lo pulso, llamo a la funcion que me llega por parametro.
+                        IconButton(onClick = onPasswordVisibilityChange) {
+                            Icon(
+                                imageVector = image,
+                                contentDescription = "Mostrar contraseña"
+                            )
+                        }
+                    }
+                )
+            }
+        }
     }
 }

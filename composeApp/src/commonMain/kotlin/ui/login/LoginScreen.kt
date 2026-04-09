@@ -28,6 +28,7 @@ import org.jetbrains.compose.resources.painterResource
 import ui.components.DialogoAlerta
 import ui.components.Validaciones
 import ui.components.CamposRegistro
+import androidx.compose.material.icons.automirrored.filled.Login
 
 @Composable
 fun LoginScreen(
@@ -402,65 +403,80 @@ fun FormularioAuth(
                     strokeWidth = 2.dp
                 )
             } else {
-                Text(if (isRegistering) "CREAR CUENTA" else "ENTRAR")
-            }
-        }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (!isRegistering) {
+                        // en modo login muestro un pictograma de entrar.
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Login,
+                            contentDescription = "entrar"
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
 
-        if (errorBackend != null) {
-            // este error no es de validacion local.
-            // viene del backend o del viewmodel, por ejemplo credenciales incorrectas.
-            Text(
-                text = errorBackend,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-        }
-
-        if (mensajeExito != null) {
-            // este mensaje suele aparecer al registrarse correctamente.
-            Text(
-                text = mensajeExito,
-                color = MaterialTheme.colorScheme.primary,
-                fontSize = 16.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-
-        TextButton(
-            onClick = {
-                // aqui cambio entre login y registro.
-                onIsRegisteringChange(!isRegistering)
-
-                // y cierro cualquier dialogo de validacion que hubiera abierto.
-                onMostrarErrorValidacionChange(false)
-            },
-            enabled = !isLoading
-        ) {
-            Text(
-                if (isRegistering) {
-                    "Volver al inicio de sesión"
-                } else {
-                    "No tengo cuenta, quiero registrarme"
+                    Text(if (isRegistering) "CREAR CUENTA" else "ENTRAR")
                 }
+            }
+
+            if (errorBackend != null) {
+                // este error no es de validacion local.
+                // viene del backend o del viewmodel, por ejemplo credenciales incorrectas.
+                Text(
+                    text = errorBackend,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+
+            if (mensajeExito != null) {
+                // este mensaje suele aparecer al registrarse correctamente.
+                Text(
+                    text = mensajeExito,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontSize = 16.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            TextButton(
+                onClick = {
+                    // aqui cambio entre login y registro.
+                    onIsRegisteringChange(!isRegistering)
+
+                    // y cierro cualquier dialogo de validacion que hubiera abierto.
+                    onMostrarErrorValidacionChange(false)
+                },
+                enabled = !isLoading
+            ) {
+                Text(
+                    if (isRegistering) {
+                        "Volver al inicio de sesión"
+                    } else {
+                        "No tengo cuenta, quiero registrarme"
+                    }
+                )
+            }
+
+            DialogoAlerta(
+                mostrarDialogo = mostrarErrorValidacion,
+                titulo = "Campos incompletos",
+                mensaje = mensajeErrorValidacion,
+
+                // ondismiss es una función callback que se ejecuta cuando el dialogo se cierra.
+                //
+                // dismiss significa "cerrar" o "descartar".
+                // por ejemplo, se ejecuta cuando:
+                // - pulso el boton del propio dialogo
+                // - o el componente decide cerrarse
+                //
+                // aqui lo que hago es poner mostrarerrorvalidacion en false
+                // para que el dialogo deje de verse.
+                onDismiss = { onMostrarErrorValidacionChange(false) }
             )
         }
-
-        DialogoAlerta(
-            mostrarDialogo = mostrarErrorValidacion,
-            titulo = "Campos incompletos",
-            mensaje = mensajeErrorValidacion,
-
-            // ondismiss es una función callback que se ejecuta cuando el dialogo se cierra.
-            //
-            // dismiss significa "cerrar" o "descartar".
-            // por ejemplo, se ejecuta cuando:
-            // - pulso el boton del propio dialogo
-            // - o el componente decide cerrarse
-            //
-            // aqui lo que hago es poner mostrarerrorvalidacion en false
-            // para que el dialogo deje de verse.
-            onDismiss = { onMostrarErrorValidacionChange(false) }
-        )
     }
 }

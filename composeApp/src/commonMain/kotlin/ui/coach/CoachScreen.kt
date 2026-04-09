@@ -18,6 +18,9 @@ import viewmodel.CoachViewModel
 import ui.components.DialogoAlerta
 import ui.components.Validaciones
 import ui.components.CamposRegistro
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.window.DialogProperties
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -280,6 +283,8 @@ fun DialogoCrearAlumno(
     var mensajeErrorValidacion by remember { mutableStateOf("") }
 
     AlertDialog(
+        modifier = Modifier.fillMaxWidth(0.9f),
+        properties = DialogProperties(usePlatformDefaultWidth = false),
         onDismissRequest = {
 
             // si hay una carga en curso, no dejo cerrar tocando fuera del dialogo.
@@ -287,7 +292,11 @@ fun DialogoCrearAlumno(
         },
         title = { Text("Nuevo Alumno") },
         text = {
-            Column {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+            ) {
 
                 // aqui reutilizo el componente comun de campos de registro.
                 CamposRegistro(
