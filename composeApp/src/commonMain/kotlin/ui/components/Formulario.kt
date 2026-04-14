@@ -16,22 +16,27 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import ui.theme.ColoresApp
 
 @Composable
 fun CamposRegistro(
     // aqui recibo el valor actual del campo nombre
     // y tambien la funcion que se ejecuta cuando el usuario escribe algo nuevo.
-    nombre: String, onNombreChange: (String) -> Unit,
+    nombre: String,
+    onNombreChange: (String) -> Unit,
 
     // aqui hago lo mismo con apellidos.
-    apellidos: String, onApellidosChange: (String) -> Unit,
+    apellidos: String,
+    onApellidosChange: (String) -> Unit,
 
     // este campo guarda el nickname que el usuario quiere usar.
-    nickname: String, onNicknameChange: (String) -> Unit,
+    nickname: String,
+    onNicknameChange: (String) -> Unit,
 
     // este campo guarda la contraseña.
     // tambien recibo la funcion para actualizarla cuando cambia el texto.
-    password: String, onPasswordChange: (String) -> Unit,
+    password: String,
+    onPasswordChange: (String) -> Unit,
 
     // este booleano me dice si la contraseña se ve o no se ve.
     //
@@ -43,8 +48,41 @@ fun CamposRegistro(
     //
     // la dejo con una funcion vacia por defecto para que el componente
     // no obligue siempre a pasarla si no hace falta.
-    onPasswordVisibilityChange: () -> Unit = {}
+    onPasswordVisibilityChange: () -> Unit = {},
+
+    // añado isDarkMode para poder sacar los colores desde ColoresApp
+    // y no dejar esta pantalla dependiendo solo de los colores por defecto.
+    isDarkMode: Boolean
 ) {
+    // aqui preparo una pequeña paleta centralizada para todos los textfield.
+    //
+    // con esto consigo que:
+    // - el texto se vea mejor en oscuro
+    // - las labels no queden demasiado apagadas
+    // - los bordes tengan contraste suficiente
+    // - los iconos mantengan coherencia con el resto de la app
+    val colorTexto = ColoresApp.textoPrincipal(isDarkMode)
+    val colorTextoSecundario = ColoresApp.textoSecundario(isDarkMode)
+
+    // creo unos colores comunes para los OutlinedTextField.
+    // asi no tengo que repetir la configuracion en cada campo.
+    val coloresCampos = OutlinedTextFieldDefaults.colors(
+        focusedTextColor = colorTexto,
+        unfocusedTextColor = colorTexto,
+        focusedBorderColor = colorTextoSecundario,
+        unfocusedBorderColor = colorTextoSecundario.copy(alpha = 0.65f),
+        focusedLabelColor = colorTextoSecundario,
+        unfocusedLabelColor = colorTextoSecundario,
+        cursorColor = colorTexto,
+        focusedLeadingIconColor = colorTextoSecundario,
+        unfocusedLeadingIconColor = colorTextoSecundario,
+        focusedTrailingIconColor = colorTextoSecundario,
+        unfocusedTrailingIconColor = colorTextoSecundario,
+        focusedContainerColor = MaterialTheme.colorScheme.surface,
+        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+        disabledContainerColor = MaterialTheme.colorScheme.surface
+    )
+
     // uso boxwithconstraints para saber el ancho disponible.
     // asi puedo decidir si pongo el formulario en una columna o en dos.
     BoxWithConstraints {
@@ -88,7 +126,10 @@ fun CamposRegistro(
                         modifier = Modifier.weight(1f),
 
                         // con singleline obligo a que el textfield sea de una sola linea.
-                        singleLine = true
+                        singleLine = true,
+
+                        // aplico los colores centralizados.
+                        colors = coloresCampos
                     )
 
                     OutlinedTextField(
@@ -105,7 +146,10 @@ fun CamposRegistro(
                         },
 
                         modifier = Modifier.weight(1f),
-                        singleLine = true
+                        singleLine = true,
+
+                        // aplico los colores centralizados.
+                        colors = coloresCampos
                     )
                 }
 
@@ -127,7 +171,10 @@ fun CamposRegistro(
                         },
 
                         modifier = Modifier.weight(1f),
-                        singleLine = true
+                        singleLine = true,
+
+                        // aplico los colores centralizados.
+                        colors = coloresCampos
                     )
 
                     OutlinedTextField(
@@ -174,7 +221,10 @@ fun CamposRegistro(
                                     contentDescription = "Mostrar contraseña"
                                 )
                             }
-                        }
+                        },
+
+                        // aplico los colores centralizados.
+                        colors = coloresCampos
                     )
                 }
             }
@@ -211,7 +261,10 @@ fun CamposRegistro(
                     modifier = Modifier.fillMaxWidth(),
 
                     // con singleline obligo a que el textfield sea de una sola linea.
-                    singleLine = true
+                    singleLine = true,
+
+                    // aplico los colores centralizados.
+                    colors = coloresCampos
                 )
 
                 OutlinedTextField(
@@ -228,7 +281,10 @@ fun CamposRegistro(
                     },
 
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+
+                    // aplico los colores centralizados.
+                    colors = coloresCampos
                 )
 
                 OutlinedTextField(
@@ -245,7 +301,10 @@ fun CamposRegistro(
                     },
 
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+
+                    // aplico los colores centralizados.
+                    colors = coloresCampos
                 )
 
                 OutlinedTextField(
@@ -292,7 +351,10 @@ fun CamposRegistro(
                                 contentDescription = "Mostrar contraseña"
                             )
                         }
-                    }
+                    },
+
+                    // aplico los colores centralizados.
+                    colors = coloresCampos
                 )
             }
         }

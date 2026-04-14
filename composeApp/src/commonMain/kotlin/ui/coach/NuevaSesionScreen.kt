@@ -24,6 +24,7 @@ import model.SesionEntrenamiento
 import ui.components.DialogoAlerta
 import ui.components.Validaciones
 import ui.components.obtenerColorBloqueUniversal
+import ui.theme.ColoresApp
 import viewmodel.SesionUiState
 import viewmodel.SesionViewModel
 
@@ -169,15 +170,6 @@ fun NuevaSesionScreen(
                         .fillMaxSize()
                         .padding(horizontal = 12.dp, vertical = 10.dp)
                 ) {
-                    // esta columna izquierda la compacto al maximo para que entren:
-                    // - nombre del entrenamiento
-                    // - biserie
-                    // - triserie
-                    // - ejercicio unico
-                    // - añadir ejercicio
-                    // - guardar rutina
-                    //
-                    // sin necesitar scroll.
                     Column(
                         modifier = Modifier
                             .weight(0.38f)
@@ -189,13 +181,6 @@ fun NuevaSesionScreen(
                             verticalArrangement = Arrangement.spacedBy(6.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            // mantengo el texto "nombre del entrenamiento",
-                            // pero ajusto la caja para que no corte las letras.
-                            //
-                            // antes tenia una altura fija demasiado pequeña.
-                            // ahora uso una altura minima mas segura para que:
-                            // - siga siendo compacta
-                            // - no recorte la parte inferior del texto
                             OutlinedTextField(
                                 value = tituloSesion,
                                 onValueChange = { tituloSesion = it },
@@ -207,14 +192,12 @@ fun NuevaSesionScreen(
                                 textStyle = MaterialTheme.typography.bodyMedium
                             )
 
-                            // este texto explica que las acciones de agrupacion
-                            // se aplican sobre los ejercicios que el entrenador haya marcado.
                             Text(
                                 text = "Agrupar seleccionados:",
-                                style = MaterialTheme.typography.labelSmall
+                                style = MaterialTheme.typography.labelSmall,
+                                color = ColoresApp.textoSecundario(isDarkMode)
                             )
 
-                            // dejo biserie y triserie en una sola fila para ahorrar altura.
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -262,7 +245,6 @@ fun NuevaSesionScreen(
                                 }
                             }
 
-                            // este boton ocupa todo el ancho de la columna.
                             OutlinedButton(
                                 onClick = {
                                     val ok = viewModel.desagruparSeleccionados()
@@ -284,7 +266,6 @@ fun NuevaSesionScreen(
                                 Text("Ejercicio único")
                             }
 
-                            // este boton tambien ocupa todo el ancho de la columna.
                             OutlinedButton(
                                 onClick = { viewModel.agregarEjercicio() },
                                 modifier = Modifier
@@ -301,14 +282,8 @@ fun NuevaSesionScreen(
                             }
                         }
 
-                        // este spacer crea una separacion visual entre
-                        // el boton de añadir ejercicio y el de guardar rutina.
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        // este boton ocupa todo el ancho real de la columna.
-                        //
-                        // quito navigationbarspadding aqui porque en horizontal
-                        // me puede empujar el boton y hacer que parezca que no cabe.
                         Button(
                             onClick = intentarGuardar,
                             modifier = Modifier
@@ -327,7 +302,6 @@ fun NuevaSesionScreen(
                         }
                     }
 
-                    // en la zona derecha pinto la lista editable de ejercicios.
                     LazyColumn(
                         modifier = Modifier
                             .weight(0.62f)
@@ -339,25 +313,15 @@ fun NuevaSesionScreen(
 
                             EjercicioItemCard(
                                 ejercicio = ej,
-
-                                // esto me permite redondear o unir visualmente tarjetas
-                                // cuando pertenecen al mismo bloque.
                                 unidoArriba = ej.bloque != 0 &&
                                         ej.bloque == listaEjercicios.getOrNull(index - 1)?.bloque,
                                 unidoAbajo = ej.bloque != 0 &&
                                         ej.bloque == listaEjercicios.getOrNull(index + 1)?.bloque,
-
                                 isDarkMode = isDarkMode,
                                 letraBloque = letra,
                                 numeroBloque = numBloque,
-
-                                // eliminar borra la fila completa.
                                 onDelete = { viewModel.eliminarEjercicio(index) },
-
-                                // actualizar modifica los datos escritos por el coach.
                                 onUpdate = { nuevo -> viewModel.actualizarEjercicio(index, nuevo) },
-
-                                // esto permite marcar o desmarcar una tarjeta.
                                 onToggleSeleccion = {
                                     viewModel.toggleSeleccionEjercicio(index)
                                 }
@@ -386,7 +350,6 @@ fun NuevaSesionScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // aqui tambien agrupo por seleccion.
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -477,12 +440,15 @@ fun NuevaSesionScreen(
                 }
             }
 
-            // este dialogo muestra errores de validacion o de uso.
             DialogoAlerta(
                 mostrarDialogo = mostrarErrorValidacion,
                 titulo = "Revisa los datos",
                 mensaje = mensajeErrorValidacion,
-                onDismiss = { mostrarErrorValidacion = false }
+                onDismiss = { mostrarErrorValidacion = false },
+
+                // ahora tambien le paso el modo oscuro para que el dialogo
+                // use la nueva logica centralizada de colores.
+                isDarkMode = isDarkMode
             )
         }
     }
@@ -506,8 +472,10 @@ fun EjercicioItemCard(
         if (ejercicio.bloque == 0) MaterialTheme.colorScheme.surfaceVariant
         else obtenerColorBloqueUniversal(numeroBloque, isDarkMode)
 
-    // adapto el color del texto segun el tema.
-    val colorTexto = if (isDarkMode) Color.White else MaterialTheme.colorScheme.onSurface
+    // ahora saco todos los colores importantes desde ColoresApp.
+    val colorTexto = ColoresApp.textoPrincipal(isDarkMode)
+    val colorTextoSecundario = ColoresApp.textoSecundario(isDarkMode)
+    val colorBordeSeleccion = ColoresApp.bordeSeleccion(isDarkMode)
 
     // esta shape me deja unir visualmente tarjetas del mismo bloque.
     val shape = RoundedCornerShape(
@@ -517,20 +485,30 @@ fun EjercicioItemCard(
         bottomEnd = if (unidoAbajo) 0.dp else 12.dp
     )
 
+    // aqui preparo una paleta de colores para los textfield.
+    val textFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedTextColor = colorTexto,
+        unfocusedTextColor = colorTexto,
+        focusedBorderColor = colorTextoSecundario,
+        unfocusedBorderColor = colorTextoSecundario.copy(alpha = 0.65f),
+        focusedLabelColor = colorTextoSecundario,
+        unfocusedLabelColor = colorTextoSecundario,
+        cursorColor = colorTexto,
+        focusedContainerColor = Color.Transparent,
+        unfocusedContainerColor = Color.Transparent,
+        disabledContainerColor = Color.Transparent
+    )
+
     Card(
         shape = shape,
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = if (unidoArriba) 0.dp else 8.dp)
-
-            // si pulso la tarjeta, cambio su estado de seleccion.
             .clickable { onToggleSeleccion() }
-
-            // cuando una tarjeta esta marcada, le dibujo un borde.
             .border(
                 width = if (ejercicio.seleccionado) 2.dp else 0.dp,
                 color = if (ejercicio.seleccionado) {
-                    MaterialTheme.colorScheme.primary
+                    colorBordeSeleccion
                 } else {
                     Color.Transparent
                 },
@@ -543,14 +521,16 @@ fun EjercicioItemCard(
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-
-                // este checkbox sirve para marcar ejercicios que luego quiero agrupar.
                 Checkbox(
                     checked = ejercicio.seleccionado,
-                    onCheckedChange = { onToggleSeleccion() }
+                    onCheckedChange = { onToggleSeleccion() },
+                    colors = CheckboxDefaults.colors(
+                        checkedColor = colorBordeSeleccion,
+                        uncheckedColor = colorTextoSecundario,
+                        checkmarkColor = MaterialTheme.colorScheme.onPrimary
+                    )
                 )
 
-                // esta etiqueta muestra la letra visual del bloque.
                 Surface(
                     color = MaterialTheme.colorScheme.primary,
                     shape = RoundedCornerShape(4.dp)
@@ -565,17 +545,6 @@ fun EjercicioItemCard(
 
                 Spacer(Modifier.width(8.dp))
 
-                // estos colores adaptan los textfield al color del bloque.
-                val textFieldColors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = colorTexto,
-                    unfocusedTextColor = colorTexto,
-                    focusedBorderColor = colorTexto.copy(alpha = 0.8f),
-                    unfocusedBorderColor = colorTexto.copy(alpha = 0.4f),
-                    focusedLabelColor = colorTexto,
-                    unfocusedLabelColor = colorTexto.copy(alpha = 0.7f),
-                    cursorColor = colorTexto
-                )
-
                 OutlinedTextField(
                     value = ejercicio.nombre,
                     onValueChange = { onUpdate(ejercicio.copy(nombre = it)) },
@@ -584,12 +553,11 @@ fun EjercicioItemCard(
                     colors = textFieldColors
                 )
 
-                // este boton elimina la tarjeta.
                 IconButton(onClick = onDelete) {
                     Icon(
                         Icons.Default.Delete,
                         null,
-                        tint = colorTexto.copy(alpha = 0.6f)
+                        tint = colorTextoSecundario
                     )
                 }
             }
@@ -598,16 +566,6 @@ fun EjercicioItemCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.padding(top = 8.dp)
             ) {
-                val textFieldColors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = colorTexto,
-                    unfocusedTextColor = colorTexto,
-                    focusedBorderColor = colorTexto.copy(alpha = 0.8f),
-                    unfocusedBorderColor = colorTexto.copy(alpha = 0.4f),
-                    focusedLabelColor = colorTexto,
-                    unfocusedLabelColor = colorTexto.copy(alpha = 0.7f),
-                    cursorColor = colorTexto
-                )
-
                 OutlinedTextField(
                     value = ejercicio.series,
                     onValueChange = { onUpdate(ejercicio.copy(series = it)) },

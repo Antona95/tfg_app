@@ -6,12 +6,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Badge
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -29,10 +30,9 @@ import androidx.compose.ui.unit.sp
 import app_tfg.composeapp.generated.resources.Res
 import app_tfg.composeapp.generated.resources.imagen_inicial
 import org.jetbrains.compose.resources.painterResource
+import ui.components.CamposRegistro
 import ui.components.DialogoAlerta
 import ui.components.Validaciones
-import ui.components.CamposRegistro
-import androidx.compose.material.icons.automirrored.filled.Login
 
 @Composable
 fun LoginScreen(
@@ -171,7 +171,11 @@ fun LoginScreen(
                             mostrarErrorValidacion = mostrarErrorValidacion,
                             onMostrarErrorValidacionChange = { mostrarErrorValidacion = it },
                             mensajeErrorValidacion = mensajeErrorValidacion,
-                            onMensajeErrorValidacionChange = { mensajeErrorValidacion = it }
+                            onMensajeErrorValidacionChange = { mensajeErrorValidacion = it },
+
+                            // ahora paso tambien el modo oscuro al formulario
+                            // para que el dialogo reutilizable reciba este dato.
+                            isDarkMode = isDarkMode
                         )
                     }
                 }
@@ -222,7 +226,10 @@ fun LoginScreen(
                             mostrarErrorValidacion = mostrarErrorValidacion,
                             onMostrarErrorValidacionChange = { mostrarErrorValidacion = it },
                             mensajeErrorValidacion = mensajeErrorValidacion,
-                            onMensajeErrorValidacionChange = { mensajeErrorValidacion = it }
+                            onMensajeErrorValidacionChange = { mensajeErrorValidacion = it },
+
+                            // igual que antes, tambien lo paso aqui.
+                            isDarkMode = isDarkMode
                         )
                     }
                 }
@@ -260,6 +267,7 @@ fun LoginScreen(
         }
     }
 }
+
 @Composable
 fun FormularioAuth(
     isLoading: Boolean,
@@ -282,7 +290,8 @@ fun FormularioAuth(
     mostrarErrorValidacion: Boolean,
     onMostrarErrorValidacionChange: (Boolean) -> Unit,
     mensajeErrorValidacion: String,
-    onMensajeErrorValidacionChange: (String) -> Unit
+    onMensajeErrorValidacionChange: (String) -> Unit,
+    isDarkMode: Boolean
 ) {
     // este composable no tiene estado propio.
     //
@@ -325,7 +334,8 @@ fun FormularioAuth(
                 //
                 // si passwordvisible es true, lo pongo false.
                 // si era false, lo pongo true.
-                onPasswordVisibilityChange = { onPasswordVisibleChange(!passwordVisible) }
+                onPasswordVisibilityChange = { onPasswordVisibleChange(!passwordVisible) },
+                isDarkMode = isDarkMode
             )
         } else {
             OutlinedTextField(
@@ -385,7 +395,10 @@ fun FormularioAuth(
                             onPasswordVisibleChange(!passwordVisible)
                         }
                     ) {
-                        Icon(imageVector = image, contentDescription = "mostrar contraseña")
+                        Icon(
+                            imageVector = image,
+                            contentDescription = "mostrar contraseña"
+                        )
                     }
                 }
             )
@@ -534,7 +547,11 @@ fun FormularioAuth(
             //
             // aqui lo que hago es poner mostrarerrorvalidacion en false
             // para que el dialogo deje de verse.
-            onDismiss = { onMostrarErrorValidacionChange(false) }
+            onDismiss = { onMostrarErrorValidacionChange(false) },
+
+            // ahora le paso el modo oscuro para que el dialogo
+            // use la nueva logica centralizada de colores.
+            isDarkMode = isDarkMode
         )
     }
 }

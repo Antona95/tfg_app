@@ -2,7 +2,6 @@ package ui.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -16,14 +15,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import ui.theme.ColoresApp
 
 @Composable
-fun PantallaCargando(modifier: Modifier = Modifier) {
+fun PantallaCargando(modifier: Modifier = Modifier, isDarkMode: Boolean = false) {
     // este composable me sirve para mostrar una pantalla de carga reutilizable.
     //
     // lo uso cuando una pantalla todavía está esperando respuesta del backend
     // y quiero enseñar un indicador visual simple al usuario.
+
+    // aqui saco un color de apoyo desde la paleta centralizada.
+    // no es obligatorio, pero asi dejo la carga visualmente alineada
+    // con el resto de la app en claro y en oscuro.
+    val colorIndicador = ColoresApp.textoSecundario(isDarkMode)
+
     Box(
         // aqui hago que el box ocupe todo el tamaño disponible.
         modifier = modifier.fillMaxSize(),
@@ -32,7 +37,7 @@ fun PantallaCargando(modifier: Modifier = Modifier) {
         contentAlignment = Alignment.Center
     ) {
         // este indicador circular representa que hay una operación en curso.
-        CircularProgressIndicator()
+        CircularProgressIndicator(color = colorIndicador)
     }
 }
 
@@ -40,7 +45,8 @@ fun PantallaCargando(modifier: Modifier = Modifier) {
 fun PantallaVacia(
     icono: ImageVector,
     mensaje: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isDarkMode: Boolean = false
 ) {
     // este composable me sirve para mostrar estados vacíos de forma visual.
     //
@@ -50,6 +56,12 @@ fun PantallaVacia(
     // - hoy toca descanso
     //
     // ahora uso un pictograma real en vez de un emoji o texto.
+
+    // aqui saco colores desde ColoresApp para que el estado vacío
+    // tenga el mismo criterio visual que el resto de la app.
+    val colorIcono = ColoresApp.textoSecundario(isDarkMode)
+    val colorTexto = ColoresApp.textoPrincipal(isDarkMode)
+
     Column(
         modifier = modifier.fillMaxSize(),
 
@@ -64,7 +76,7 @@ fun PantallaVacia(
             imageVector = icono,
             contentDescription = null,
             modifier = Modifier.size(96.dp),
-            tint = MaterialTheme.colorScheme.primary
+            tint = colorIcono
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -73,26 +85,42 @@ fun PantallaVacia(
         Text(
             text = mensaje,
             style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = colorTexto
         )
     }
 }
 
 @Composable
-fun PantallaError(mensaje: String, modifier: Modifier = Modifier) {
+fun PantallaError(
+    mensaje: String,
+    modifier: Modifier = Modifier,
+    isDarkMode: Boolean = false
+) {
     // este composable me sirve para mostrar un error simple en pantalla completa.
     //
     // lo uso cuando una operación falla y quiero enseñarlo de forma directa.
+
+    // aqui preparo dos colores:
+    // - uno para el prefijo "Error:"
+    // - otro para el texto principal del mensaje si en algun momento quiero separarlo visualmente
+    //
+    // de momento mantengo todo en color de error para que sea muy claro,
+    // pero dejo el texto principal de la app a mano porque puede venir bien.
+    val colorError = MaterialTheme.colorScheme.error
+    val colorTexto = ColoresApp.textoPrincipal(isDarkMode)
+
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
         Text(
-            // aqui concateno la palabra "error" con el mensaje real recibido.
+            // aqui concateno la palabra "Error" con el mensaje real recibido.
+            //
+            // uso el mensaje entero en rojo porque quiero que el usuario
+            // identifique rapido que ha ocurrido un fallo.
             text = "Error: $mensaje",
-
-            // uso el color de error del tema para que visualmente quede claro.
-            color = MaterialTheme.colorScheme.error,
+            color = colorError,
             fontWeight = FontWeight.Bold
         )
     }
@@ -105,7 +133,8 @@ fun DialogoAlerta(
     mostrarDialogo: Boolean,
     titulo: String,
     mensaje: String,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    isDarkMode: Boolean = false
 ) {
     // aqui hago una comprobación sencilla:
     // solo construyo el dialogo si mostrarDialogo vale true.
@@ -135,13 +164,19 @@ fun DialogoAlerta(
 
                     Text(
                         text = titulo,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = ColoresApp.textoPrincipal(isDarkMode)
                     )
                 }
             },
 
             // este es el cuerpo del dialogo con el mensaje explicativo.
-            text = { Text(text = mensaje) },
+            text = {
+                Text(
+                    text = mensaje,
+                    color = ColoresApp.textoPrincipal(isDarkMode)
+                )
+            },
 
             confirmButton = {
                 // este botón confirma o simplemente cierra el diálogo.

@@ -12,14 +12,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import model.Persona
 import ui.components.CamposRegistro
 import ui.components.DialogoAlerta
 import ui.components.Validaciones
+import ui.theme.ColoresApp
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import viewmodel.CoachViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,6 +56,13 @@ fun CoachScreen(
     // si no es null, muestro el dialogo de confirmacion.
     var alumnoAEliminar by remember { mutableStateOf<Persona?>(null) }
 
+    // ahora estos colores los saco de ColoresApp.
+    //
+    // asi dejo de repetir if (isDarkMode) Color(...) en esta pantalla
+    // y me apoyo en la paleta centralizada.
+    val colorTextoVacio = ColoresApp.textoSuave(isDarkMode)
+    val colorIconoSecundario = ColoresApp.textoSecundario(isDarkMode)
+
     // cuando el registro es exitoso, cierro el dialogo de crear alumno
     // y reseteo el estado del viewmodel para limpiar mensajes viejos.
     LaunchedEffect(registroExitoso) {
@@ -71,6 +79,11 @@ fun CoachScreen(
 
             // le paso isloading para bloquear el formulario si hay una operacion en curso.
             isLoading = isLoading,
+
+            // paso tambien el modo oscuro para que el dialogo interno
+            // pueda pintar bien su DialogoAlerta.
+            isDarkMode = isDarkMode,
+
             onConfirmar = { nick, pass, nom, ape ->
 
                 // al confirmar, llamo al viewmodel para crear el nuevo alumno.
@@ -155,6 +168,8 @@ fun CoachScreen(
                         Icon(
                             Icons.Default.PersonAdd,
                             "Nuevo Alumno",
+
+                            // mantengo el color primario porque es una accion destacada.
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -185,7 +200,11 @@ fun CoachScreen(
 
                     // este boton fuerza la recarga manual de alumnos.
                     IconButton(onClick = { viewModel.cargarAlumnos() }) {
-                        Icon(Icons.Default.Refresh, "Recargar")
+                        Icon(
+                            Icons.Default.Refresh,
+                            "Recargar",
+                            tint = colorIconoSecundario
+                        )
                     }
 
                     // este boton lanza la accion de salir de la sesion.
@@ -259,7 +278,7 @@ fun CoachScreen(
                                 "Sin resultados."
                             },
                             modifier = Modifier.align(Alignment.Center),
-                            color = Color.Gray
+                            color = colorTextoVacio
                         )
                     } else {
 
@@ -271,6 +290,9 @@ fun CoachScreen(
                             items(alumnos) { alumno ->
                                 AlumnoItem(
                                     alumno = alumno,
+
+                                    // paso el modo oscuro para ajustar mejor algunos colores internos.
+                                    isDarkMode = isDarkMode,
 
                                     // al pulsar sobre el alumno, aviso a la pantalla padre para navegar.
                                     onClick = { onAlumnoClick(alumno) },
@@ -290,10 +312,16 @@ fun CoachScreen(
 @Composable
 fun AlumnoItem(
     alumno: Persona,
+    isDarkMode: Boolean,
     onClick: () -> Unit,
     onDelete: () -> Unit
 ) {
     // esta tarjeta representa un alumno en la lista del coach.
+
+    // aqui saco los colores secundarios desde ColoresApp.
+    val colorNickname = ColoresApp.textoSecundario(isDarkMode)
+    val colorFlecha = ColoresApp.textoSecundario(isDarkMode)
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -335,7 +363,7 @@ fun AlumnoItem(
                 Text(
                     text = "@${alumno.nickname}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray
+                    color = colorNickname
                 )
             }
 
@@ -353,7 +381,8 @@ fun AlumnoItem(
             // esta flecha indica visualmente que la tarjeta se puede abrir.
             Icon(
                 Icons.Default.KeyboardArrowRight,
-                contentDescription = null
+                contentDescription = null,
+                tint = colorFlecha
             )
         }
     }
@@ -365,6 +394,7 @@ fun AlumnoItem(
 fun DialogoCrearAlumno(
     errorServidor: String?,
     isLoading: Boolean,
+    isDarkMode: Boolean,
     onConfirmar: (String, String, String, String) -> Unit,
     onDescartar: () -> Unit
 ) {
@@ -408,7 +438,8 @@ fun DialogoCrearAlumno(
                     password = pass,
                     onPasswordChange = { pass = it },
                     passwordVisible = passwordVisible,
-                    onPasswordVisibilityChange = { passwordVisible = !passwordVisible }
+                    onPasswordVisibilityChange = { passwordVisible = !passwordVisible },
+                    isDarkMode = isDarkMode
                 )
 
                 // si el backend ha devuelto un error, lo muestro debajo del formulario.
@@ -487,6 +518,10 @@ fun DialogoCrearAlumno(
         mostrarDialogo = mostrarErrorValidacion,
         titulo = "Revisa los datos",
         mensaje = mensajeErrorValidacion,
-        onDismiss = { mostrarErrorValidacion = false }
+        onDismiss = { mostrarErrorValidacion = false },
+
+        // ahora tambien le paso el modo oscuro para que el dialogo
+        // use la nueva logica centralizada de colores.
+        isDarkMode = isDarkMode
     )
 }

@@ -11,7 +11,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -19,10 +18,11 @@ import dev.icerock.moko.mvvm.compose.getViewModel
 import dev.icerock.moko.mvvm.compose.viewModelFactory
 import model.SesionEntrenamiento
 import repository.SesionRepository
-import viewmodel.HistorialViewModel
 import ui.components.PantallaCargando
 import ui.components.PantallaVacia
 import ui.components.SesionResumenCard
+import ui.theme.ColoresApp
+import viewmodel.HistorialViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,6 +51,10 @@ fun HistorialScreen(
     // observo si ha ocurrido un error de red o del backend.
     val error by historialVM.error.collectAsState()
 
+    // aqui saco algunos colores desde ColoresApp
+    // para mantener la coherencia visual con el resto de pantallas.
+    val colorIconoSecundario = ColoresApp.textoSecundario(isDarkMode)
+
     // cada vez que cambia el id del usuario, recargo el historial.
     // esto me asegura que si entro a otro alumno, no me quede con datos viejos.
     LaunchedEffect(idUsuario) {
@@ -74,24 +78,31 @@ fun HistorialScreen(
 
         // este box ocupa todo el contenido bajo la barra superior.
         Box(
-            modifier = Modifier.padding(padding).fillMaxSize(),
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize(),
             contentAlignment = Alignment.TopCenter
         ) {
 
             // si hay error, doy prioridad a mostrar una pantalla de error amigable.
             if (error != null) {
                 Column(
-                    modifier = Modifier.fillMaxSize().padding(16.dp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
 
                     // icono visual para indicar fallo de conexion o problema de red.
+                    //
+                    // antes usaba Color.Gray fijo.
+                    // ahora uso ColoresApp para que también se adapte mejor al modo oscuro.
                     Icon(
                         imageVector = Icons.Default.WifiOff,
                         contentDescription = "Sin Red",
                         modifier = Modifier.size(64.dp),
-                        tint = Color.Gray
+                        tint = colorIconoSecundario
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -107,7 +118,9 @@ fun HistorialScreen(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     // este boton permite reintentar la carga sin salir de la pantalla.
-                    Button(onClick = { historialVM.cargarHistorial(idUsuario, true) }) {
+                    Button(
+                        onClick = { historialVM.cargarHistorial(idUsuario, true) }
+                    ) {
                         Text("Reintentar conexión")
                     }
                 }
@@ -115,14 +128,15 @@ fun HistorialScreen(
 
             // si esta cargando y aun no tengo sesiones, muestro la pantalla de carga.
             else if (isLoading && sesiones.isEmpty()) {
-                PantallaCargando()
+                PantallaCargando(isDarkMode = isDarkMode)
             }
 
             // si ya no carga y no hay sesiones, muestro una pantalla vacia.
             else if (!isLoading && sesiones.isEmpty()) {
                 PantallaVacia(
                     icono = Icons.Default.History,
-                    mensaje = "No hay sesiones registradas"
+                    mensaje = "No hay sesiones registradas",
+                    isDarkMode = isDarkMode
                 )
             }
 

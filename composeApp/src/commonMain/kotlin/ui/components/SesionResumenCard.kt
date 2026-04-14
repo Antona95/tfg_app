@@ -7,14 +7,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import model.SesionEntrenamiento
+import ui.theme.ColoresApp
 
 @Composable
 fun SesionResumenCard(
@@ -32,6 +36,12 @@ fun SesionResumenCard(
     // - si esta finalizada o pendiente
     // - una flecha para indicar que se puede abrir
 
+    // aqui saco algunos colores desde ColoresApp para mejorar el contraste
+    // y no dejar colores fijos en este componente.
+    val colorEstadoFinalizada = ColoresApp.estadoExito(isDarkMode)
+    val colorEstadoPendiente = ColoresApp.estadoPendiente(isDarkMode)
+    val colorTextoSecundario = ColoresApp.textoSecundario(isDarkMode)
+
     Card(
         // redondeo las esquinas para que la tarjeta tenga un aspecto mas moderno y limpio.
         shape = RoundedCornerShape(12.dp),
@@ -40,12 +50,11 @@ fun SesionResumenCard(
             .fillMaxWidth()
 
             // clickable hace que toda la tarjeta responda al toque.
-            // cuando pulso, ejecuto la funcion onclick que me llega por parametro.
+            // cuando pulso, ejecuto la funcion onClick que me llega por parametro.
             .clickable { onClick() },
 
         colors = CardDefaults.cardColors(
-            // uso un color secundario del tema para diferenciarla del fondo
-            // pero sin destacar demasiado.
+            // uso un color del tema para diferenciar la tarjeta del fondo.
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         ),
 
@@ -60,7 +69,7 @@ fun SesionResumenCard(
             // centro verticalmente el contenido de la fila.
             verticalAlignment = Alignment.CenterVertically,
 
-            // spacebetween coloca el bloque de texto a la izquierda
+            // spaceBetween coloca el bloque de texto a la izquierda
             // y la flecha a la derecha.
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -76,7 +85,7 @@ fun SesionResumenCard(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
 
-                    // uso el color de texto asociado a surfacevariant para que combine bien con la tarjeta.
+                    // uso el color de texto asociado a surfaceVariant para que combine bien con la tarjeta.
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
@@ -89,7 +98,7 @@ fun SesionResumenCard(
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
                             contentDescription = "finalizada",
-                            tint = Color(0xFF2E7D32)
+                            tint = colorEstadoFinalizada
                         )
 
                         Spacer(modifier = Modifier.width(6.dp))
@@ -97,8 +106,8 @@ fun SesionResumenCard(
                         Text(
                             "Finalizada",
 
-                            // si está finalizada uso verde porque transmite visualmente "hecho" o "correcto".
-                            color = Color(0xFF2E7D32),
+                            // uso el color centralizado de exito.
+                            color = colorEstadoFinalizada,
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -108,7 +117,7 @@ fun SesionResumenCard(
                         Icon(
                             imageVector = Icons.Default.Schedule,
                             contentDescription = "pendiente",
-                            tint = if (isDarkMode) Color(0xFFFFB74D) else Color(0xFFE65100)
+                            tint = colorEstadoPendiente
                         )
 
                         Spacer(modifier = Modifier.width(6.dp))
@@ -116,11 +125,8 @@ fun SesionResumenCard(
                         Text(
                             "Pendiente",
 
-                            // si esta pendiente cambio el color segun el tema.
-                            //
-                            // en oscuro uso un naranja mas claro para que tenga contraste.
-                            // en claro uso un naranja mas intenso.
-                            color = if (isDarkMode) Color(0xFFFFB74D) else Color(0xFFE65100),
+                            // uso el color centralizado de pendiente.
+                            color = colorEstadoPendiente,
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -130,14 +136,14 @@ fun SesionResumenCard(
 
             // esta flecha indica que la tarjeta se puede abrir o navegar.
             //
-            // uso automirrored para que si algun dia hubiera soporte rtl
+            // uso AutoMirrored para que si algun dia hubiera soporte rtl
             // la flecha se adapte automaticamente a la direccion correcta.
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = "Ver detalles",
 
-                // uso el color primario del tema para que la flecha destaque un poco.
-                tint = MaterialTheme.colorScheme.primary
+                // aqui uso un color secundario centralizado para que no resalte demasiado.
+                tint = colorTextoSecundario
             )
         }
     }

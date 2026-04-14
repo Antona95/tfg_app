@@ -4,14 +4,18 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import model.SesionEntrenamiento
+import ui.theme.ColoresApp
 
 @Composable
 fun CabeceraEstadoSesion(sesion: SesionEntrenamiento, isDarkMode: Boolean) {
@@ -23,6 +27,11 @@ fun CabeceraEstadoSesion(sesion: SesionEntrenamiento, isDarkMode: Boolean) {
     // - el estado finalizada o pendiente tambien salga igual
     //
     // asi evito repetir codigo en varias pantallas.
+
+    // aqui saco los colores de estado desde ColoresApp.
+    // de esta manera dejo de tener colores "duros" metidos en el componente.
+    val colorEstadoFinalizada = ColoresApp.estadoExito(isDarkMode)
+    val colorEstadoPendiente = ColoresApp.estadoPendiente(isDarkMode)
 
     Card(
         colors = CardDefaults.cardColors(
@@ -48,7 +57,7 @@ fun CabeceraEstadoSesion(sesion: SesionEntrenamiento, isDarkMode: Boolean) {
                 // aqui muestro el titulo de la sesion.
                 //
                 // si sesion.titulo viene null, uso un texto por defecto:
-                // "sesión de entrenamiento"
+                // "Sesión de Entrenamiento"
                 //
                 // el operador ?: significa "si esto es null, usa esto otro".
                 text = sesion.titulo ?: "Sesión de Entrenamiento",
@@ -70,7 +79,7 @@ fun CabeceraEstadoSesion(sesion: SesionEntrenamiento, isDarkMode: Boolean) {
                     Icon(
                         imageVector = Icons.Default.CheckCircle,
                         contentDescription = "sesión finalizada",
-                        tint = Color(0xFF2E7D32)
+                        tint = colorEstadoFinalizada
                     )
 
                     Spacer(modifier = Modifier.width(8.dp))
@@ -79,8 +88,8 @@ fun CabeceraEstadoSesion(sesion: SesionEntrenamiento, isDarkMode: Boolean) {
                         // si está finalizada, muestro este texto.
                         text = "FINALIZADA",
 
-                        // uso un verde fijo para reforzar visualmente que la sesion ya está hecha.
-                        color = Color(0xFF2E7D32),
+                        // uso el color centralizado de estado de exito.
+                        color = colorEstadoFinalizada,
 
                         // le doy un tamaño algo mayor para que destaque.
                         style = MaterialTheme.typography.titleLarge,
@@ -96,7 +105,7 @@ fun CabeceraEstadoSesion(sesion: SesionEntrenamiento, isDarkMode: Boolean) {
                     Icon(
                         imageVector = Icons.Default.Schedule,
                         contentDescription = "sesión pendiente",
-                        tint = if (isDarkMode) Color(0xFFFFB74D) else Color(0xFFE65100)
+                        tint = colorEstadoPendiente
                     )
 
                     Spacer(modifier = Modifier.width(8.dp))
@@ -105,14 +114,8 @@ fun CabeceraEstadoSesion(sesion: SesionEntrenamiento, isDarkMode: Boolean) {
                         // si no está finalizada, muestro pendiente.
                         text = "PENDIENTE",
 
-                        // aqui cambio el color según el modo oscuro o claro.
-                        //
-                        // lo hago porque el mismo color no siempre se ve igual de bien
-                        // en ambos temas.
-                        //
-                        // si isdarkmode es true uso un naranja más claro.
-                        // si no, uso un naranja más oscuro.
-                        color = if (isDarkMode) Color(0xFFFFB74D) else Color(0xFFE65100),
+                        // uso el color centralizado de estado pendiente.
+                        color = colorEstadoPendiente,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )

@@ -6,7 +6,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Hotel
 import androidx.compose.material3.*
@@ -52,11 +51,19 @@ fun HoyScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Mi Entrenamiento de Hoy", fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        "Mi Entrenamiento de Hoy",
+                        fontWeight = FontWeight.Bold
+                    )
+                },
                 navigationIcon = {
                     // este boton me permite volver a la pantalla anterior.
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = "Volver"
+                        )
                     }
                 }
             )
@@ -93,15 +100,20 @@ fun HoyScreen(
                             imageVector = Icons.Default.CheckCircle,
                             contentDescription = "finalizar entrenamiento"
                         )
+
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("FINALIZAR ENTRENAMIENTO", fontWeight = FontWeight.Bold)
+
+                        Text(
+                            "FINALIZAR ENTRENAMIENTO",
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }
         }
     ) { padding ->
 
-        // boxwithconstraints me permite saber si estoy en vertical u horizontal.
+        // BoxWithConstraints me permite saber si estoy en vertical u horizontal.
         BoxWithConstraints(
             modifier = Modifier
                 .padding(padding)
@@ -114,17 +126,21 @@ fun HoyScreen(
             when (val state = uiState) {
 
                 // si esta cargando, muestro la pantalla de carga.
-                is HoyUiState.Loading -> PantallaCargando()
+                is HoyUiState.Loading -> PantallaCargando(isDarkMode = isDarkMode)
 
                 // si no hay ninguna sesion activa, muestro una pantalla vacia.
                 // antes usaba un emoji, pero ahora uso un pictograma real.
                 is HoyUiState.Empty -> PantallaVacia(
                     icono = Icons.Default.Hotel,
-                    mensaje = "Hoy toca descanso"
+                    mensaje = "Hoy toca descanso",
+                    isDarkMode = isDarkMode
                 )
 
                 // si hay error de red o del backend, muestro el mensaje de error.
-                is HoyUiState.Error -> PantallaError(mensaje = state.mensaje)
+                is HoyUiState.Error -> PantallaError(
+                    mensaje = state.mensaje,
+                    isDarkMode = isDarkMode
+                )
 
                 // si ha ido bien, muestro el contenido de la sesion.
                 is HoyUiState.Success -> {
@@ -157,7 +173,7 @@ fun ContenidoEntreno(
         contentAlignment = Alignment.TopCenter
     ) {
 
-        // uso una lazycolumn para que la lista de ejercicios pueda hacer scroll.
+        // uso una LazyColumn para que la lista de ejercicios pueda hacer scroll.
         LazyColumn(
             modifier = Modifier
                 .fillMaxHeight()
@@ -171,7 +187,10 @@ fun ContenidoEntreno(
 
             // arriba del todo muestro una cabecera con el titulo y el estado de la sesion.
             item {
-                CabeceraEstadoSesion(sesion = sesion, isDarkMode = isDarkMode)
+                CabeceraEstadoSesion(
+                    sesion = sesion,
+                    isDarkMode = isDarkMode
+                )
             }
 
             // aqui recorro cada grupo de ejercicios.
@@ -180,7 +199,7 @@ fun ContenidoEntreno(
                 // calculo el numero de bloque empezando en 1.
                 val numeroBloque = indexGrupo + 1
 
-                // convierto ese numero en letra para mostrar algo tipo a, b, c...
+                // convierto ese numero en letra para mostrar algo tipo A, B, C...
                 val letraBloque = (numeroBloque + 64).toChar()
 
                 if (isLandscape) {
@@ -195,11 +214,11 @@ fun ContenidoEntreno(
                             // uso weight para que todas las tarjetas del grupo ocupen un ancho parecido.
                             Box(modifier = Modifier.weight(1f)) {
                                 EjercicioUniversalCard(
-                                    ejercicio,
-                                    isDarkMode,
+                                    ejercicio = ejercicio,
+                                    isDarkMode = isDarkMode,
                                     isLandscape = true,
-                                    letraBloque,
-                                    numeroBloque
+                                    letraBloque = letraBloque,
+                                    numeroBloque = numeroBloque
                                 )
                             }
                         }
@@ -213,11 +232,11 @@ fun ContenidoEntreno(
                     ) {
                         for (ejercicio in grupo) {
                             EjercicioUniversalCard(
-                                ejercicio,
-                                isDarkMode,
+                                ejercicio = ejercicio,
+                                isDarkMode = isDarkMode,
                                 isLandscape = false,
-                                letraBloque,
-                                numeroBloque
+                                letraBloque = letraBloque,
+                                numeroBloque = numeroBloque
                             )
                         }
                     }

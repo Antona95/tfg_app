@@ -15,11 +15,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import model.Persona
+import ui.theme.ColoresApp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,16 +38,16 @@ fun AlumnoHomeScreen(
         // si el ancho es mayor que el alto, considero que la pantalla está en horizontal.
         val isLandscape = maxWidth > maxHeight
 
-        // scaffold me sirve como estructura base de la pantalla.
-        // aquí coloco la barra superior y debajo el contenido principal.
+        // ahora saco estos colores desde ColoresApp.
+        val colorTarjetaHoy = ColoresApp.tarjetaHoy(isDarkMode)
+        val colorTextoTarjetaHoy = ColoresApp.tarjetaHoyTexto(isDarkMode)
+        val colorTarjetaHistorial = ColoresApp.tarjetaHistorial(isDarkMode)
+        val colorTextoTarjetaHistorial = ColoresApp.tarjetaHistorialTexto(isDarkMode)
+
         Scaffold(
             topBar = {
                 TopAppBar(
                     title = {
-                        // en el titulo muestro un saludo personalizado con el nombre del usuario.
-                        //
-                        // antes usaba un emoji, pero ahora lo sustituyo por un pictograma real
-                        // para mantener coherencia visual en toda la app.
                         Column {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically
@@ -55,7 +55,8 @@ fun AlumnoHomeScreen(
                                 Icon(
                                     imageVector = Icons.Default.Person,
                                     contentDescription = "usuario",
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(20.dp),
+                                    tint = MaterialTheme.colorScheme.onSurface
                                 )
 
                                 Spacer(modifier = Modifier.width(8.dp))
@@ -68,21 +69,17 @@ fun AlumnoHomeScreen(
 
                             Text(
                                 "Vamos a por todas",
-                                style = MaterialTheme.typography.labelMedium
+                                style = MaterialTheme.typography.labelMedium,
+                                color = ColoresApp.textoSecundario(isDarkMode)
                             )
                         }
                     },
                     actions = {
-
-                        // este switch cambia entre modo claro y modo oscuro.
-                        // lo dejo en la parte superior porque es un ajuste global de la app.
                         Switch(
                             checked = isDarkMode,
                             onCheckedChange = { onThemeToggle() },
                             modifier = Modifier.padding(end = 8.dp),
                             thumbContent = {
-
-                                // cambio el icono del switch según el tema actual.
                                 if (isDarkMode) {
                                     Icon(
                                         Icons.Default.DarkMode,
@@ -99,11 +96,11 @@ fun AlumnoHomeScreen(
                             }
                         )
 
-                        // este botón sirve para cerrar la sesión del usuario.
                         IconButton(onClick = onLogout) {
                             Icon(
                                 Icons.Default.ExitToApp,
-                                "Cerrar Sesión"
+                                "Cerrar Sesión",
+                                tint = MaterialTheme.colorScheme.error
                             )
                         }
                     }
@@ -111,46 +108,37 @@ fun AlumnoHomeScreen(
             }
         ) { padding ->
 
-            // aquí construyo el menú principal del alumno en forma de cuadrícula.
-            // uso lazyverticalgrid porque quiero que sea adaptable y eficiente.
             LazyVerticalGrid(
-
-                // si estoy en horizontal muestro 2 columnas.
-                // si estoy en vertical muestro 1.
                 columns = GridCells.Fixed(if (isLandscape) 2 else 1),
                 modifier = Modifier
                     .padding(padding)
                     .fillMaxSize()
                     .padding(24.dp),
-
-                // dejo separación vertical y horizontal entre tarjetas para que respire la interfaz.
                 verticalArrangement = Arrangement.spacedBy(24.dp),
                 horizontalArrangement = Arrangement.spacedBy(24.dp),
-
-                // en vertical añado más espacio arriba y abajo para que visualmente quede mejor.
                 contentPadding = PaddingValues(vertical = if (!isLandscape) 32.dp else 0.dp)
             ) {
 
-                // esta tarjeta lleva al entrenamiento actual del usuario.
                 item {
                     AlumnoMenuCard(
                         titulo = "Entrenamiento de Hoy",
                         subtitulo = "Ver tu rutina y registrar pesos",
                         icono = Icons.Default.SportsGymnastics,
-                        colorFondo = MaterialTheme.colorScheme.primary,
-                        colorTexto = Color.White,
+                        colorFondo = colorTarjetaHoy,
+                        colorTexto = colorTextoTarjetaHoy,
+                        isDarkMode = isDarkMode,
                         onClick = onVerHoy
                     )
                 }
 
-                // esta tarjeta lleva al historial de sesiones del usuario.
                 item {
                     AlumnoMenuCard(
                         titulo = "Historial de Sesiones",
                         subtitulo = "Consulta tus entrenos pasados",
                         icono = Icons.Default.History,
-                        colorFondo = MaterialTheme.colorScheme.secondaryContainer,
-                        colorTexto = MaterialTheme.colorScheme.onSecondaryContainer,
+                        colorFondo = colorTarjetaHistorial,
+                        colorTexto = colorTextoTarjetaHistorial,
+                        isDarkMode = isDarkMode,
                         onClick = onVerHistorial
                     )
                 }
@@ -165,26 +153,24 @@ fun AlumnoMenuCard(
     titulo: String,
     subtitulo: String,
     icono: ImageVector,
-    colorFondo: Color,
-    colorTexto: Color,
+    colorFondo: androidx.compose.ui.graphics.Color,
+    colorTexto: androidx.compose.ui.graphics.Color,
+    isDarkMode: Boolean,
     onClick: () -> Unit
 ) {
     // esta función representa una tarjeta reutilizable del menú del alumno.
-    // la he separado para no repetir código y para que el diseño sea consistente.
+
+    // aqui preparo un color un poco más suave para el subtitulo.
+    val colorSubtitulo =
+        if (isDarkMode) colorTexto.copy(alpha = 0.88f) else colorTexto.copy(alpha = 0.8f)
+
     Card(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
             .height(140.dp),
-
-        // redondeo las esquinas para que la tarjeta tenga un estilo más moderno.
         shape = RoundedCornerShape(16.dp),
-
-        // el color de fondo lo recibo por parámetro para poder reutilizar la misma tarjeta
-        // con distintos estilos.
         colors = CardDefaults.cardColors(containerColor = colorFondo),
-
-        // añado una pequeña elevación para que visualmente se separe del fondo.
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Row(
@@ -193,8 +179,6 @@ fun AlumnoMenuCard(
                 .padding(20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-
-            // en la parte izquierda muestro el título y el subtítulo.
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     titulo,
@@ -205,15 +189,13 @@ fun AlumnoMenuCard(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // el subtítulo lo dejo un poco más suave bajando la opacidad.
                 Text(
                     subtitulo,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = colorTexto.copy(alpha = 0.8f)
+                    color = colorSubtitulo
                 )
             }
 
-            // en la parte derecha muestro el icono de la opción.
             Icon(
                 icono,
                 contentDescription = null,

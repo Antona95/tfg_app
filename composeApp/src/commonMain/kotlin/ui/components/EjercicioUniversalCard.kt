@@ -2,7 +2,11 @@ package ui.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -10,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import model.DetalleSesion
+import ui.theme.ColoresApp
 
 fun agruparEjercicios(ejercicios: List<DetalleSesion>): List<List<DetalleSesion>> {
     // esta funcion me sirve para transformar una lista plana de ejercicios
@@ -83,49 +88,14 @@ fun agruparEjercicios(ejercicios: List<DetalleSesion>): List<List<DetalleSesion>
 }
 
 fun obtenerColorBloqueUniversal(numeroBloque: Int, isDarkMode: Boolean): Color {
-    // esta funcion decide el color de fondo de cada bloque de ejercicios.
+    // esta funcion ahora ya no decide colores por su cuenta.
     //
-    // la idea es que bloques distintos tengan colores distintos,
-    // y que esos colores cambien segun si estoy en modo oscuro o claro.
-
-    // aqui hago un truco para reciclar 5 colores.
+    // en vez de dejar aqui todos los Color(...),
+    // delego la responsabilidad al archivo central ColoresApp.
     //
-    // por ejemplo:
-    // bloque 1 -> color 1
-    // bloque 2 -> color 2
-    // ...
-    // bloque 6 -> vuelve a color 1
-    //
-    // asi no necesito definir infinitos colores.
-    val indexColor = ((numeroBloque - 1) % 5) + 1
-
-    return if (isDarkMode) {
-        // en modo oscuro uso colores más intensos y profundos
-        // para que contrasten bien con texto blanco.
-        when (indexColor) {
-            1 -> Color(0xFF0D47A1)
-            2 -> Color(0xFF1B5E20)
-            3 -> Color(0xFFB71C1C)
-            4 -> Color(0xFF4A148C)
-            5 -> Color(0xFFE65100)
-
-            // este else actua como color de seguridad por si algo falla.
-            else -> Color(0xFF2C2C2C)
-        }
-    } else {
-        // en modo claro uso colores pastel o suaves
-        // para que no molesten visualmente y sigan diferenciando bloques.
-        when (indexColor) {
-            1 -> Color(0xFFE3F2FD)
-            2 -> Color(0xFFE8F5E9)
-            3 -> Color(0xFFFFF3E0)
-            4 -> Color(0xFFF3E5F5)
-            5 -> Color(0xFFEFEBE9)
-
-            // color de respaldo si no entra en ningún caso.
-            else -> Color(0xFFF5F5F5)
-        }
-    }
+    // asi, si mañana quiero cambiar la paleta de bloques,
+    // solo lo hago en un sitio.
+    return ColoresApp.colorBloque(numeroBloque, isDarkMode)
 }
 
 @Composable
@@ -140,25 +110,31 @@ fun EjercicioUniversalCard(
     // aqui calculo el color de fondo de la tarjeta según el bloque y el tema.
     val colorFondo = obtenerColorBloqueUniversal(numeroBloque, isDarkMode)
 
-    // aqui decido el color del texto principal.
-    // en oscuro uso blanco para que contraste.
-    // en claro uso el color de texto normal del tema.
-    val colorTexto = if (isDarkMode) Color.White else MaterialTheme.colorScheme.onSurface
+    // aqui saco el color principal del texto desde ColoresApp.
+    // asi no repito la logica del modo oscuro en cada archivo.
+    val colorTexto = ColoresApp.textoPrincipal(isDarkMode)
 
     Card(
         modifier = modifier.fillMaxWidth(),
 
         // con cardcolors personalizo tanto el fondo como el color de contenido de la tarjeta.
-        colors = CardDefaults.cardColors(containerColor = colorFondo, contentColor = colorTexto)
+        colors = CardDefaults.cardColors(
+            containerColor = colorFondo,
+            contentColor = colorTexto
+        )
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
 
             // esta primera fila contiene:
             // - a la izquierda, el nombre del ejercicio
             // - a la derecha, una especie de etiqueta con la letra del bloque
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
-                    // si el ejercicio no tiene nombre, muestro "sin nombre" para evitar vacíos en pantalla.
+                    // si el ejercicio no tiene nombre, muestro "Sin nombre" para evitar vacíos en pantalla.
                     text = ejercicio.nombre ?: "Sin nombre",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
@@ -176,10 +152,13 @@ fun EjercicioUniversalCard(
                 ) {
                     Text(
                         // en horizontal enseño solo la letra para ahorrar espacio.
-                        // en vertical escribo "bloque a", "bloque b", etc.
+                        // en vertical escribo "Bloque A", "Bloque B", etc.
                         text = if (isLandscape) "$letraBloque" else "Bloque $letraBloque",
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelSmall,
+
+                        // aqui mantengo blanco fijo porque encima del color primario
+                        // suele funcionar muy bien y se lee claro.
                         color = Color.White,
                         fontWeight = FontWeight.Bold
                     )
@@ -194,30 +173,51 @@ fun EjercicioUniversalCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // aqui reutilizo el composable datouniversal para no repetir codigo.
+                // aqui reutilizo el composable DatoUniversal para no repetir codigo.
                 //
-                // si estoy en horizontal uso etiquetas cortas: s, r, kg
+                // si estoy en horizontal uso etiquetas cortas: S, R, Kg
                 // porque hay menos espacio.
                 //
                 // si estoy en vertical uso etiquetas completas.
-                DatoUniversal(if (isLandscape) "S" else "Series", "${ejercicio.series}", colorTexto)
-                DatoUniversal(if (isLandscape) "R" else "Reps", "${ejercicio.repeticiones}", colorTexto)
+                DatoUniversal(
+                    label = if (isLandscape) "S" else "Series",
+                    value = "${ejercicio.series}",
+                    isDarkMode = isDarkMode
+                )
+
+                DatoUniversal(
+                    label = if (isLandscape) "R" else "Reps",
+                    value = "${ejercicio.repeticiones}",
+                    isDarkMode = isDarkMode
+                )
 
                 // aqui preparo el texto del peso.
                 //
                 // si el peso existe y es mayor que 0, lo muestro.
                 // si no, enseño "--" para indicar que no hay peso informado.
                 val pesoText =
-                    if (ejercicio.peso != null && ejercicio.peso > 0) "${ejercicio.peso}" else "--"
+                    if (ejercicio.peso != null && ejercicio.peso > 0) {
+                        "${ejercicio.peso}"
+                    } else {
+                        "--"
+                    }
 
-                DatoUniversal(if (isLandscape) "Kg" else "Peso", pesoText, colorTexto)
+                DatoUniversal(
+                    label = if (isLandscape) "Kg" else "Peso",
+                    value = pesoText,
+                    isDarkMode = isDarkMode
+                )
             }
         }
     }
 }
 
 @Composable
-fun DatoUniversal(label: String, value: String, color: Color) {
+fun DatoUniversal(
+    label: String,
+    value: String,
+    isDarkMode: Boolean
+) {
     // este composable pequeño me sirve para pintar cada dato resumen del ejercicio.
     //
     // por ejemplo:
@@ -227,14 +227,21 @@ fun DatoUniversal(label: String, value: String, color: Color) {
     //
     // lo separo en una funcion propia porque asi reutilizo el mismo diseño
     // y mantengo coherencia visual.
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+    // aqui saco desde ColoresApp el color principal y el secundario.
+    // asi no tengo que jugar con opacidades manuales en cada archivo.
+    val colorValor = ColoresApp.textoPrincipal(isDarkMode)
+    val colorLabel = ColoresApp.textoSecundario(isDarkMode)
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
 
         // esta es la etiqueta pequeña de arriba.
-        // le bajo un poco la opacidad para que tenga menos importancia visual que el valor.
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = color.copy(alpha = 0.6f)
+            color = colorLabel
         )
 
         // este es el valor importante del dato.
@@ -243,7 +250,7 @@ fun DatoUniversal(label: String, value: String, color: Color) {
             text = value,
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Bold,
-            color = color
+            color = colorValor
         )
     }
 }
