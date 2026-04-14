@@ -2,6 +2,7 @@ package ui.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -12,6 +13,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,7 +37,11 @@ fun PantallaCargando(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun PantallaVacia(icono: String, mensaje: String, modifier: Modifier = Modifier) {
+fun PantallaVacia(
+    icono: ImageVector,
+    mensaje: String,
+    modifier: Modifier = Modifier
+) {
     // este composable me sirve para mostrar estados vacíos de forma visual.
     //
     // por ejemplo:
@@ -43,7 +49,7 @@ fun PantallaVacia(icono: String, mensaje: String, modifier: Modifier = Modifier)
     // - no hay resultados
     // - hoy toca descanso
     //
-    // le paso un icono y un mensaje para reutilizarlo en distintas pantallas.
+    // ahora uso un pictograma real en vez de un emoji o texto.
     Column(
         modifier = modifier.fillMaxSize(),
 
@@ -53,9 +59,15 @@ fun PantallaVacia(icono: String, mensaje: String, modifier: Modifier = Modifier)
         // y también centrado en horizontal.
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // aqui muestro el icono como texto grande.
-        // como lo recibo como string, puedo usar un emoji u otro simbolo.
-        Text(text = icono, fontSize = 100.sp)
+        // aqui muestro el pictograma del estado vacío.
+        Icon(
+            imageVector = icono,
+            contentDescription = null,
+            modifier = Modifier.size(96.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         // aqui muestro el mensaje principal del estado vacío.
         Text(

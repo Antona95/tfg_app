@@ -6,6 +6,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Hotel
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -85,6 +88,12 @@ fun HoyScreen(
                             .fillMaxWidth()
                             .height(56.dp)
                     ) {
+                        // aqui añado un pictograma real para reforzar la accion de completar.
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = "finalizar entrenamiento"
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text("FINALIZAR ENTRENAMIENTO", fontWeight = FontWeight.Bold)
                     }
                 }
@@ -108,7 +117,11 @@ fun HoyScreen(
                 is HoyUiState.Loading -> PantallaCargando()
 
                 // si no hay ninguna sesion activa, muestro una pantalla vacia.
-                is HoyUiState.Empty -> PantallaVacia(icono = "💤", mensaje = "Hoy toca descanso")
+                // antes usaba un emoji, pero ahora uso un pictograma real.
+                is HoyUiState.Empty -> PantallaVacia(
+                    icono = Icons.Default.Hotel,
+                    mensaje = "Hoy toca descanso"
+                )
 
                 // si hay error de red o del backend, muestro el mensaje de error.
                 is HoyUiState.Error -> PantallaError(mensaje = state.mensaje)

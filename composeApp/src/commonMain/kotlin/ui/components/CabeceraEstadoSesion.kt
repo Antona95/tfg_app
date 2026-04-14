@@ -1,6 +1,9 @@
 package ui.components
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -33,7 +36,9 @@ fun CabeceraEstadoSesion(sesion: SesionEntrenamiento, isDarkMode: Boolean) {
             // este modifier hace dos cosas:
             // 1. ocupa todo el ancho disponible
             // 2. deja un padding interior de 16 dp para que el contenido no quede pegado
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
 
             // aqui centro horizontalmente los elementos del column.
             // por eso el titulo y el estado salen centrados.
@@ -52,38 +57,66 @@ fun CabeceraEstadoSesion(sesion: SesionEntrenamiento, isDarkMode: Boolean) {
             )
 
             // este spacer me sirve para dejar un hueco entre el titulo
-            // y el texto del estado.
+            // y el bloque visual del estado.
             Spacer(modifier = Modifier.height(8.dp))
 
             // aqui compruebo si la sesion está finalizada o no.
             if (sesion.finalizada) {
-                Text(
-                    // si está finalizada, muestro este texto.
-                    text = "✅ FINALIZADA",
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    // sustituyo el emoticono por un pictograma real.
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = "sesión finalizada",
+                        tint = Color(0xFF2E7D32)
+                    )
 
-                    // uso un verde fijo para reforzar visualmente que la sesion ya está hecha.
-                    color = Color(0xFF2E7D32),
+                    Spacer(modifier = Modifier.width(8.dp))
 
-                    // le doy un tamaño algo mayor para que destaque.
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
+                    Text(
+                        // si está finalizada, muestro este texto.
+                        text = "FINALIZADA",
+
+                        // uso un verde fijo para reforzar visualmente que la sesion ya está hecha.
+                        color = Color(0xFF2E7D32),
+
+                        // le doy un tamaño algo mayor para que destaque.
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             } else {
-                Text(
-                    // si no está finalizada, muestro pendiente.
-                    text = "⏳ PENDIENTE",
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    // sustituyo el emoticono por un pictograma real.
+                    Icon(
+                        imageVector = Icons.Default.Schedule,
+                        contentDescription = "sesión pendiente",
+                        tint = if (isDarkMode) Color(0xFFFFB74D) else Color(0xFFE65100)
+                    )
 
-                    // aqui cambio el color según el modo oscuro o claro.
-                    //
-                    // lo hago porque el mismo color no siempre se ve igual de bien
-                    // en ambos temas.
-                    //
-                    // si isdarkmode es true uso un naranja más claro.
-                    // si no, uso un naranja más oscuro.
-                    color = if(isDarkMode) Color(0xFFFFB74D) else Color(0xFFE65100),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Text(
+                        // si no está finalizada, muestro pendiente.
+                        text = "PENDIENTE",
+
+                        // aqui cambio el color según el modo oscuro o claro.
+                        //
+                        // lo hago porque el mismo color no siempre se ve igual de bien
+                        // en ambos temas.
+                        //
+                        // si isdarkmode es true uso un naranja más claro.
+                        // si no, uso un naranja más oscuro.
+                        color = if (isDarkMode) Color(0xFFFFB74D) else Color(0xFFE65100),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     }

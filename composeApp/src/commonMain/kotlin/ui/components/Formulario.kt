@@ -1,8 +1,12 @@
 package ui.components
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -12,7 +16,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.BoxWithConstraints
 
 @Composable
 fun CamposRegistro(
@@ -73,6 +76,14 @@ fun CamposRegistro(
                         // label es el texto flotante que identifica el campo.
                         label = { Text("Nombre real") },
 
+                        // añado un pictograma para indicar que este campo corresponde a una persona.
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "nombre"
+                            )
+                        },
+
                         // con weight reparto el ancho entre los dos campos de la fila.
                         modifier = Modifier.weight(1f),
 
@@ -84,6 +95,15 @@ fun CamposRegistro(
                         value = apellidos,
                         onValueChange = onApellidosChange,
                         label = { Text("Apellidos") },
+
+                        // reutilizo el mismo pictograma porque sigue siendo un dato personal.
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "apellidos"
+                            )
+                        },
+
                         modifier = Modifier.weight(1f),
                         singleLine = true
                     )
@@ -97,6 +117,15 @@ fun CamposRegistro(
                         value = nickname,
                         onValueChange = onNicknameChange,
                         label = { Text("Nickname") },
+
+                        // este pictograma refuerza que es un identificador del usuario.
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Badge,
+                                contentDescription = "nickname"
+                            )
+                        },
+
                         modifier = Modifier.weight(1f),
                         singleLine = true
                     )
@@ -107,6 +136,14 @@ fun CamposRegistro(
                         label = { Text("Password") },
                         modifier = Modifier.weight(1f),
                         singleLine = true,
+
+                        // añado un pictograma de candado para identificar la contraseña.
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = "contraseña"
+                            )
+                        },
 
                         // visualtransformation cambia como se muestra el texto en pantalla.
                         //
@@ -162,6 +199,14 @@ fun CamposRegistro(
                     // label es el texto flotante que identifica el campo.
                     label = { Text("Nombre real") },
 
+                    // añado un pictograma para indicar que este campo corresponde a una persona.
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "nombre"
+                        )
+                    },
+
                     // hago que el campo ocupe todo el ancho disponible.
                     modifier = Modifier.fillMaxWidth(),
 
@@ -173,6 +218,15 @@ fun CamposRegistro(
                     value = apellidos,
                     onValueChange = onApellidosChange,
                     label = { Text("Apellidos") },
+
+                    // reutilizo el mismo pictograma porque sigue siendo un dato personal.
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "apellidos"
+                        )
+                    },
+
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -181,6 +235,15 @@ fun CamposRegistro(
                     value = nickname,
                     onValueChange = onNicknameChange,
                     label = { Text("Nickname") },
+
+                    // este pictograma refuerza que es un identificador del usuario.
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Badge,
+                            contentDescription = "nickname"
+                        )
+                    },
+
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -191,6 +254,14 @@ fun CamposRegistro(
                     label = { Text("Password") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
+
+                    // añado un pictograma de candado para identificar la contraseña.
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Lock,
+                            contentDescription = "contraseña"
+                        )
+                    },
 
                     // visualtransformation cambia como se muestra el texto en pantalla.
                     //

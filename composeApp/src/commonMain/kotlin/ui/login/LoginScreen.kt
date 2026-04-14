@@ -6,6 +6,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Visibility
@@ -82,7 +86,15 @@ fun LoginScreen(
 
     // boxwithconstraints me permite conocer el tamaño disponible del contenedor.
     // gracias a eso puedo saber si la pantalla esta en vertical u horizontal.
-    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+    //
+    // añado safedrawingpadding para que todo el contenido respete las zonas seguras
+    // del dispositivo, como la barra de navegacion y la barra superior.
+    // asi evito que en horizontal el contenido se meta debajo de los botones del movil.
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxSize()
+            .safeDrawingPadding()
+    ) {
 
         // si el ancho es mayor que el alto, considero que el movil está girado.
         val isLandscape = maxWidth > maxHeight
@@ -248,7 +260,6 @@ fun LoginScreen(
         }
     }
 }
-
 @Composable
 fun FormularioAuth(
     isLoading: Boolean,
@@ -326,7 +337,16 @@ fun FormularioAuth(
                 onValueChange = onNicknameChange,
                 label = { Text("Nickname") },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+
+                // añado un pictograma para reforzar visualmente
+                // que este campo corresponde al identificador del usuario.
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Badge,
+                        contentDescription = "nickname"
+                    )
+                }
             )
 
             OutlinedTextField(
@@ -345,6 +365,16 @@ fun FormularioAuth(
                 },
 
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+
+                // añado un pictograma para identificar claramente
+                // que este campo corresponde a la contraseña.
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = "contraseña"
+                    )
+                },
+
                 trailingIcon = {
                     val image =
                         if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
@@ -408,50 +438,78 @@ fun FormularioAuth(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (!isRegistering) {
+                    if (isRegistering) {
+                        // en modo registro muestro un pictograma de alta de usuario.
+                        Icon(
+                            imageVector = Icons.Default.PersonAdd,
+                            contentDescription = "crear cuenta"
+                        )
+                    } else {
                         // en modo login muestro un pictograma de entrar.
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Login,
                             contentDescription = "entrar"
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
                     }
+
+                    Spacer(modifier = Modifier.width(8.dp))
 
                     Text(if (isRegistering) "CREAR CUENTA" else "ENTRAR")
                 }
             }
+        }
 
-            if (errorBackend != null) {
-                // este error no es de validacion local.
-                // viene del backend o del viewmodel, por ejemplo credenciales incorrectas.
-                Text(
-                    text = errorBackend,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-            }
+        if (errorBackend != null) {
+            // este error no es de validacion local.
+            // viene del backend o del viewmodel, por ejemplo credenciales incorrectas.
+            Text(
+                text = errorBackend,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
 
-            if (mensajeExito != null) {
-                // este mensaje suele aparecer al registrarse correctamente.
-                Text(
-                    text = mensajeExito,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontSize = 16.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+        if (mensajeExito != null) {
+            // este mensaje suele aparecer al registrarse correctamente.
+            Text(
+                text = mensajeExito,
+                color = MaterialTheme.colorScheme.primary,
+                fontSize = 16.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
 
-            TextButton(
-                onClick = {
-                    // aqui cambio entre login y registro.
-                    onIsRegisteringChange(!isRegistering)
+        TextButton(
+            onClick = {
+                // aqui cambio entre login y registro.
+                onIsRegisteringChange(!isRegistering)
 
-                    // y cierro cualquier dialogo de validacion que hubiera abierto.
-                    onMostrarErrorValidacionChange(false)
-                },
-                enabled = !isLoading
+                // y cierro cualquier dialogo de validacion que hubiera abierto.
+                onMostrarErrorValidacionChange(false)
+            },
+            enabled = !isLoading
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
             ) {
+                if (isRegistering) {
+                    // si estoy en registro, este boton me devuelve al login.
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "volver al inicio de sesión"
+                    )
+                } else {
+                    // si estoy en login, este boton me lleva a la pantalla de registro.
+                    Icon(
+                        imageVector = Icons.Default.PersonAdd,
+                        contentDescription = "ir a registro"
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
                 Text(
                     if (isRegistering) {
                         "Volver al inicio de sesión"
@@ -460,23 +518,23 @@ fun FormularioAuth(
                     }
                 )
             }
-
-            DialogoAlerta(
-                mostrarDialogo = mostrarErrorValidacion,
-                titulo = "Campos incompletos",
-                mensaje = mensajeErrorValidacion,
-
-                // ondismiss es una función callback que se ejecuta cuando el dialogo se cierra.
-                //
-                // dismiss significa "cerrar" o "descartar".
-                // por ejemplo, se ejecuta cuando:
-                // - pulso el boton del propio dialogo
-                // - o el componente decide cerrarse
-                //
-                // aqui lo que hago es poner mostrarerrorvalidacion en false
-                // para que el dialogo deje de verse.
-                onDismiss = { onMostrarErrorValidacionChange(false) }
-            )
         }
+
+        DialogoAlerta(
+            mostrarDialogo = mostrarErrorValidacion,
+            titulo = "Campos incompletos",
+            mensaje = mensajeErrorValidacion,
+
+            // ondismiss es una función callback que se ejecuta cuando el dialogo se cierra.
+            //
+            // dismiss significa "cerrar" o "descartar".
+            // por ejemplo, se ejecuta cuando:
+            // - pulso el boton del propio dialogo
+            // - o el componente decide cerrarse
+            //
+            // aqui lo que hago es poner mostrarerrorvalidacion en false
+            // para que el dialogo deje de verse.
+            onDismiss = { onMostrarErrorValidacionChange(false) }
+        )
     }
 }

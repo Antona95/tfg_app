@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Warning
 
 // importo componentes de material 3
 import androidx.compose.material3.*
@@ -159,11 +160,25 @@ fun UserOptionsScreen(
                 onDismissRequest = { mostrarAvisoSinSesiones = false },
                 confirmButton = {
                     TextButton(onClick = { mostrarAvisoSinSesiones = false }) {
-                        Text("aceptar")
+                        Text("Aceptar")
                     }
                 },
                 title = {
-                    Text("¡Ojo!")
+                    // aqui sustituyo el texto simple por un bloque con pictograma + texto
+                    // para mantener la app mas coherente visualmente.
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = "aviso",
+                            tint = MaterialTheme.colorScheme.error
+                        )
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Text("Aviso")
+                    }
                 },
                 text = {
                     Text("Primero debes crear una sesión.")

@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.SportsGymnastics
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -43,11 +44,32 @@ fun AlumnoHomeScreen(
             topBar = {
                 TopAppBar(
                     title = {
-
-                        // en el título muestro un saludo personalizado con el nombre del usuario.
+                        // en el titulo muestro un saludo personalizado con el nombre del usuario.
+                        //
+                        // antes usaba un emoji, pero ahora lo sustituyo por un pictograma real
+                        // para mantener coherencia visual en toda la app.
                         Column {
-                            Text("Hola, ${usuario.nombre} 👋", fontWeight = FontWeight.Bold)
-                            Text("Vamos a por todas", style = MaterialTheme.typography.labelMedium)
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Person,
+                                    contentDescription = "usuario",
+                                    modifier = Modifier.size(20.dp)
+                                )
+
+                                Spacer(modifier = Modifier.width(8.dp))
+
+                                Text(
+                                    "Hola, ${usuario.nombre}",
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+
+                            Text(
+                                "Vamos a por todas",
+                                style = MaterialTheme.typography.labelMedium
+                            )
                         }
                     },
                     actions = {
@@ -62,16 +84,27 @@ fun AlumnoHomeScreen(
 
                                 // cambio el icono del switch según el tema actual.
                                 if (isDarkMode) {
-                                    Icon(Icons.Default.DarkMode, "Modo Oscuro", modifier = Modifier.size(SwitchDefaults.IconSize))
+                                    Icon(
+                                        Icons.Default.DarkMode,
+                                        "Modo Oscuro",
+                                        modifier = Modifier.size(SwitchDefaults.IconSize)
+                                    )
                                 } else {
-                                    Icon(Icons.Default.LightMode, "Modo Claro", modifier = Modifier.size(SwitchDefaults.IconSize))
+                                    Icon(
+                                        Icons.Default.LightMode,
+                                        "Modo Claro",
+                                        modifier = Modifier.size(SwitchDefaults.IconSize)
+                                    )
                                 }
                             }
                         )
 
                         // este botón sirve para cerrar la sesión del usuario.
                         IconButton(onClick = onLogout) {
-                            Icon(Icons.Default.ExitToApp, "Cerrar Sesión")
+                            Icon(
+                                Icons.Default.ExitToApp,
+                                "Cerrar Sesión"
+                            )
                         }
                     }
                 )
@@ -140,7 +173,9 @@ fun AlumnoMenuCard(
     // la he separado para no repetir código y para que el diseño sea consistente.
     Card(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth().height(140.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(140.dp),
 
         // redondeo las esquinas para que la tarjeta tenga un estilo más moderno.
         shape = RoundedCornerShape(16.dp),
@@ -153,7 +188,9 @@ fun AlumnoMenuCard(
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxSize().padding(20.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
 

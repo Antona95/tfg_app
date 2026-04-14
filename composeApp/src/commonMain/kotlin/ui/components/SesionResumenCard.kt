@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -83,26 +85,46 @@ fun SesionResumenCard(
 
                 // aqui muestro el estado de la sesion.
                 if (sesion.finalizada) {
-                    Text(
-                        "✅ Finalizada",
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = "finalizada",
+                            tint = Color(0xFF2E7D32)
+                        )
 
-                        // si está finalizada uso verde porque transmite visualmente "hecho" o "correcto".
-                        color = Color(0xFF2E7D32),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold
-                    )
+                        Spacer(modifier = Modifier.width(6.dp))
+
+                        Text(
+                            "Finalizada",
+
+                            // si está finalizada uso verde porque transmite visualmente "hecho" o "correcto".
+                            color = Color(0xFF2E7D32),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 } else {
-                    Text(
-                        "⏳ Pendiente",
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Schedule,
+                            contentDescription = "pendiente",
+                            tint = if (isDarkMode) Color(0xFFFFB74D) else Color(0xFFE65100)
+                        )
 
-                        // si esta pendiente cambio el color segun el tema.
-                        //
-                        // en oscuro uso un naranja mas claro para que tenga contraste.
-                        // en claro uso un naranja mas intenso.
-                        color = if(isDarkMode) Color(0xFFFFB74D) else Color(0xFFE65100),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold
-                    )
+                        Spacer(modifier = Modifier.width(6.dp))
+
+                        Text(
+                            "Pendiente",
+
+                            // si esta pendiente cambio el color segun el tema.
+                            //
+                            // en oscuro uso un naranja mas claro para que tenga contraste.
+                            // en claro uso un naranja mas intenso.
+                            color = if (isDarkMode) Color(0xFFFFB74D) else Color(0xFFE65100),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
 

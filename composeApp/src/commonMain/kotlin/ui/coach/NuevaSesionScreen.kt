@@ -167,37 +167,57 @@ fun NuevaSesionScreen(
                     modifier = Modifier
                         .padding(padding)
                         .fillMaxSize()
-                        .padding(16.dp)
+                        .padding(horizontal = 12.dp, vertical = 10.dp)
                 ) {
+                    // esta columna izquierda la compacto al maximo para que entren:
+                    // - nombre del entrenamiento
+                    // - biserie
+                    // - triserie
+                    // - ejercicio unico
+                    // - añadir ejercicio
+                    // - guardar rutina
+                    //
+                    // sin necesitar scroll.
                     Column(
                         modifier = Modifier
-                            .weight(0.35f)
+                            .weight(0.38f)
                             .fillMaxHeight()
-                            .padding(end = 16.dp),
+                            .padding(end = 12.dp),
                         verticalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Column {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            // mantengo el texto "nombre del entrenamiento",
+                            // pero ajusto la caja para que no corte las letras.
+                            //
+                            // antes tenia una altura fija demasiado pequeña.
+                            // ahora uso una altura minima mas segura para que:
+                            // - siga siendo compacta
+                            // - no recorte la parte inferior del texto
                             OutlinedTextField(
                                 value = tituloSesion,
                                 onValueChange = { tituloSesion = it },
                                 label = { Text("Nombre del entrenamiento") },
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 56.dp),
+                                singleLine = true,
+                                textStyle = MaterialTheme.typography.bodyMedium
                             )
 
-                            Spacer(modifier = Modifier.height(24.dp))
-
-                            // ahora ya no agrupo los ultimos ejercicios,
-                            // sino los ejercicios que el entrenador haya marcado.
+                            // este texto explica que las acciones de agrupacion
+                            // se aplican sobre los ejercicios que el entrenador haya marcado.
                             Text(
-                                "Agrupar seleccionados:",
+                                text = "Agrupar seleccionados:",
                                 style = MaterialTheme.typography.labelSmall
                             )
 
+                            // dejo biserie y triserie en una sola fila para ahorrar altura.
                             Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 8.dp),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 Button(
                                     onClick = {
@@ -209,7 +229,13 @@ fun NuevaSesionScreen(
                                             mostrarErrorValidacion = true
                                         }
                                     },
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(44.dp),
+                                    contentPadding = PaddingValues(
+                                        horizontal = 6.dp,
+                                        vertical = 6.dp
+                                    )
                                 ) {
                                     Text("Biserie")
                                 }
@@ -224,14 +250,19 @@ fun NuevaSesionScreen(
                                             mostrarErrorValidacion = true
                                         }
                                     },
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(44.dp),
+                                    contentPadding = PaddingValues(
+                                        horizontal = 6.dp,
+                                        vertical = 6.dp
+                                    )
                                 ) {
                                     Text("Triserie")
                                 }
                             }
 
-                            // este boton devuelve los ejercicios seleccionados a bloque 0.
-                            // o sea, vuelven a ser ejercicios sueltos.
+                            // este boton ocupa todo el ancho de la columna.
                             OutlinedButton(
                                 onClick = {
                                     val ok = viewModel.desagruparSeleccionados()
@@ -242,47 +273,64 @@ fun NuevaSesionScreen(
                                         mostrarErrorValidacion = true
                                     }
                                 },
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(44.dp),
+                                contentPadding = PaddingValues(
+                                    horizontal = 6.dp,
+                                    vertical = 6.dp
+                                )
                             ) {
                                 Text("Ejercicio único")
                             }
 
-                            Spacer(modifier = Modifier.height(16.dp))
-
+                            // este boton tambien ocupa todo el ancho de la columna.
                             OutlinedButton(
                                 onClick = { viewModel.agregarEjercicio() },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(50.dp)
+                                    .height(44.dp),
+                                contentPadding = PaddingValues(
+                                    horizontal = 6.dp,
+                                    vertical = 6.dp
+                                )
                             ) {
                                 Icon(Icons.Default.Add, null)
-                                Spacer(Modifier.width(8.dp))
-                                Text("Añadir Ejercicio")
+                                Spacer(Modifier.width(6.dp))
+                                Text("Añadir ejercicio")
                             }
                         }
 
+                        // este spacer crea una separacion visual entre
+                        // el boton de añadir ejercicio y el de guardar rutina.
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // este boton ocupa todo el ancho real de la columna.
+                        //
+                        // quito navigationbarspadding aqui porque en horizontal
+                        // me puede empujar el boton y hacer que parezca que no cabe.
                         Button(
                             onClick = intentarGuardar,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(56.dp)
-                                .navigationBarsPadding(),
+                                .height(48.dp),
                             enabled = uiState !is SesionUiState.Loading
                         ) {
                             if (uiState is SesionUiState.Loading) {
                                 CircularProgressIndicator(
                                     color = Color.White,
-                                    modifier = Modifier.size(24.dp)
+                                    modifier = Modifier.size(22.dp)
                                 )
                             } else {
-                                Text("GUARDAR", fontWeight = FontWeight.Bold)
+                                Text("GUARDAR RUTINA", fontWeight = FontWeight.Bold)
                             }
                         }
                     }
 
+                    // en la zona derecha pinto la lista editable de ejercicios.
                     LazyColumn(
                         modifier = Modifier
-                            .weight(0.65f)
+                            .weight(0.62f)
                             .fillMaxHeight()
                     ) {
                         itemsIndexed(listaEjercicios) { index, ej ->
@@ -316,7 +364,7 @@ fun NuevaSesionScreen(
                             )
                         }
 
-                        item { Spacer(modifier = Modifier.height(32.dp)) }
+                        item { Spacer(modifier = Modifier.height(24.dp)) }
                     }
                 }
             } else {

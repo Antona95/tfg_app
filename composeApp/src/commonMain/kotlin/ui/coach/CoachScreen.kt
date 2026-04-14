@@ -4,6 +4,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -13,14 +15,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import model.Persona
-import viewmodel.CoachViewModel
+import ui.components.CamposRegistro
 import ui.components.DialogoAlerta
 import ui.components.Validaciones
-import ui.components.CamposRegistro
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.ui.window.DialogProperties
+import viewmodel.CoachViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -89,14 +89,22 @@ fun CoachScreen(
     if (alumnoAEliminar != null) {
         AlertDialog(
             onDismissRequest = { alumnoAEliminar = null },
-            title = { Text("Confirmar eliminación", fontWeight = FontWeight.Bold) },
+            title = {
+                Text(
+                    "Confirmar eliminación",
+                    fontWeight = FontWeight.Bold
+                )
+            },
 
             // aqui construyo el mensaje dinamicamente con el nombre del alumno.
-            text = { Text("¿Estás seguro de que quieres eliminar a ${alumnoAEliminar!!.nombre} ${alumnoAEliminar!!.apellidos}? Se borrará todo su historial y rutinas de la base de datos de forma permanente.") },
+            text = {
+                Text(
+                    "¿Estás seguro de que quieres eliminar a ${alumnoAEliminar!!.nombre} ${alumnoAEliminar!!.apellidos}? Se borrará todo su historial y rutinas de la base de datos de forma permanente."
+                )
+            },
             confirmButton = {
                 Button(
                     onClick = {
-
                         // si confirmo, pido al viewmodel que elimine al alumno por nickname.
                         viewModel.eliminarAlumno(alumnoAEliminar!!.nickname)
 
@@ -105,13 +113,32 @@ fun CoachScreen(
                     },
 
                     // pongo el boton en color de error para reforzar visualmente la accion destructiva.
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                ) { Text("Eliminar definitivamente") }
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = "Eliminar"
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Eliminar definitivamente")
+                    }
+                }
             },
             dismissButton = {
-
                 // si cancelo, simplemente cierro el dialogo.
-                TextButton(onClick = { alumnoAEliminar = null }) { Text("Cancelar") }
+                TextButton(onClick = { alumnoAEliminar = null }) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = "Cancelar"
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Cancelar")
+                    }
+                }
             }
         )
     }
@@ -125,7 +152,11 @@ fun CoachScreen(
 
                     // este boton abre el dialogo de crear alumno.
                     IconButton(onClick = { mostrarDialogoCrear = true }) {
-                        Icon(Icons.Default.PersonAdd, "Nuevo Alumno", tint = MaterialTheme.colorScheme.primary)
+                        Icon(
+                            Icons.Default.PersonAdd,
+                            "Nuevo Alumno",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                     }
 
                     // este switch cambia entre modo claro y oscuro.
@@ -136,23 +167,46 @@ fun CoachScreen(
                         thumbContent = {
 
                             // aqui cambio el icono del switch segun el tema actual.
-                            if (isDarkMode) { Icon(Icons.Default.DarkMode, "Modo Oscuro", modifier = Modifier.size(SwitchDefaults.IconSize)) }
-                            else { Icon(Icons.Default.LightMode, "Modo Claro", modifier = Modifier.size(SwitchDefaults.IconSize)) }
+                            if (isDarkMode) {
+                                Icon(
+                                    Icons.Default.DarkMode,
+                                    "Modo Oscuro",
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
+                            } else {
+                                Icon(
+                                    Icons.Default.LightMode,
+                                    "Modo Claro",
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
+                            }
                         }
                     )
 
                     // este boton fuerza la recarga manual de alumnos.
-                    IconButton(onClick = { viewModel.cargarAlumnos() }) { Icon(Icons.Default.Refresh, "Recargar") }
+                    IconButton(onClick = { viewModel.cargarAlumnos() }) {
+                        Icon(Icons.Default.Refresh, "Recargar")
+                    }
 
                     // este boton lanza la accion de salir de la sesion.
-                    IconButton(onClick = onLogoutClick) { Icon(Icons.Default.ExitToApp, "Cerrar Sesión", tint = MaterialTheme.colorScheme.error) }
+                    IconButton(onClick = onLogoutClick) {
+                        Icon(
+                            Icons.Default.ExitToApp,
+                            "Cerrar Sesión",
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
             )
-        },
+        }
     ) { padding ->
 
         // aqui coloco todo el contenido debajo de la barra superior.
-        Column(modifier = Modifier.padding(padding).fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+        ) {
 
             // este textfield es el buscador de alumnos.
             OutlinedTextField(
@@ -160,17 +214,23 @@ fun CoachScreen(
 
                 // cada vez que escribo algo, llamo al viewmodel para aplicar el filtro.
                 onValueChange = { viewModel.buscar(it) },
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
                 placeholder = { Text("Buscar alumno...") },
 
                 // icono de buscar a la izquierda.
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                leadingIcon = {
+                    Icon(Icons.Default.Search, contentDescription = null)
+                },
 
                 trailingIcon = {
 
                     // si hay texto escrito, muestro el boton de limpiar.
                     if (textoBusqueda.isNotEmpty()) {
-                        IconButton(onClick = { viewModel.buscar("") }) { Icon(Icons.Default.Clear, "Limpiar") }
+                        IconButton(onClick = { viewModel.buscar("") }) {
+                            Icon(Icons.Default.Clear, "Limpiar")
+                        }
                     }
                 },
                 singleLine = true,
@@ -179,7 +239,11 @@ fun CoachScreen(
 
             // este box ocupa el resto de la pantalla.
             // dentro pinto o bien el loading, o el mensaje vacio, o la lista.
-            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
 
                 // si esta cargando y no hay alumnos todavia, muestro el progreso en el centro.
                 if (isLoading && alumnos.isEmpty()) {
@@ -189,7 +253,11 @@ fun CoachScreen(
                     // si no hay alumnos, muestro un mensaje distinto segun haya filtro o no.
                     if (alumnos.isEmpty()) {
                         Text(
-                            text = if (textoBusqueda.isEmpty()) "No hay alumnos registrados." else "Sin resultados.",
+                            text = if (textoBusqueda.isEmpty()) {
+                                "No hay alumnos registrados."
+                            } else {
+                                "Sin resultados."
+                            },
                             modifier = Modifier.align(Alignment.Center),
                             color = Color.Gray
                         )
@@ -220,13 +288,20 @@ fun CoachScreen(
 }
 
 @Composable
-fun AlumnoItem(alumno: Persona, onClick: () -> Unit, onDelete: () -> Unit) {
-
+fun AlumnoItem(
+    alumno: Persona,
+    onClick: () -> Unit,
+    onDelete: () -> Unit
+) {
     // esta tarjeta representa un alumno en la lista del coach.
     Card(
-        modifier = Modifier.fillMaxWidth().clickable { onClick() },
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -234,9 +309,17 @@ fun AlumnoItem(alumno: Persona, onClick: () -> Unit, onDelete: () -> Unit) {
         ) {
 
             // este surface pequeño funciona como avatar con la inicial del nombre.
-            Surface(modifier = Modifier.size(40.dp), shape = MaterialTheme.shapes.small, color = MaterialTheme.colorScheme.primary) {
+            Surface(
+                modifier = Modifier.size(40.dp),
+                shape = MaterialTheme.shapes.small,
+                color = MaterialTheme.colorScheme.primary
+            ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Text(text = alumno.nombre.take(1).uppercase(), color = Color.White, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = alumno.nombre.take(1).uppercase(),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
 
@@ -244,17 +327,34 @@ fun AlumnoItem(alumno: Persona, onClick: () -> Unit, onDelete: () -> Unit) {
 
             // aqui muestro nombre completo y nickname del alumno.
             Column {
-                Text(text = "${alumno.nombre} ${alumno.apellidos}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text(text = "@${alumno.nickname}", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+                Text(
+                    text = "${alumno.nombre} ${alumno.apellidos}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "@${alumno.nickname}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray
+                )
             }
 
             Spacer(modifier = Modifier.weight(1f))
 
             // este boton rojo sirve para abrir la eliminacion del alumno.
-            IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, "Eliminar Alumno", tint = MaterialTheme.colorScheme.error) }
+            IconButton(onClick = onDelete) {
+                Icon(
+                    Icons.Default.Delete,
+                    "Eliminar Alumno",
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
 
             // esta flecha indica visualmente que la tarjeta se puede abrir.
-            Icon(Icons.Default.KeyboardArrowRight, contentDescription = null)
+            Icon(
+                Icons.Default.KeyboardArrowRight,
+                contentDescription = null
+            )
         }
     }
 }
@@ -268,7 +368,6 @@ fun DialogoCrearAlumno(
     onConfirmar: (String, String, String, String) -> Unit,
     onDescartar: () -> Unit
 ) {
-
     // estos estados locales guardan lo que escribo en el formulario.
     var nick by remember { mutableStateOf("") }
     var pass by remember { mutableStateOf("") }
@@ -300,10 +399,14 @@ fun DialogoCrearAlumno(
 
                 // aqui reutilizo el componente comun de campos de registro.
                 CamposRegistro(
-                    nombre = nombre, onNombreChange = { nombre = it },
-                    apellidos = apellidos, onApellidosChange = { apellidos = it },
-                    nickname = nick, onNicknameChange = { nick = it },
-                    password = pass, onPasswordChange = { pass = it },
+                    nombre = nombre,
+                    onNombreChange = { nombre = it },
+                    apellidos = apellidos,
+                    onApellidosChange = { apellidos = it },
+                    nickname = nick,
+                    onNicknameChange = { nick = it },
+                    password = pass,
+                    onPasswordChange = { pass = it },
                     passwordVisible = passwordVisible,
                     onPasswordVisibilityChange = { passwordVisible = !passwordVisible }
                 )
@@ -343,9 +446,20 @@ fun DialogoCrearAlumno(
 
                 // si hay carga, muestro un spinner dentro del boton.
                 if (isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
                 } else {
-                    Text("Crear")
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.PersonAdd,
+                            contentDescription = "Crear alumno"
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Crear")
+                    }
                 }
             }
         },
@@ -355,7 +469,16 @@ fun DialogoCrearAlumno(
 
                 // tambien desactivo cancelar mientras hay carga.
                 enabled = !isLoading
-            ) { Text("Cancelar") }
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = "Cancelar"
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Cancelar")
+                }
+            }
         }
     )
 
