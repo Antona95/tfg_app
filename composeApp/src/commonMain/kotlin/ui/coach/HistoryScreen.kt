@@ -17,19 +17,19 @@ import androidx.compose.ui.unit.dp
 import dev.icerock.moko.mvvm.compose.getViewModel
 import dev.icerock.moko.mvvm.compose.viewModelFactory
 import model.SesionEntrenamiento
-import repository.SesionRepository
+import repository.SessionRepository
 import ui.components.PantallaCargando
 import ui.components.PantallaVacia
 import ui.components.SesionResumenCard
-import ui.theme.ColoresApp
-import viewmodel.HistorialViewModel
+import ui.theme.AppColors
+import viewmodel.HistoryViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistorialScreen(
     idUsuario: String,
-    repository: SesionRepository,
-    viewModel: HistorialViewModel? = null,
+    repository: SessionRepository,
+    viewModel: HistoryViewModel? = null,
     isDarkMode: Boolean,
     onBack: () -> Unit,
     onSesionClick: (SesionEntrenamiento) -> Unit
@@ -39,7 +39,7 @@ fun HistorialScreen(
     // si no, lo creo aqui con moko mvvm.
     val historialVM = viewModel ?: getViewModel(
         key = "historial-$idUsuario",
-        factory = viewModelFactory { HistorialViewModel(repository) }
+        factory = viewModelFactory { HistoryViewModel(repository) }
     )
 
     // observo la lista de sesiones del historial.
@@ -53,7 +53,7 @@ fun HistorialScreen(
 
     // aqui saco algunos colores desde ColoresApp
     // para mantener la coherencia visual con el resto de pantallas.
-    val colorIconoSecundario = ColoresApp.textoSecundario(isDarkMode)
+    val colorIconoSecundario = AppColors.textoSecundario(isDarkMode)
 
     // cada vez que cambia el id del usuario, recargo el historial.
     // esto me asegura que si entro a otro alumno, no me quede con datos viejos.
@@ -69,7 +69,10 @@ fun HistorialScreen(
                 navigationIcon = {
                     // este boton me devuelve a la pantalla anterior.
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = "Volver"
+                        )
                     }
                 }
             )
@@ -128,7 +131,9 @@ fun HistorialScreen(
 
             // si esta cargando y aun no tengo sesiones, muestro la pantalla de carga.
             else if (isLoading && sesiones.isEmpty()) {
-                PantallaCargando(isDarkMode = isDarkMode)
+                PantallaCargando(
+                    isDarkMode = isDarkMode
+                )
             }
 
             // si ya no carga y no hay sesiones, muestro una pantalla vacia.

@@ -9,8 +9,27 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -22,21 +41,21 @@ import androidx.compose.ui.unit.dp
 import model.EjercicioDraft
 import model.SesionEntrenamiento
 import ui.components.DialogoAlerta
-import ui.components.Validaciones
+import ui.components.Validators
 import ui.components.obtenerColorBloqueUniversal
-import ui.theme.ColoresApp
+import ui.theme.AppColors
 import viewmodel.SesionUiState
 import viewmodel.SesionViewModel
 
 fun obtenerInfoVisualBloqueDraft(lista: List<EjercicioDraft>, indexActual: Int): Pair<Char, Int> {
-    // esta funcion me sirve para calcular la letra y el numero visual del bloque.
+    // esta función me sirve para calcular la letra y el número visual del bloque.
     //
     // no uso directamente el valor real de "bloque" porque:
     // - puede haber ejercicios sueltos con bloque 0
     // - puede haber bloques agrupados mezclados con ejercicios normales
     //
-    // por eso recorro la lista hasta la posicion actual y voy construyendo
-    // un numero de bloque visual que sea estable para la interfaz.
+    // por eso recorro la lista hasta la posición actual y voy construyendo
+    // un número de bloque visual estable para la interfaz.
     var currentBlock = 1
     var lastDbBlock = -1
 
@@ -69,29 +88,45 @@ fun NuevaSesionScreen(
     onNavigateBack: () -> Unit,
     sesionBase: SesionEntrenamiento? = null
 ) {
-    // aqui observo el estado general de la pantalla:
-    // idle, loading, success o error.
+    // observo el estado general de la pantalla.
     val uiState by viewModel.uiState.collectAsState()
 
-    // aqui observo la lista editable de ejercicios que estoy montando.
+    // observo la lista editable de ejercicios.
     val listaEjercicios by viewModel.listaEjercicios.collectAsState()
 
-    // este estado local guarda el titulo de la sesion.
-    // si estoy duplicando una sesion, pongo un titulo inicial basado en ella.
+    // este estado local guarda el título de la sesión.
     var tituloSesion by rememberSaveable {
         mutableStateOf(if (sesionBase != null) "Copia de ${sesionBase.titulo}" else "")
     }
 
-    // estos estados controlan un dialogo simple de validacion.
+    // estos estados controlan un diálogo simple de validación.
     var mostrarErrorValidacion by remember { mutableStateOf(false) }
     var mensajeErrorValidacion by remember { mutableStateOf("") }
 
-    // cuando entro con una sesion base, inicializo el formulario con sus ejercicios.
+    // saco algunos colores desde ColoresApp para mantener consistencia.
+    val colorTextoPrincipal = AppColors.textoPrincipal(isDarkMode)
+    val colorTextoSecundario = AppColors.textoSecundario(isDarkMode)
+
+    // preparo una paleta común para el textfield del título.
+    val coloresCampoTitulo = OutlinedTextFieldDefaults.colors(
+        focusedTextColor = colorTextoPrincipal,
+        unfocusedTextColor = colorTextoPrincipal,
+        focusedBorderColor = colorTextoSecundario,
+        unfocusedBorderColor = colorTextoSecundario.copy(alpha = 0.65f),
+        focusedLabelColor = colorTextoSecundario,
+        unfocusedLabelColor = colorTextoSecundario,
+        cursorColor = colorTextoPrincipal,
+        focusedContainerColor = MaterialTheme.colorScheme.surface,
+        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+        disabledContainerColor = MaterialTheme.colorScheme.surface
+    )
+
+    // cuando entro con una sesión base, inicializo el formulario con sus ejercicios.
     LaunchedEffect(sesionBase) {
         viewModel.inicializarConSesionBase(sesionBase)
     }
 
-    // si guardar la sesion sale bien, vuelvo atras y limpio el estado del viewmodel.
+    // si guardar la sesión sale bien, vuelvo atrás y limpio el estado.
     LaunchedEffect(uiState) {
         if (uiState is SesionUiState.Success) {
             onNavigateBack()
@@ -101,7 +136,7 @@ fun NuevaSesionScreen(
 
     // esta lambda me sirve para validar y guardar.
     val intentarGuardar = {
-        val error = Validaciones.validarFormularioSesion(tituloSesion, listaEjercicios)
+        val error = Validators.validarFormularioSesion(tituloSesion, listaEjercicios)
 
         if (error != null) {
             mensajeErrorValidacion = error
@@ -120,19 +155,22 @@ fun NuevaSesionScreen(
                 TopAppBar(
                     title = {
                         Text(
-                            if (sesionBase != null) "Duplicar Sesión" else "Nueva Sesión",
+                            text = if (sesionBase != null) "Duplicar Sesión" else "Nueva Sesión",
                             fontWeight = FontWeight.Bold
                         )
                     },
                     navigationIcon = {
                         IconButton(onClick = onNavigateBack) {
-                            Icon(Icons.Default.ArrowBack, "Volver")
+                            Icon(
+                                imageVector = Icons.Default.ArrowBack,
+                                contentDescription = "Volver"
+                            )
                         }
                     }
                 )
             },
             bottomBar = {
-                // en vertical dejo el boton guardar abajo fijo para que sea mas accesible.
+                // en vertical dejo el botón guardar abajo fijo para que sea más accesible.
                 if (!isLandscape) {
                     Box(
                         modifier = Modifier
@@ -153,7 +191,10 @@ fun NuevaSesionScreen(
                                     modifier = Modifier.size(24.dp)
                                 )
                             } else {
-                                Text("GUARDAR RUTINA", fontWeight = FontWeight.Bold)
+                                Text(
+                                    text = "GUARDAR RUTINA",
+                                    fontWeight = FontWeight.Bold
+                                )
                             }
                         }
                     }
@@ -178,8 +219,8 @@ fun NuevaSesionScreen(
                         verticalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column(
-                            verticalArrangement = Arrangement.spacedBy(6.dp),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             OutlinedTextField(
                                 value = tituloSesion,
@@ -189,13 +230,14 @@ fun NuevaSesionScreen(
                                     .fillMaxWidth()
                                     .heightIn(min = 56.dp),
                                 singleLine = true,
-                                textStyle = MaterialTheme.typography.bodyMedium
+                                textStyle = MaterialTheme.typography.bodyMedium,
+                                colors = coloresCampoTitulo
                             )
 
                             Text(
                                 text = "Agrupar seleccionados:",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = ColoresApp.textoSecundario(isDarkMode)
+                                color = colorTextoSecundario
                             )
 
                             Row(
@@ -276,8 +318,11 @@ fun NuevaSesionScreen(
                                     vertical = 6.dp
                                 )
                             ) {
-                                Icon(Icons.Default.Add, null)
-                                Spacer(Modifier.width(6.dp))
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = null
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
                                 Text("Añadir ejercicio")
                             }
                         }
@@ -297,7 +342,10 @@ fun NuevaSesionScreen(
                                     modifier = Modifier.size(22.dp)
                                 )
                             } else {
-                                Text("GUARDAR RUTINA", fontWeight = FontWeight.Bold)
+                                Text(
+                                    text = "GUARDAR RUTINA",
+                                    fontWeight = FontWeight.Bold
+                                )
                             }
                         }
                     }
@@ -328,7 +376,9 @@ fun NuevaSesionScreen(
                             )
                         }
 
-                        item { Spacer(modifier = Modifier.height(24.dp)) }
+                        item {
+                            Spacer(modifier = Modifier.height(24.dp))
+                        }
                     }
                 }
             } else {
@@ -345,7 +395,8 @@ fun NuevaSesionScreen(
                         label = { Text("Nombre del entrenamiento") },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 16.dp)
+                            .padding(top = 16.dp),
+                        colors = coloresCampoTitulo
                     )
 
                     Spacer(modifier = Modifier.height(24.dp))
@@ -429,13 +480,18 @@ fun NuevaSesionScreen(
                                 onClick = { viewModel.agregarEjercicio() },
                                 modifier = Modifier.padding(vertical = 16.dp)
                             ) {
-                                Icon(Icons.Default.Add, null)
-                                Spacer(Modifier.width(8.dp))
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = null
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
                                 Text("Añadir ejercicio")
                             }
                         }
 
-                        item { Spacer(modifier = Modifier.height(16.dp)) }
+                        item {
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
                     }
                 }
             }
@@ -445,9 +501,6 @@ fun NuevaSesionScreen(
                 titulo = "Revisa los datos",
                 mensaje = mensajeErrorValidacion,
                 onDismiss = { mostrarErrorValidacion = false },
-
-                // ahora tambien le paso el modo oscuro para que el dialogo
-                // use la nueva logica centralizada de colores.
                 isDarkMode = isDarkMode
             )
         }
@@ -469,13 +522,16 @@ fun EjercicioItemCard(
     // si el ejercicio no tiene bloque, uso un color neutro.
     // si pertenece a un bloque, reutilizo el color del bloque visual.
     val colorFondo =
-        if (ejercicio.bloque == 0) MaterialTheme.colorScheme.surfaceVariant
-        else obtenerColorBloqueUniversal(numeroBloque, isDarkMode)
+        if (ejercicio.bloque == 0) {
+            MaterialTheme.colorScheme.surfaceVariant
+        } else {
+            obtenerColorBloqueUniversal(numeroBloque, isDarkMode)
+        }
 
-    // ahora saco todos los colores importantes desde ColoresApp.
-    val colorTexto = ColoresApp.textoPrincipal(isDarkMode)
-    val colorTextoSecundario = ColoresApp.textoSecundario(isDarkMode)
-    val colorBordeSeleccion = ColoresApp.bordeSeleccion(isDarkMode)
+    // saco todos los colores importantes desde ColoresApp.
+    val colorTexto = AppColors.textoPrincipal(isDarkMode)
+    val colorTextoSecundario = AppColors.textoSecundario(isDarkMode)
+    val colorBordeSeleccion = AppColors.bordeSeleccion(isDarkMode)
 
     // esta shape me deja unir visualmente tarjetas del mismo bloque.
     val shape = RoundedCornerShape(
@@ -485,7 +541,7 @@ fun EjercicioItemCard(
         bottomEnd = if (unidoAbajo) 0.dp else 12.dp
     )
 
-    // aqui preparo una paleta de colores para los textfield.
+    // preparo una paleta de colores para los textfield.
     val textFieldColors = OutlinedTextFieldDefaults.colors(
         focusedTextColor = colorTexto,
         unfocusedTextColor = colorTexto,
@@ -507,11 +563,7 @@ fun EjercicioItemCard(
             .clickable { onToggleSeleccion() }
             .border(
                 width = if (ejercicio.seleccionado) 2.dp else 0.dp,
-                color = if (ejercicio.seleccionado) {
-                    colorBordeSeleccion
-                } else {
-                    Color.Transparent
-                },
+                color = if (ejercicio.seleccionado) colorBordeSeleccion else Color.Transparent,
                 shape = shape
             ),
         colors = CardDefaults.cardColors(
@@ -536,14 +588,14 @@ fun EjercicioItemCard(
                     shape = RoundedCornerShape(4.dp)
                 ) {
                     Text(
-                        "$letraBloque",
+                        text = "$letraBloque",
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         color = Color.White,
                         fontWeight = FontWeight.Bold
                     )
                 }
 
-                Spacer(Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(8.dp))
 
                 OutlinedTextField(
                     value = ejercicio.nombre,
@@ -555,16 +607,16 @@ fun EjercicioItemCard(
 
                 IconButton(onClick = onDelete) {
                     Icon(
-                        Icons.Default.Delete,
-                        null,
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = null,
                         tint = colorTextoSecundario
                     )
                 }
             }
 
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(top = 8.dp)
+                modifier = Modifier.padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 OutlinedTextField(
                     value = ejercicio.series,

@@ -16,7 +16,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import ui.theme.ColoresApp
+import ui.theme.AppColors
 
 @Composable
 fun CamposRegistro(
@@ -61,8 +61,8 @@ fun CamposRegistro(
     // - las labels no queden demasiado apagadas
     // - los bordes tengan contraste suficiente
     // - los iconos mantengan coherencia con el resto de la app
-    val colorTexto = ColoresApp.textoPrincipal(isDarkMode)
-    val colorTextoSecundario = ColoresApp.textoSecundario(isDarkMode)
+    val colorTexto = AppColors.textoPrincipal(isDarkMode)
+    val colorTextoSecundario = AppColors.textoSecundario(isDarkMode)
 
     // creo unos colores comunes para los OutlinedTextField.
     // asi no tengo que repetir la configuracion en cada campo.
@@ -83,7 +83,7 @@ fun CamposRegistro(
         disabledContainerColor = MaterialTheme.colorScheme.surface
     )
 
-    // uso boxwithconstraints para saber el ancho disponible.
+    // uso BoxWithConstraints para saber el ancho disponible.
     // asi puedo decidir si pongo el formulario en una columna o en dos.
     BoxWithConstraints {
 
@@ -107,7 +107,7 @@ fun CamposRegistro(
                         // value es el texto actual que se ve en el campo.
                         value = nombre,
 
-                        // onvaluechange se ejecuta cada vez que el usuario escribe o borra.
+                        // onValueChange se ejecuta cada vez que el usuario escribe o borra.
                         // aqui reutilizo directamente la funcion que me llega por parametro.
                         onValueChange = onNombreChange,
 
@@ -125,7 +125,7 @@ fun CamposRegistro(
                         // con weight reparto el ancho entre los dos campos de la fila.
                         modifier = Modifier.weight(1f),
 
-                        // con singleline obligo a que el textfield sea de una sola linea.
+                        // con singleLine obligo a que el textfield sea de una sola linea.
                         singleLine = true,
 
                         // aplico los colores centralizados.
@@ -192,10 +192,10 @@ fun CamposRegistro(
                             )
                         },
 
-                        // visualtransformation cambia como se muestra el texto en pantalla.
+                        // visualTransformation cambia como se muestra el texto en pantalla.
                         //
-                        // si passwordvisible es true, enseño la contraseña tal cual.
-                        // si es false, la oculto con puntitos usando passwordvisualtransformation.
+                        // si passwordVisible es true, enseño la contraseña tal cual.
+                        // si es false, la oculto con puntitos usando PasswordVisualTransformation.
                         visualTransformation = if (passwordVisible) {
                             VisualTransformation.None
                         } else {
@@ -213,7 +213,7 @@ fun CamposRegistro(
                                 Icons.Filled.VisibilityOff
                             }
 
-                            // este iconbutton es el boton del ojito.
+                            // este IconButton es el boton del ojito.
                             // cuando lo pulso, llamo a la funcion que me llega por parametro.
                             IconButton(onClick = onPasswordVisibilityChange) {
                                 Icon(
@@ -242,7 +242,7 @@ fun CamposRegistro(
                     // value es el texto actual que se ve en el campo.
                     value = nombre,
 
-                    // onvaluechange se ejecuta cada vez que el usuario escribe o borra.
+                    // onValueChange se ejecuta cada vez que el usuario escribe o borra.
                     // aqui reutilizo directamente la funcion que me llega por parametro.
                     onValueChange = onNombreChange,
 
@@ -260,7 +260,7 @@ fun CamposRegistro(
                     // hago que el campo ocupe todo el ancho disponible.
                     modifier = Modifier.fillMaxWidth(),
 
-                    // con singleline obligo a que el textfield sea de una sola linea.
+                    // con singleLine obligo a que el textfield sea de una sola linea.
                     singleLine = true,
 
                     // aplico los colores centralizados.
@@ -322,10 +322,10 @@ fun CamposRegistro(
                         )
                     },
 
-                    // visualtransformation cambia como se muestra el texto en pantalla.
+                    // visualTransformation cambia como se muestra el texto en pantalla.
                     //
-                    // si passwordvisible es true, enseño la contraseña tal cual.
-                    // si es false, la oculto con puntitos usando passwordvisualtransformation.
+                    // si passwordVisible es true, enseño la contraseña tal cual.
+                    // si es false, la oculto con puntitos usando PasswordVisualTransformation.
                     visualTransformation = if (passwordVisible) {
                         VisualTransformation.None
                     } else {
@@ -343,7 +343,7 @@ fun CamposRegistro(
                             Icons.Filled.VisibilityOff
                         }
 
-                        // este iconbutton es el boton del ojito.
+                        // este IconButton es el boton del ojito.
                         // cuando lo pulso, llamo a la funcion que me llega por parametro.
                         IconButton(onClick = onPasswordVisibilityChange) {
                             Icon(

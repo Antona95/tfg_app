@@ -5,12 +5,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import model.SesionEntrenamiento
-import repository.SesionRepository
+import repository.SessionRepository
 
 // este viewmodel se encarga de toda la logica del historial.
 // aqui gestiono la carga de sesiones, el estado de carga, los errores y
 // algunas acciones como marcar una sesion como finalizada.
-class HistorialViewModel(private val repository: SesionRepository) : ViewModel() {
+class HistoryViewModel(private val repository: SessionRepository) : ViewModel() {
 
     // aqui guardo la lista de sesiones del historial.
     // uso mutablestateflow porque quiero que la ui reaccione automaticamente a los cambios.

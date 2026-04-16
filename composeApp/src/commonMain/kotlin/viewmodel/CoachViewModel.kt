@@ -5,11 +5,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import model.Persona
-import repository.UsuarioRepository
+import repository.UserRepository
 
 // este viewmodel controla toda la logica de la pantalla del entrenador.
 // aqui gestiono la lista de alumnos, la busqueda, la creacion y el borrado.
-class CoachViewModel(private val repository: UsuarioRepository) : ViewModel() {
+class CoachViewModel(private val repository: UserRepository) : ViewModel() {
 
     // aqui guardo la lista completa de alumnos tal y como llega del repositorio.
     // esta es la fuente original sobre la que luego aplico filtros.

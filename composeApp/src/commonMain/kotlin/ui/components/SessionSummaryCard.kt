@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import model.SesionEntrenamiento
-import ui.theme.ColoresApp
+import ui.theme.AppColors
 
 @Composable
 fun SesionResumenCard(
@@ -38,9 +38,9 @@ fun SesionResumenCard(
 
     // aqui saco algunos colores desde ColoresApp para mejorar el contraste
     // y no dejar colores fijos en este componente.
-    val colorEstadoFinalizada = ColoresApp.estadoExito(isDarkMode)
-    val colorEstadoPendiente = ColoresApp.estadoPendiente(isDarkMode)
-    val colorTextoSecundario = ColoresApp.textoSecundario(isDarkMode)
+    val colorEstadoFinalizada = AppColors.estadoExito(isDarkMode)
+    val colorEstadoPendiente = AppColors.estadoPendiente(isDarkMode)
+    val colorTextoSecundario = AppColors.textoSecundario(isDarkMode)
 
     Card(
         // redondeo las esquinas para que la tarjeta tenga un aspecto mas moderno y limpio.

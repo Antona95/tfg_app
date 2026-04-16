@@ -2,7 +2,7 @@ package ui.components
 
 import model.EjercicioDraft
 
-object Validaciones {
+object Validators {
 
     // Validación para crear o duplicar sesiones
     fun validarFormularioSesion(titulo: String, ejercicios: List<EjercicioDraft>): String? {

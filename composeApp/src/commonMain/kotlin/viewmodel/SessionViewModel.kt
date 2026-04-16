@@ -9,7 +9,7 @@ import model.CrearEjercicioRequest
 import model.CrearSesionRequest
 import model.EjercicioDraft
 import model.SesionEntrenamiento
-import repository.SesionRepository
+import repository.SessionRepository
 
 // esta sealed class representa los posibles estados de la pantalla de creacion de sesion.
 // me sirve para que la ui sepa si esta en reposo, cargando, si ha salido bien o si hay error.
@@ -22,7 +22,7 @@ sealed class SesionUiState {
 
 class SesionViewModel(
     // inyecto el repositorio para no meter aqui directamente la logica de red.
-    private val repository: SesionRepository
+    private val repository: SessionRepository
 ) : ViewModel() {
 
     // aqui guardo el estado general de la pantalla.

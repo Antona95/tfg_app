@@ -13,7 +13,7 @@ import model.*
 
 // este repositorio es la capa que uso para comunicar la app con la api.
 // aqui concentro todas las peticiones http para no mezclar red con la interfaz.
-class EntrenamientoRepository(
+class WorkoutRepository(
 
     // inyecto el cliente ktor ya configurado para reutilizarlo en todas las llamadas.
     private val client: HttpClient

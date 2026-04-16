@@ -14,7 +14,7 @@ import network.ApiConfig
 
 // este repositorio se encarga de la gestion de usuarios y alumnos.
 // aqui meto listado, creacion y borrado de alumnos.
-class UsuarioRepository(
+class UserRepository(
     private val client: HttpClient
 ) {
     private val baseUrl = ApiConfig.BASE_URL

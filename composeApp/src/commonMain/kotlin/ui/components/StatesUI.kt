@@ -15,10 +15,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import ui.theme.ColoresApp
+import ui.theme.AppColors
 
 @Composable
-fun PantallaCargando(modifier: Modifier = Modifier, isDarkMode: Boolean = false) {
+fun PantallaCargando(
+    modifier: Modifier = Modifier,
+    isDarkMode: Boolean = false
+) {
     // este composable me sirve para mostrar una pantalla de carga reutilizable.
     //
     // lo uso cuando una pantalla todavía está esperando respuesta del backend
@@ -27,7 +30,7 @@ fun PantallaCargando(modifier: Modifier = Modifier, isDarkMode: Boolean = false)
     // aqui saco un color de apoyo desde la paleta centralizada.
     // no es obligatorio, pero asi dejo la carga visualmente alineada
     // con el resto de la app en claro y en oscuro.
-    val colorIndicador = ColoresApp.textoSecundario(isDarkMode)
+    val colorIndicador = AppColors.textoSecundario(isDarkMode)
 
     Box(
         // aqui hago que el box ocupe todo el tamaño disponible.
@@ -59,8 +62,8 @@ fun PantallaVacia(
 
     // aqui saco colores desde ColoresApp para que el estado vacío
     // tenga el mismo criterio visual que el resto de la app.
-    val colorIcono = ColoresApp.textoSecundario(isDarkMode)
-    val colorTexto = ColoresApp.textoPrincipal(isDarkMode)
+    val colorIcono = AppColors.textoSecundario(isDarkMode)
+    val colorTexto = AppColors.textoPrincipal(isDarkMode)
 
     Column(
         modifier = modifier.fillMaxSize(),
@@ -101,15 +104,11 @@ fun PantallaError(
     //
     // lo uso cuando una operación falla y quiero enseñarlo de forma directa.
 
-    // aqui preparo dos colores:
-    // - uno para el prefijo "Error:"
-    // - otro para el texto principal del mensaje si en algun momento quiero separarlo visualmente
+    // dejo el parámetro isDarkMode porque mantiene la firma consistente
+    // con el resto de estados reutilizables.
     //
-    // de momento mantengo todo en color de error para que sea muy claro,
-    // pero dejo el texto principal de la app a mano porque puede venir bien.
-    val colorError = MaterialTheme.colorScheme.error
-    val colorTexto = ColoresApp.textoPrincipal(isDarkMode)
-
+    // aunque aqui no lo use directamente ahora mismo, me viene bien
+    // por si más adelante quiero ajustar iconos o textos secundarios.
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -117,10 +116,10 @@ fun PantallaError(
         Text(
             // aqui concateno la palabra "Error" con el mensaje real recibido.
             //
-            // uso el mensaje entero en rojo porque quiero que el usuario
-            // identifique rapido que ha ocurrido un fallo.
+            // uso el mensaje entero en color de error para que el usuario
+            // identifique rápido que ha ocurrido un fallo.
             text = "Error: $mensaje",
-            color = colorError,
+            color = MaterialTheme.colorScheme.error,
             fontWeight = FontWeight.Bold
         )
     }
@@ -140,13 +139,13 @@ fun DialogoAlerta(
     // solo construyo el dialogo si mostrarDialogo vale true.
     if (mostrarDialogo) {
         AlertDialog(
-            // ondismissrequest es la acción que ejecuto cuando el dialogo se cierra.
+            // onDismissRequest es la acción que ejecuto cuando el dialogo se cierra.
             //
             // por ejemplo, puede dispararse si el usuario toca fuera del cuadro
             // o si el propio componente se descarta.
             //
             // yo aquí no escribo la lógica directamente, sino que recibo una función
-            // llamada ondismiss y la ejecuto.
+            // llamada onDismiss y la ejecuto.
             onDismissRequest = onDismiss,
 
             title = {
@@ -165,7 +164,7 @@ fun DialogoAlerta(
                     Text(
                         text = titulo,
                         fontWeight = FontWeight.Bold,
-                        color = ColoresApp.textoPrincipal(isDarkMode)
+                        color = AppColors.textoPrincipal(isDarkMode)
                     )
                 }
             },
@@ -174,15 +173,15 @@ fun DialogoAlerta(
             text = {
                 Text(
                     text = mensaje,
-                    color = ColoresApp.textoPrincipal(isDarkMode)
+                    color = AppColors.textoPrincipal(isDarkMode)
                 )
             },
 
             confirmButton = {
                 // este botón confirma o simplemente cierra el diálogo.
                 //
-                // en este caso, al pulsarlo ejecuto onDismiss, o sea,
-                // la función que me pasan desde fuera para ocultar el dialogo.
+                // en este caso, al pulsarlo ejecuto onDismiss,
+                // o sea, la función que me pasan desde fuera para ocultar el dialogo.
                 TextButton(onClick = onDismiss) {
                     Text("Entendido")
                 }

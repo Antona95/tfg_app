@@ -4,8 +4,8 @@ import androidx.compose.runtime.*
 import dev.icerock.moko.mvvm.compose.getViewModel
 import dev.icerock.moko.mvvm.compose.viewModelFactory
 import repository.AuthRepository
-import repository.SesionRepository
-import repository.UsuarioRepository
+import repository.SessionRepository
+import repository.UserRepository
 import ui.components.DialogoCerrarSesion
 import ui.login.LoginScreen
 import ui.navigation.AlumnoFlow
@@ -15,8 +15,8 @@ import viewmodel.LoginViewModel
 @Composable
 fun AppContent(
     authRepository: AuthRepository,
-    usuarioRepository: UsuarioRepository,
-    sesionRepository: SesionRepository,
+    usuarioRepository: UserRepository,
+    sesionRepository: SessionRepository,
     isDarkMode: Boolean,
     onThemeToggle: () -> Unit
 ) {

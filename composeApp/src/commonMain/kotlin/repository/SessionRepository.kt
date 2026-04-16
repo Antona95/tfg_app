@@ -15,7 +15,7 @@ import network.ApiConfig
 
 // este repositorio se encarga de toda la gestion de sesiones.
 // aqui meto historial, sesion actual, creacion y finalizacion.
-class SesionRepository(
+class SessionRepository(
     private val client: HttpClient
 ) {
     private val baseUrl = ApiConfig.BASE_URL

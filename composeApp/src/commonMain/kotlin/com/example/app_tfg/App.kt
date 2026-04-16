@@ -7,8 +7,8 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import network.createHttpClient
 import repository.AuthRepository
-import repository.UsuarioRepository
-import repository.SesionRepository
+import repository.UserRepository
+import repository.SessionRepository
 
 @Composable
 fun App() {
@@ -33,8 +33,8 @@ fun App() {
 
         // ahora creo los repositorios por separado, cada uno con su responsabilidad.
         val authRepository = remember { AuthRepository(client) }
-        val usuarioRepository = remember { UsuarioRepository(client) }
-        val sesionRepository = remember { SesionRepository(client) }
+        val usuarioRepository = remember { UserRepository(client) }
+        val sesionRepository = remember { SessionRepository(client) }
 
         // aqui delego el resto del trabajo a appcontent.
         AppContent(

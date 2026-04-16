@@ -16,7 +16,7 @@ import androidx.compose.ui.graphics.Color
 // - mantengo una coherencia visual en toda la app
 // - si mañana quiero cambiar un color, lo hago solo aqui
 // - evito errores o diferencias entre pantallas
-object ColoresApp {
+object AppColors {
 
     // =====================================================
     // COLORES DE TEXTO GENERALES

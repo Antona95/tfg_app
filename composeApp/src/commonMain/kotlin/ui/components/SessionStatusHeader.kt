@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import model.SesionEntrenamiento
-import ui.theme.ColoresApp
+import ui.theme.AppColors
 
 @Composable
 fun CabeceraEstadoSesion(sesion: SesionEntrenamiento, isDarkMode: Boolean) {
@@ -30,8 +30,8 @@ fun CabeceraEstadoSesion(sesion: SesionEntrenamiento, isDarkMode: Boolean) {
 
     // aqui saco los colores de estado desde ColoresApp.
     // de esta manera dejo de tener colores "duros" metidos en el componente.
-    val colorEstadoFinalizada = ColoresApp.estadoExito(isDarkMode)
-    val colorEstadoPendiente = ColoresApp.estadoPendiente(isDarkMode)
+    val colorEstadoFinalizada = AppColors.estadoExito(isDarkMode)
+    val colorEstadoPendiente = AppColors.estadoPendiente(isDarkMode)
 
     Card(
         colors = CardDefaults.cardColors(

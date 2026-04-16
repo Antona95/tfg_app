@@ -69,7 +69,6 @@ fun HoyScreen(
             )
         },
         bottomBar = {
-
             // solo muestro el boton de finalizar si tengo una sesion cargada
             // y esa sesion aun no esta finalizada.
             if (sesionActual != null && !sesionActual.finalizada) {
@@ -84,7 +83,6 @@ fun HoyScreen(
                 ) {
                     Button(
                         onClick = {
-
                             // al pulsar, llamo al viewmodel para finalizar la sesion.
                             // le paso el id de la sesion y el id del usuario.
                             viewModel.finalizarEntrenamiento(sesionActual.idSesion, idUsuario) {
@@ -126,7 +124,9 @@ fun HoyScreen(
             when (val state = uiState) {
 
                 // si esta cargando, muestro la pantalla de carga.
-                is HoyUiState.Loading -> PantallaCargando(isDarkMode = isDarkMode)
+                is HoyUiState.Loading -> PantallaCargando(
+                    isDarkMode = isDarkMode
+                )
 
                 // si no hay ninguna sesion activa, muestro una pantalla vacia.
                 // antes usaba un emoji, pero ahora uso un pictograma real.

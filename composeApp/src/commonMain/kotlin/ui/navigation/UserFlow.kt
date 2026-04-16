@@ -5,19 +5,19 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import dev.icerock.moko.mvvm.compose.getViewModel
 import dev.icerock.moko.mvvm.compose.viewModelFactory
 import model.Persona
-import repository.SesionRepository
+import repository.SessionRepository
 import ui.coach.DetalleSesionScreen
 import ui.coach.HistorialScreen
 import ui.components.BackHandler
 import ui.user.AlumnoHomeScreen
 import ui.user.HoyScreen
-import viewmodel.HistorialViewModel
+import viewmodel.HistoryViewModel
 import viewmodel.HoyViewModel
 
 @Composable
 fun AlumnoFlow(
     usuario: Persona,
-    sesionRepository: SesionRepository,
+    sesionRepository: SessionRepository,
     isDarkMode: Boolean,
     onThemeToggle: () -> Unit,
     onLogoutRequest: () -> Unit
@@ -29,7 +29,7 @@ fun AlumnoFlow(
 
     val historialViewModel = getViewModel(
         key = "historial-screen-vm",
-        factory = viewModelFactory { HistorialViewModel(sesionRepository) }
+        factory = viewModelFactory { HistoryViewModel(sesionRepository) }
     )
 
     var pantallaAlumno by rememberSaveable { mutableStateOf("MENU") }

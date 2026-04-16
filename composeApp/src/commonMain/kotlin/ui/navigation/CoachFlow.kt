@@ -5,8 +5,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import dev.icerock.moko.mvvm.compose.getViewModel
 import dev.icerock.moko.mvvm.compose.viewModelFactory
 import model.Persona
-import repository.SesionRepository
-import repository.UsuarioRepository
+import repository.SessionRepository
+import repository.UserRepository
 import ui.coach.CoachScreen
 import ui.coach.DetalleSesionScreen
 import ui.coach.HistorialScreen
@@ -14,14 +14,14 @@ import ui.coach.NuevaSesionScreen
 import ui.coach.UserOptionsScreen
 import ui.components.BackHandler
 import viewmodel.CoachViewModel
-import viewmodel.HistorialViewModel
+import viewmodel.HistoryViewModel
 import viewmodel.SesionViewModel
 
 @Composable
 fun CoachFlow(
     usuario: Persona,
-    usuarioRepository: UsuarioRepository,
-    sesionRepository: SesionRepository,
+    usuarioRepository: UserRepository,
+    sesionRepository: SessionRepository,
     isDarkMode: Boolean,
     onThemeToggle: () -> Unit,
     onLogoutRequest: () -> Unit
@@ -33,7 +33,7 @@ fun CoachFlow(
 
     val historialCoachVM = getViewModel(
         key = "historial-coach-vm",
-        factory = viewModelFactory { HistorialViewModel(sesionRepository) }
+        factory = viewModelFactory { HistoryViewModel(sesionRepository) }
     )
 
     val sesionVM = getViewModel(
