@@ -5,16 +5,27 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.SportsGymnastics
-import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.SportsGymnastics
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -31,23 +42,26 @@ fun AlumnoHomeScreen(
     isDarkMode: Boolean,
     onThemeToggle: () -> Unit
 ) {
-    // aqui uso boxwithconstraints para saber el tamaño disponible de la pantalla.
+    // aqui uso BoxWithConstraints para saber el tamaño disponible de la pantalla.
     // esto me permite adaptar el diseño si el móvil está en vertical o en horizontal.
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
 
         // si el ancho es mayor que el alto, considero que la pantalla está en horizontal.
         val isLandscape = maxWidth > maxHeight
 
-        // ahora saco estos colores desde ColoresApp.
+        // saco estos colores desde ColoresApp para que todo quede centralizado.
         val colorTarjetaHoy = ColoresApp.tarjetaHoy(isDarkMode)
         val colorTextoTarjetaHoy = ColoresApp.tarjetaHoyTexto(isDarkMode)
         val colorTarjetaHistorial = ColoresApp.tarjetaHistorial(isDarkMode)
         val colorTextoTarjetaHistorial = ColoresApp.tarjetaHistorialTexto(isDarkMode)
 
+        // scaffold me sirve como estructura base de la pantalla.
+        // aquí coloco la barra superior y debajo el contenido principal.
         Scaffold(
             topBar = {
                 TopAppBar(
                     title = {
+                        // en el título muestro un pequeño bloque con icono, saludo y subtítulo.
                         Column {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically
@@ -56,25 +70,33 @@ fun AlumnoHomeScreen(
                                     imageVector = Icons.Default.Person,
                                     contentDescription = "usuario",
                                     modifier = Modifier.size(20.dp),
-                                    tint = MaterialTheme.colorScheme.onSurface
+
+                                    // aqui uso un color centralizado para no mezclar
+                                    // unos textos con el tema y otros con ColoresApp.
+                                    tint = ColoresApp.textoPrincipal(isDarkMode)
                                 )
 
                                 Spacer(modifier = Modifier.width(8.dp))
 
                                 Text(
-                                    "Hola, ${usuario.nombre}",
-                                    fontWeight = FontWeight.Bold
+                                    text = "Hola, ${usuario.nombre}",
+                                    fontWeight = FontWeight.Bold,
+
+                                    // tambien saco este color desde ColoresApp
+                                    // para mantener el mismo criterio visual.
+                                    color = ColoresApp.textoPrincipal(isDarkMode)
                                 )
                             }
 
                             Text(
-                                "Vamos a por todas",
+                                text = "Vamos a por todas",
                                 style = MaterialTheme.typography.labelMedium,
                                 color = ColoresApp.textoSecundario(isDarkMode)
                             )
                         }
                     },
                     actions = {
+                        // este switch me permite cambiar entre modo claro y oscuro.
                         Switch(
                             checked = isDarkMode,
                             onCheckedChange = { onThemeToggle() },
@@ -82,24 +104,25 @@ fun AlumnoHomeScreen(
                             thumbContent = {
                                 if (isDarkMode) {
                                     Icon(
-                                        Icons.Default.DarkMode,
-                                        "Modo Oscuro",
+                                        imageVector = Icons.Default.DarkMode,
+                                        contentDescription = "Modo oscuro",
                                         modifier = Modifier.size(SwitchDefaults.IconSize)
                                     )
                                 } else {
                                     Icon(
-                                        Icons.Default.LightMode,
-                                        "Modo Claro",
+                                        imageVector = Icons.Default.LightMode,
+                                        contentDescription = "Modo claro",
                                         modifier = Modifier.size(SwitchDefaults.IconSize)
                                     )
                                 }
                             }
                         )
 
+                        // este botón cierra la sesión del usuario.
                         IconButton(onClick = onLogout) {
                             Icon(
-                                Icons.Default.ExitToApp,
-                                "Cerrar Sesión",
+                                imageVector = Icons.Default.ExitToApp,
+                                contentDescription = "Cerrar sesión",
                                 tint = MaterialTheme.colorScheme.error
                             )
                         }
@@ -108,6 +131,8 @@ fun AlumnoHomeScreen(
             }
         ) { padding ->
 
+            // aqui construyo el menú principal del alumno en forma de cuadrícula.
+            // si está en horizontal uso 2 columnas; si no, 1.
             LazyVerticalGrid(
                 columns = GridCells.Fixed(if (isLandscape) 2 else 1),
                 modifier = Modifier
@@ -116,9 +141,12 @@ fun AlumnoHomeScreen(
                     .padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp),
                 horizontalArrangement = Arrangement.spacedBy(24.dp),
-                contentPadding = PaddingValues(vertical = if (!isLandscape) 32.dp else 0.dp)
+                contentPadding = PaddingValues(
+                    vertical = if (!isLandscape) 32.dp else 0.dp
+                )
             ) {
 
+                // tarjeta para ver el entrenamiento de hoy.
                 item {
                     AlumnoMenuCard(
                         titulo = "Entrenamiento de Hoy",
@@ -131,6 +159,7 @@ fun AlumnoHomeScreen(
                     )
                 }
 
+                // tarjeta para ver el historial.
                 item {
                     AlumnoMenuCard(
                         titulo = "Historial de Sesiones",
@@ -153,14 +182,15 @@ fun AlumnoMenuCard(
     titulo: String,
     subtitulo: String,
     icono: ImageVector,
-    colorFondo: androidx.compose.ui.graphics.Color,
-    colorTexto: androidx.compose.ui.graphics.Color,
+    colorFondo: Color,
+    colorTexto: Color,
     isDarkMode: Boolean,
     onClick: () -> Unit
 ) {
     // esta función representa una tarjeta reutilizable del menú del alumno.
+    // la separo para no repetir diseño y mantener consistencia visual.
 
-    // aqui preparo un color un poco más suave para el subtitulo.
+    // preparo un color algo más suave para el subtítulo.
     val colorSubtitulo =
         if (isDarkMode) colorTexto.copy(alpha = 0.88f) else colorTexto.copy(alpha = 0.8f)
 
@@ -171,7 +201,7 @@ fun AlumnoMenuCard(
             .height(140.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = colorFondo),
-        elevation = CardDefaults.cardElevation(4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Row(
             modifier = Modifier
@@ -179,9 +209,12 @@ fun AlumnoMenuCard(
                 .padding(20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(modifier = Modifier.weight(1f)) {
+            // a la izquierda muestro título y subtítulo.
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
                 Text(
-                    titulo,
+                    text = titulo,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = colorTexto
@@ -190,14 +223,15 @@ fun AlumnoMenuCard(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    subtitulo,
+                    text = subtitulo,
                     style = MaterialTheme.typography.bodyMedium,
                     color = colorSubtitulo
                 )
             }
 
+            // a la derecha muestro el pictograma principal de la tarjeta.
             Icon(
-                icono,
+                imageVector = icono,
                 contentDescription = null,
                 tint = colorTexto,
                 modifier = Modifier.size(40.dp)

@@ -12,6 +12,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import model.Persona
@@ -19,8 +21,6 @@ import ui.components.CamposRegistro
 import ui.components.DialogoAlerta
 import ui.components.Validaciones
 import ui.theme.ColoresApp
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import viewmodel.CoachViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -33,7 +33,7 @@ fun CoachScreen(
     onThemeToggle: () -> Unit
 ) {
     // aqui observo la lista de alumnos que me da el viewmodel.
-    // al usar collectasstate, la pantalla se actualiza sola si cambia la lista.
+    // al usar collectAsState, la pantalla se actualiza sola si cambia la lista.
     val alumnos by viewModel.alumnos.collectAsState()
 
     // este estado me indica si hay una carga en curso.
@@ -77,11 +77,11 @@ fun CoachScreen(
         DialogoCrearAlumno(
             errorServidor = errorRegistro,
 
-            // le paso isloading para bloquear el formulario si hay una operacion en curso.
+            // le paso isLoading para bloquear el formulario si hay una operacion en curso.
             isLoading = isLoading,
 
             // paso tambien el modo oscuro para que el dialogo interno
-            // pueda pintar bien su DialogoAlerta.
+            // pueda pintar bien su DialogoAlerta y CamposRegistro.
             isDarkMode = isDarkMode,
 
             onConfirmar = { nick, pass, nom, ape ->
@@ -156,7 +156,7 @@ fun CoachScreen(
         )
     }
 
-    // scaffold me da una estructura base con topbar y contenido principal.
+    // Scaffold me da una estructura base con topBar y contenido principal.
     Scaffold(
         topBar = {
             TopAppBar(
@@ -167,7 +167,7 @@ fun CoachScreen(
                     IconButton(onClick = { mostrarDialogoCrear = true }) {
                         Icon(
                             Icons.Default.PersonAdd,
-                            "Nuevo Alumno",
+                            contentDescription = "Nuevo Alumno",
 
                             // mantengo el color primario porque es una accion destacada.
                             tint = MaterialTheme.colorScheme.primary
@@ -185,13 +185,13 @@ fun CoachScreen(
                             if (isDarkMode) {
                                 Icon(
                                     Icons.Default.DarkMode,
-                                    "Modo Oscuro",
+                                    contentDescription = "Modo Oscuro",
                                     modifier = Modifier.size(SwitchDefaults.IconSize)
                                 )
                             } else {
                                 Icon(
                                     Icons.Default.LightMode,
-                                    "Modo Claro",
+                                    contentDescription = "Modo Claro",
                                     modifier = Modifier.size(SwitchDefaults.IconSize)
                                 )
                             }
@@ -202,7 +202,7 @@ fun CoachScreen(
                     IconButton(onClick = { viewModel.cargarAlumnos() }) {
                         Icon(
                             Icons.Default.Refresh,
-                            "Recargar",
+                            contentDescription = "Recargar",
                             tint = colorIconoSecundario
                         )
                     }
@@ -211,7 +211,7 @@ fun CoachScreen(
                     IconButton(onClick = onLogoutClick) {
                         Icon(
                             Icons.Default.ExitToApp,
-                            "Cerrar Sesión",
+                            contentDescription = "Cerrar Sesión",
                             tint = MaterialTheme.colorScheme.error
                         )
                     }
@@ -248,7 +248,7 @@ fun CoachScreen(
                     // si hay texto escrito, muestro el boton de limpiar.
                     if (textoBusqueda.isNotEmpty()) {
                         IconButton(onClick = { viewModel.buscar("") }) {
-                            Icon(Icons.Default.Clear, "Limpiar")
+                            Icon(Icons.Default.Clear, contentDescription = "Limpiar")
                         }
                     }
                 },
@@ -336,7 +336,7 @@ fun AlumnoItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
 
-            // este surface pequeño funciona como avatar con la inicial del nombre.
+            // este Surface pequeño funciona como avatar con la inicial del nombre.
             Surface(
                 modifier = Modifier.size(40.dp),
                 shape = MaterialTheme.shapes.small,
@@ -373,7 +373,7 @@ fun AlumnoItem(
             IconButton(onClick = onDelete) {
                 Icon(
                     Icons.Default.Delete,
-                    "Eliminar Alumno",
+                    contentDescription = "Eliminar Alumno",
                     tint = MaterialTheme.colorScheme.error
                 )
             }
@@ -389,7 +389,7 @@ fun AlumnoItem(
 }
 
 // aqui tengo un dialogo reutilizable para crear alumnos.
-// lo separo de coachscreen para que el codigo principal quede mas limpio.
+// lo separo de CoachScreen para que el codigo principal quede mas limpio.
 @Composable
 fun DialogoCrearAlumno(
     errorServidor: String?,
@@ -439,6 +439,8 @@ fun DialogoCrearAlumno(
                     onPasswordChange = { pass = it },
                     passwordVisible = passwordVisible,
                     onPasswordVisibilityChange = { passwordVisible = !passwordVisible },
+
+                    // ahora CamposRegistro necesita tambien el modo oscuro.
                     isDarkMode = isDarkMode
                 )
 

@@ -69,7 +69,10 @@ fun HistorialScreen(
                 navigationIcon = {
                     // este boton me devuelve a la pantalla anterior.
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = "Volver"
+                        )
                     }
                 }
             )
@@ -128,7 +131,9 @@ fun HistorialScreen(
 
             // si esta cargando y aun no tengo sesiones, muestro la pantalla de carga.
             else if (isLoading && sesiones.isEmpty()) {
-                PantallaCargando(isDarkMode = isDarkMode)
+                PantallaCargando(
+                    isDarkMode = isDarkMode
+                )
             }
 
             // si ya no carga y no hay sesiones, muestro una pantalla vacia.

@@ -9,8 +9,8 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -41,6 +41,10 @@ fun SesionResumenCard(
     val colorEstadoFinalizada = ColoresApp.estadoExito(isDarkMode)
     val colorEstadoPendiente = ColoresApp.estadoPendiente(isDarkMode)
     val colorTextoSecundario = ColoresApp.textoSecundario(isDarkMode)
+
+    // aqui saco tambien el color principal del texto desde ColoresApp.
+    // asi no mezclo unas partes con MaterialTheme y otras con la paleta centralizada.
+    val colorTextoPrincipal = ColoresApp.textoPrincipal(isDarkMode)
 
     Card(
         // redondeo las esquinas para que la tarjeta tenga un aspecto mas moderno y limpio.
@@ -85,8 +89,8 @@ fun SesionResumenCard(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
 
-                    // uso el color de texto asociado a surfaceVariant para que combine bien con la tarjeta.
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    // uso el color principal centralizado para mantener coherencia.
+                    color = colorTextoPrincipal
                 )
 
                 // dejo una pequeña separacion entre el titulo y el estado.

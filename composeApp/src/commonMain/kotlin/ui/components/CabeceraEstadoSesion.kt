@@ -33,6 +33,11 @@ fun CabeceraEstadoSesion(sesion: SesionEntrenamiento, isDarkMode: Boolean) {
     val colorEstadoFinalizada = ColoresApp.estadoExito(isDarkMode)
     val colorEstadoPendiente = ColoresApp.estadoPendiente(isDarkMode)
 
+    // aqui saco tambien el color principal del texto desde ColoresApp.
+    // asi mantengo la coherencia con el resto de componentes que ya usan
+    // la paleta centralizada para los textos normales.
+    val colorTextoPrincipal = ColoresApp.textoPrincipal(isDarkMode)
+
     Card(
         colors = CardDefaults.cardColors(
             // aqui uso un color del tema para que la cabecera destaque un poco
@@ -62,7 +67,10 @@ fun CabeceraEstadoSesion(sesion: SesionEntrenamiento, isDarkMode: Boolean) {
                 // el operador ?: significa "si esto es null, usa esto otro".
                 text = sesion.titulo ?: "Sesión de Entrenamiento",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+
+                // uso el color principal centralizado para mantener consistencia.
+                color = colorTextoPrincipal
             )
 
             // este spacer me sirve para dejar un hueco entre el titulo

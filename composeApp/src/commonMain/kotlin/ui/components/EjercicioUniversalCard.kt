@@ -17,10 +17,10 @@ import model.DetalleSesion
 import ui.theme.ColoresApp
 
 fun agruparEjercicios(ejercicios: List<DetalleSesion>): List<List<DetalleSesion>> {
-    // esta funcion me sirve para transformar una lista plana de ejercicios
+    // esta función me sirve para transformar una lista plana de ejercicios
     // en una lista de grupos.
     //
-    // el objetivo es que luego la ui pueda pintar:
+    // el objetivo es que luego la UI pueda pintar:
     // - ejercicios sueltos
     // - biseries
     // - triseries
@@ -34,7 +34,7 @@ fun agruparEjercicios(ejercicios: List<DetalleSesion>): List<List<DetalleSesion>
     var grupoActual = mutableListOf<DetalleSesion>()
 
     // aqui recuerdo el bloque del grupo actual.
-    // empiezo en -1 como valor de control para indicar "ningun bloque real".
+    // empiezo en -1 como valor de control para indicar "ningún bloque real".
     var bloqueActual = -1
 
     // recorro todos los ejercicios en el orden en el que vienen.
@@ -78,17 +78,17 @@ fun agruparEjercicios(ejercicios: List<DetalleSesion>): List<List<DetalleSesion>
     }
 
     // al terminar el bucle, puede quedar un grupo sin añadir todavía.
-    // por eso hago esta comprobacion final.
+    // por eso hago esta comprobación final.
     if (grupoActual.isNotEmpty()) {
         grupos.add(grupoActual)
     }
 
-    // devuelvo la lista de grupos ya preparada para que la ui la pinte.
+    // devuelvo la lista de grupos ya preparada para que la UI la pinte.
     return grupos
 }
 
 fun obtenerColorBloqueUniversal(numeroBloque: Int, isDarkMode: Boolean): Color {
-    // esta funcion ahora ya no decide colores por su cuenta.
+    // esta función ya no decide colores por su cuenta.
     //
     // en vez de dejar aqui todos los Color(...),
     // delego la responsabilidad al archivo central ColoresApp.
@@ -107,17 +107,14 @@ fun EjercicioUniversalCard(
     numeroBloque: Int,
     modifier: Modifier = Modifier
 ) {
-    // aqui calculo el color de fondo de la tarjeta según el bloque y el tema.
+    // calculo el color de fondo de la tarjeta según el bloque y el tema.
     val colorFondo = obtenerColorBloqueUniversal(numeroBloque, isDarkMode)
 
-    // aqui saco el color principal del texto desde ColoresApp.
-    // asi no repito la logica del modo oscuro en cada archivo.
+    // saco el color principal del texto desde ColoresApp.
     val colorTexto = ColoresApp.textoPrincipal(isDarkMode)
 
     Card(
         modifier = modifier.fillMaxWidth(),
-
-        // con cardcolors personalizo tanto el fondo como el color de contenido de la tarjeta.
         colors = CardDefaults.cardColors(
             containerColor = colorFondo,
             contentColor = colorTexto
@@ -129,36 +126,26 @@ fun EjercicioUniversalCard(
 
             // esta primera fila contiene:
             // - a la izquierda, el nombre del ejercicio
-            // - a la derecha, una especie de etiqueta con la letra del bloque
+            // - a la derecha, una etiqueta con la letra del bloque
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    // si el ejercicio no tiene nombre, muestro "Sin nombre" para evitar vacíos en pantalla.
                     text = ejercicio.nombre ?: "Sin nombre",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-
-                    // weight hace que este texto ocupe todo el espacio posible
-                    // y empuje la etiqueta del bloque hacia la derecha.
                     modifier = Modifier.weight(1f),
                     color = colorTexto
                 )
 
                 Surface(
-                    // esta surface pequeña funciona como una etiqueta o badge del bloque.
                     color = MaterialTheme.colorScheme.primary,
                     shape = RoundedCornerShape(4.dp)
                 ) {
                     Text(
-                        // en horizontal enseño solo la letra para ahorrar espacio.
-                        // en vertical escribo "Bloque A", "Bloque B", etc.
                         text = if (isLandscape) "$letraBloque" else "Bloque $letraBloque",
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelSmall,
-
-                        // aqui mantengo blanco fijo porque encima del color primario
-                        // suele funcionar muy bien y se lee claro.
                         color = Color.White,
                         fontWeight = FontWeight.Bold
                     )
@@ -173,12 +160,6 @@ fun EjercicioUniversalCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // aqui reutilizo el composable DatoUniversal para no repetir codigo.
-                //
-                // si estoy en horizontal uso etiquetas cortas: S, R, Kg
-                // porque hay menos espacio.
-                //
-                // si estoy en vertical uso etiquetas completas.
                 DatoUniversal(
                     label = if (isLandscape) "S" else "Series",
                     value = "${ejercicio.series}",
@@ -191,10 +172,7 @@ fun EjercicioUniversalCard(
                     isDarkMode = isDarkMode
                 )
 
-                // aqui preparo el texto del peso.
-                //
-                // si el peso existe y es mayor que 0, lo muestro.
-                // si no, enseño "--" para indicar que no hay peso informado.
+                // preparo el texto del peso.
                 val pesoText =
                     if (ejercicio.peso != null && ejercicio.peso > 0) {
                         "${ejercicio.peso}"
@@ -224,28 +202,20 @@ fun DatoUniversal(
     // series -> 3
     // reps -> 10
     // peso -> 20
-    //
-    // lo separo en una funcion propia porque asi reutilizo el mismo diseño
-    // y mantengo coherencia visual.
 
-    // aqui saco desde ColoresApp el color principal y el secundario.
-    // asi no tengo que jugar con opacidades manuales en cada archivo.
+    // saco desde ColoresApp el color principal y el secundario.
     val colorValor = ColoresApp.textoPrincipal(isDarkMode)
     val colorLabel = ColoresApp.textoSecundario(isDarkMode)
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
-        // esta es la etiqueta pequeña de arriba.
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
             color = colorLabel
         )
 
-        // este es el valor importante del dato.
-        // lo muestro en negrita para que destaque.
         Text(
             text = value,
             style = MaterialTheme.typography.bodyLarge,

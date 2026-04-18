@@ -33,6 +33,7 @@ import org.jetbrains.compose.resources.painterResource
 import ui.components.CamposRegistro
 import ui.components.DialogoAlerta
 import ui.components.Validaciones
+import ui.theme.ColoresApp
 
 @Composable
 fun LoginScreen(
@@ -45,16 +46,16 @@ fun LoginScreen(
     onThemeToggle: () -> Unit
 ) {
     // aqui guardo todos los estados del formulario en el composable padre.
-    // esto significa que el estado "vive" en loginscreen y no dentro de formularioauth.
+    // esto significa que el estado "vive" en LoginScreen y no dentro de FormularioAuth.
     //
     // lo hago asi porque esta pantalla cambia de estructura cuando giro el movil:
     // - en vertical sale imagen arriba y formulario abajo
     // - en horizontal sale imagen a la izquierda y formulario a la derecha
     //
-    // si el estado estuviera dentro de formularioauth, al cambiar la estructura
-    // compose podria reconstruirlo y perder lo escrito.
+    // si el estado estuviera dentro de FormularioAuth, al cambiar la estructura
+    // Compose podria reconstruirlo y perder lo escrito.
     //
-    // remembersaveable sirve para conservar estos datos incluso si hay rotacion.
+    // rememberSaveable sirve para conservar estos datos incluso si hay rotacion.
     var isRegistering by rememberSaveable { mutableStateOf(false) }
     var nickname by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
@@ -64,12 +65,12 @@ fun LoginScreen(
 
     // estos dos estados controlan el cuadro emergente de error de validacion.
     //
-    // mostrarerrorvalidacion decide si el dialogo se ve o no.
-    // mensajeerrorvalidacion guarda el texto que quiero enseñar en ese dialogo.
+    // mostrarErrorValidacion decide si el dialogo se ve o no.
+    // mensajeErrorValidacion guarda el texto que quiero enseñar en ese dialogo.
     var mostrarErrorValidacion by rememberSaveable { mutableStateOf(false) }
     var mensajeErrorValidacion by rememberSaveable { mutableStateOf("") }
 
-    // launchedeffect se ejecuta cuando cambia mensajeexito.
+    // LaunchedEffect se ejecuta cuando cambia mensajeExito.
     //
     // aqui lo uso para detectar que el registro ha salido bien.
     // si hay mensaje de exito:
@@ -84,10 +85,10 @@ fun LoginScreen(
         }
     }
 
-    // boxwithconstraints me permite conocer el tamaño disponible del contenedor.
+    // BoxWithConstraints me permite conocer el tamaño disponible del contenedor.
     // gracias a eso puedo saber si la pantalla esta en vertical u horizontal.
     //
-    // añado safedrawingpadding para que todo el contenido respete las zonas seguras
+    // añado safeDrawingPadding para que todo el contenido respete las zonas seguras
     // del dispositivo, como la barra de navegacion y la barra superior.
     // asi evito que en horizontal el contenido se meta debajo de los botones del movil.
     BoxWithConstraints(
@@ -95,15 +96,14 @@ fun LoginScreen(
             .fillMaxSize()
             .safeDrawingPadding()
     ) {
-
         // si el ancho es mayor que el alto, considero que el movil está girado.
         val isLandscape = maxWidth > maxHeight
 
-        // surface es un contenedor visual con el color de fondo del tema.
+        // Surface es un contenedor visual con el color de fondo del tema.
         Surface(color = MaterialTheme.colorScheme.background) {
             if (isLandscape) {
                 // en horizontal reparto la pantalla en dos zonas.
-                // row coloca elementos uno al lado del otro.
+                // Row coloca elementos uno al lado del otro.
                 Row(modifier = Modifier.fillMaxSize()) {
                     Box(
                         modifier = Modifier
@@ -119,7 +119,7 @@ fun LoginScreen(
                             contentDescription = "logo aplicación",
                             modifier = Modifier.fillMaxSize(),
 
-                            // fit intenta meter la imagen entera sin recortarla.
+                            // Fit intenta meter la imagen entera sin recortarla.
                             contentScale = ContentScale.Fit
                         )
                     }
@@ -131,7 +131,7 @@ fun LoginScreen(
                             .fillMaxHeight()
                             .padding(horizontal = 16.dp)
 
-                            // verticalscroll permite hacer scroll si no cabe el contenido.
+                            // verticalScroll permite hacer scroll si no cabe el contenido.
                             .verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
@@ -139,8 +139,8 @@ fun LoginScreen(
                         // llamo al formulario y le paso todos los datos y funciones.
                         //
                         // esto es importante:
-                        // formularioauth no decide nada por si solo,
-                        // solo pinta y usa lo que le manda loginscreen.
+                        // FormularioAuth no decide nada por si solo,
+                        // solo pinta y usa lo que le manda LoginScreen.
                         FormularioAuth(
                             isLoading = isLoading,
                             onLoginClick = onLoginClick,
@@ -150,13 +150,13 @@ fun LoginScreen(
                             isRegistering = isRegistering,
 
                             // este callback sirve para cambiar entre login y registro.
-                            // cuando formularioauth lo invoque, realmente cambiara
-                            // la variable isregistering de arriba.
+                            // cuando FormularioAuth lo invoque, realmente cambiara
+                            // la variable isRegistering de arriba.
                             onIsRegisteringChange = { isRegistering = it },
 
                             nickname = nickname,
 
-                            // onnicknamechange es una funcion que recibe un string.
+                            // onNicknameChange es una funcion que recibe un String.
                             // se usa para actualizar el estado cuando escribo en el textfield.
                             onNicknameChange = { nickname = it },
 
@@ -174,7 +174,7 @@ fun LoginScreen(
                             onMensajeErrorValidacionChange = { mensajeErrorValidacion = it },
 
                             // ahora paso tambien el modo oscuro al formulario
-                            // para que el dialogo reutilizable reciba este dato.
+                            // para que el dialogo reutilizable y CamposRegistro reciban este dato.
                             isDarkMode = isDarkMode
                         )
                     }
@@ -195,7 +195,7 @@ fun LoginScreen(
                             .height(250.dp)
                             .padding(bottom = 16.dp),
 
-                        // crop llena el espacio aunque recorte un poco la imagen.
+                        // Crop llena el espacio aunque recorte un poco la imagen.
                         contentScale = ContentScale.Crop
                     )
 
@@ -238,10 +238,10 @@ fun LoginScreen(
             // este switch cambia el tema claro/oscuro.
             //
             // checked indica el valor actual.
-            // oncheckedchange es la funcion que se ejecuta cuando el usuario lo pulsa.
+            // onCheckedChange es la funcion que se ejecuta cuando el usuario lo pulsa.
             //
             // en este caso no cambio yo el estado aqui directamente,
-            // sino que llamo a onthemetoggle, que viene de la pantalla superior.
+            // sino que llamo a onThemeToggle, que viene de la pantalla superior.
             Switch(
                 checked = isDarkMode,
                 onCheckedChange = { onThemeToggle() },
@@ -252,13 +252,13 @@ fun LoginScreen(
                     if (isDarkMode) {
                         Icon(
                             Icons.Default.DarkMode,
-                            "modo oscuro",
+                            contentDescription = "modo oscuro",
                             modifier = Modifier.size(SwitchDefaults.IconSize)
                         )
                     } else {
                         Icon(
                             Icons.Default.LightMode,
-                            "modo claro",
+                            contentDescription = "modo claro",
                             modifier = Modifier.size(SwitchDefaults.IconSize)
                         )
                     }
@@ -301,8 +301,36 @@ fun FormularioAuth(
     // - y avisa al padre cuando hay cambios
     //
     // este patrón me ayuda a separar:
-    // - quien guarda el estado: loginscreen
-    // - quien dibuja la interfaz: formularioauth
+    // - quien guarda el estado: LoginScreen
+    // - quien dibuja la interfaz: FormularioAuth
+
+    // aqui preparo una paleta de colores para los campos del login simple.
+    //
+    // antes solo CamposRegistro usaba ColoresApp, pero estos dos campos de login
+    // se quedaban con los colores por defecto de Material.
+    //
+    // con esto dejo registro y login con el mismo criterio visual.
+    val colorTexto = ColoresApp.textoPrincipal(isDarkMode)
+    val colorTextoSecundario = ColoresApp.textoSecundario(isDarkMode)
+
+    // creo unos colores comunes para los OutlinedTextField del login simple.
+    // asi mantengo uniformidad con CamposRegistro.
+    val coloresCamposLogin = OutlinedTextFieldDefaults.colors(
+        focusedTextColor = colorTexto,
+        unfocusedTextColor = colorTexto,
+        focusedBorderColor = colorTextoSecundario,
+        unfocusedBorderColor = colorTextoSecundario.copy(alpha = 0.65f),
+        focusedLabelColor = colorTextoSecundario,
+        unfocusedLabelColor = colorTextoSecundario,
+        cursorColor = colorTexto,
+        focusedLeadingIconColor = colorTextoSecundario,
+        unfocusedLeadingIconColor = colorTextoSecundario,
+        focusedTrailingIconColor = colorTextoSecundario,
+        unfocusedTrailingIconColor = colorTextoSecundario,
+        focusedContainerColor = MaterialTheme.colorScheme.surface,
+        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+        disabledContainerColor = MaterialTheme.colorScheme.surface
+    )
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -332,16 +360,18 @@ fun FormularioAuth(
                 // aqui no paso directamente una variable,
                 // sino una funcion que cambia el valor actual al contrario.
                 //
-                // si passwordvisible es true, lo pongo false.
+                // si passwordVisible es true, lo pongo false.
                 // si era false, lo pongo true.
                 onPasswordVisibilityChange = { onPasswordVisibleChange(!passwordVisible) },
+
+                // ahora CamposRegistro necesita tambien el modo oscuro.
                 isDarkMode = isDarkMode
             )
         } else {
             OutlinedTextField(
                 value = nickname,
 
-                // onvaluechange se ejecuta cada vez que el usuario escribe algo.
+                // onValueChange se ejecuta cada vez que el usuario escribe algo.
                 // el nuevo texto entra como parametro "it".
                 // yo lo reenvio al padre para actualizar nickname.
                 onValueChange = onNicknameChange,
@@ -356,7 +386,11 @@ fun FormularioAuth(
                         imageVector = Icons.Default.Badge,
                         contentDescription = "nickname"
                     )
-                }
+                },
+
+                // aplico los colores centralizados para no dejar este campo
+                // con la apariencia por defecto mientras el registro usa ColoresApp.
+                colors = coloresCamposLogin
             )
 
             OutlinedTextField(
@@ -366,7 +400,7 @@ fun FormularioAuth(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
 
-                // visualtransformation cambia la forma de mostrar el texto.
+                // visualTransformation cambia la forma de mostrar el texto.
                 // no cambia el valor real, solo cómo se ve en pantalla.
                 visualTransformation = if (passwordVisible) {
                     VisualTransformation.None
@@ -400,7 +434,11 @@ fun FormularioAuth(
                             contentDescription = "mostrar contraseña"
                         )
                     }
-                }
+                },
+
+                // aplico tambien la paleta centralizada en este campo
+                // para que login y registro se comporten igual visualmente.
+                colors = coloresCamposLogin
             )
         }
 
@@ -439,7 +477,7 @@ fun FormularioAuth(
             enabled = !isLoading
         ) {
             if (isLoading) {
-                // si isloading es true, enseño el spinner.
+                // si isLoading es true, enseño el spinner.
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
                     color = MaterialTheme.colorScheme.onPrimary,
@@ -538,14 +576,14 @@ fun FormularioAuth(
             titulo = "Campos incompletos",
             mensaje = mensajeErrorValidacion,
 
-            // ondismiss es una función callback que se ejecuta cuando el dialogo se cierra.
+            // onDismiss es una función callback que se ejecuta cuando el dialogo se cierra.
             //
             // dismiss significa "cerrar" o "descartar".
             // por ejemplo, se ejecuta cuando:
             // - pulso el boton del propio dialogo
             // - o el componente decide cerrarse
             //
-            // aqui lo que hago es poner mostrarerrorvalidacion en false
+            // aqui lo que hago es poner mostrarErrorValidacion en false
             // para que el dialogo deje de verse.
             onDismiss = { onMostrarErrorValidacionChange(false) },
 
