@@ -272,9 +272,16 @@ class SesionViewModel(
 
                         repeticiones = borrador.repeticiones,
 
-                        // convierto peso de string a double.
-                        // si falla la conversion, pongo 0.0.
-                        peso = borrador.peso.toDoubleOrNull() ?: 0.0,
+                        // aqui aplico la misma regla que en validaciones.
+                        //
+                        // si el peso viene vacio, lo interpreto como 0.0.
+                        // si viene con coma decimal, la convierto a punto
+                        // para que la conversion a double funcione bien.
+                        peso = if (borrador.peso.trim().isBlank()) {
+                            0.0
+                        } else {
+                            borrador.peso.replace(',', '.').toDoubleOrNull() ?: 0.0
+                        },
 
                         // este bloque es el que luego usa la api
                         // para guardar ejercicios sueltos, biseries o triseries.
@@ -334,7 +341,15 @@ class SesionViewModel(
                         nombre = borrador.nombre,
                         series = borrador.series.toIntOrNull() ?: 0,
                         repeticiones = borrador.repeticiones,
-                        peso = borrador.peso.toDoubleOrNull() ?: 0.0,
+                        // aqui vuelvo a aplicar la misma logica del guardado.
+                        //
+                        // si el peso viene vacio, lo trato como 0.0.
+                        // si viene con coma decimal, lo normalizo antes de convertirlo.
+                        peso = if (borrador.peso.trim().isBlank()) {
+                            0.0
+                        } else {
+                            borrador.peso.replace(',', '.').toDoubleOrNull() ?: 0.0
+                        },
                         bloque = borrador.bloque
                     )
                 }

@@ -221,7 +221,7 @@ object ColoresApp {
             // pero sigue destacando bien en home.
             Color(0xFF1D4E89)
         } else {
-            Color(0xFF1976D2)
+            Color(0xFF6750A4)
         }
     }
 
