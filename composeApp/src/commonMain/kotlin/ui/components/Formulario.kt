@@ -69,18 +69,18 @@ fun CamposRegistro(
     val coloresCampos = OutlinedTextFieldDefaults.colors(
         focusedTextColor = colorTexto,
         unfocusedTextColor = colorTexto,
-        focusedBorderColor = colorTextoSecundario,
-        unfocusedBorderColor = colorTextoSecundario.copy(alpha = 0.65f),
-        focusedLabelColor = colorTextoSecundario,
+        focusedBorderColor = MaterialTheme.colorScheme.primary,
+        unfocusedBorderColor = colorTextoSecundario.copy(alpha = 0.85f),
+        focusedLabelColor = MaterialTheme.colorScheme.primary,
         unfocusedLabelColor = colorTextoSecundario,
-        cursorColor = colorTexto,
-        focusedLeadingIconColor = colorTextoSecundario,
+        cursorColor = MaterialTheme.colorScheme.primary,
+        focusedLeadingIconColor = MaterialTheme.colorScheme.primary,
         unfocusedLeadingIconColor = colorTextoSecundario,
-        focusedTrailingIconColor = colorTextoSecundario,
+        focusedTrailingIconColor = MaterialTheme.colorScheme.primary,
         unfocusedTrailingIconColor = colorTextoSecundario,
-        focusedContainerColor = MaterialTheme.colorScheme.surface,
-        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-        disabledContainerColor = MaterialTheme.colorScheme.surface
+        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f),
+        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f)
     )
 
     // uso BoxWithConstraints para saber el ancho disponible.
@@ -91,17 +91,26 @@ fun CamposRegistro(
         // esto viene bien en horizontal para aprovechar mejor el espacio.
         val dosColumnas = maxWidth >= 450.dp
 
+        // aqui preparo medidas algo más compactas para horizontal.
+        //
+        // no cambio la lógica del formulario:
+        // solo reduzco un poco huecos y altura visual para que entre mejor
+        // cuando el móvil está apaisado.
+        val espacioVertical = if (dosColumnas) 8.dp else 8.dp
+        val espacioHorizontal = if (dosColumnas) 10.dp else 12.dp
+        val alturaMinimaCampo = if (dosColumnas) 56.dp else 0.dp
+
         if (dosColumnas) {
 
             // en pantallas anchas coloco los campos en dos filas.
             // primera fila: nombre + apellidos
             // segunda fila: nickname + password
             Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(espacioVertical)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(espacioHorizontal)
                 ) {
                     OutlinedTextField(
                         // value es el texto actual que se ve en el campo.
@@ -123,7 +132,9 @@ fun CamposRegistro(
                         },
 
                         // con weight reparto el ancho entre los dos campos de la fila.
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .weight(1f)
+                            .heightIn(min = alturaMinimaCampo),
 
                         // con singleLine obligo a que el textfield sea de una sola linea.
                         singleLine = true,
@@ -145,7 +156,9 @@ fun CamposRegistro(
                             )
                         },
 
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .weight(1f)
+                            .heightIn(min = alturaMinimaCampo),
                         singleLine = true,
 
                         // aplico los colores centralizados.
@@ -155,7 +168,7 @@ fun CamposRegistro(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(espacioHorizontal)
                 ) {
                     OutlinedTextField(
                         value = nickname,
@@ -170,7 +183,9 @@ fun CamposRegistro(
                             )
                         },
 
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .weight(1f)
+                            .heightIn(min = alturaMinimaCampo),
                         singleLine = true,
 
                         // aplico los colores centralizados.
@@ -181,7 +196,9 @@ fun CamposRegistro(
                         value = password,
                         onValueChange = onPasswordChange,
                         label = { Text("Password") },
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .weight(1f)
+                            .heightIn(min = alturaMinimaCampo),
                         singleLine = true,
 
                         // añado un pictograma de candado para identificar la contraseña.
@@ -236,7 +253,7 @@ fun CamposRegistro(
             // los agrupo aqui y asi el codigo queda mas limpio y mas reutilizable.
             Column(
                 // dejo una separacion vertical fija entre los campos para que no queden pegados.
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(espacioVertical)
             ) {
                 OutlinedTextField(
                     // value es el texto actual que se ve en el campo.

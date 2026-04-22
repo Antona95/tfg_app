@@ -602,6 +602,9 @@ fun EjercicioItemCard(
                     onValueChange = { onUpdate(ejercicio.copy(nombre = it)) },
                     label = { Text("Ejercicio") },
                     modifier = Modifier.weight(1f),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text
+                    ),
                     colors = textFieldColors
                 )
 
@@ -637,10 +640,16 @@ fun EjercicioItemCard(
 
                 OutlinedTextField(
                     value = ejercicio.peso,
-                    onValueChange = { onUpdate(ejercicio.copy(peso = it)) },
+                    onValueChange = {
+                        // aqui permito que el usuario escriba comas o puntos.
+                        // luego convierto la coma en punto para guardar siempre
+                        // un formato numerico consistente.
+                        val pesoNormalizado = it.replace(',', '.')
+                        onUpdate(ejercicio.copy(peso = pesoNormalizado))
+                    },
                     label = { Text("kg") },
                     modifier = Modifier.weight(1f),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     colors = textFieldColors
                 )
             }

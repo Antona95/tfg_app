@@ -8,7 +8,7 @@ import androidx.compose.ui.graphics.Color
 // por ejemplo, en vez de poner en muchos archivos:
 //
 // if (isDarkMode) Color(...) else Color(...)
-////
+//
 //// lo concentro todo aqui y luego desde cualquier pantalla llamo a una funcion.
 //
 // esto me da varias ventajas:
@@ -35,7 +35,7 @@ object ColoresApp {
     // en modo claro uso un negro oscuro tipo material design.
     fun textoPrincipal(isDarkMode: Boolean): Color {
         return if (isDarkMode) {
-            Color(0xFFF5F5F5)
+            Color(0xFFF3F2F7)
         } else {
             Color(0xFF1C1B1F)
         }
@@ -53,7 +53,7 @@ object ColoresApp {
     // el texto principal destaca mas y este queda un poco mas suave.
     fun textoSecundario(isDarkMode: Boolean): Color {
         return if (isDarkMode) {
-            Color(0xFFD0D0D0)
+            Color(0xFFD7D0E0)
         } else {
             Color(0xFF5F5F5F)
         }
@@ -71,7 +71,7 @@ object ColoresApp {
     // principal -> secundario -> suave
     fun textoSuave(isDarkMode: Boolean): Color {
         return if (isDarkMode) {
-            Color(0xFFBDBDBD)
+            Color(0xFFB8B2C2)
         } else {
             Color(0xFF757575)
         }
@@ -92,7 +92,7 @@ object ColoresApp {
     // en claro puedo usar un verde algo mas intenso.
     fun estadoExito(isDarkMode: Boolean): Color {
         return if (isDarkMode) {
-            Color(0xFF81C784)
+            Color(0xFF7FD9A2)
         } else {
             Color(0xFF2E7D32)
         }
@@ -108,7 +108,7 @@ object ColoresApp {
     // en oscuro bajo un poco la dureza del naranja.
     fun estadoPendiente(isDarkMode: Boolean): Color {
         return if (isDarkMode) {
-            Color(0xFFFFCC80)
+            Color(0xFFFFC978)
         } else {
             Color(0xFFE65100)
         }
@@ -130,7 +130,7 @@ object ColoresApp {
     // en claro puedo usar un azul mas fuerte sin problema.
     fun bordeSeleccion(isDarkMode: Boolean): Color {
         return if (isDarkMode) {
-            Color(0xFF90CAF9)
+            Color(0xFF8AB4FF)
         } else {
             Color(0xFF1976D2)
         }
@@ -168,22 +168,23 @@ object ColoresApp {
 
         return if (isDarkMode) {
 
-            // en modo oscuro uso colores mas apagados y menos saturados.
+            // en modo oscuro uso ahora una paleta con mas presencia visual.
             //
-            // esto me interesa porque:
-            // - el contraste con el texto sigue siendo bueno
-            // - la vista se cansa menos
-            // - la pantalla queda mas elegante
+            // antes los bloques quedaban demasiado apagados
+            // y costaba percibir bien la diferencia entre unos y otros.
+            //
+            // con estos tonos sigo manteniendo un estilo sobrio,
+            // pero consigo que cada bloque destaque mejor.
             when (indexColor) {
-                1 -> Color(0xFF24415A)
-                2 -> Color(0xFF2D4A34)
-                3 -> Color(0xFF5A3333)
-                4 -> Color(0xFF4A3B5E)
-                5 -> Color(0xFF5B442B)
+                1 -> Color(0xFF2F5D9A)
+                2 -> Color(0xFF2F6B57)
+                3 -> Color(0xFF8A4B4B)
+                4 -> Color(0xFF664C99)
+                5 -> Color(0xFF8A613A)
 
                 // este else me sirve como color de seguridad
                 // por si algo falla o entra un valor raro.
-                else -> Color(0xFF2C2C2C)
+                else -> Color(0xFF3A3A3A)
             }
         } else {
 
@@ -215,49 +216,37 @@ object ColoresApp {
     fun tarjetaHoy(isDarkMode: Boolean): Color {
         return if (isDarkMode) {
 
-            // en oscuro uso un azul apagado.
-            Color(0xFF2A3F55)
+            // aqui uso un azul oscuro con mas presencia visual.
+            // no es tan agresivo como el azul de prueba,
+            // pero sigue destacando bien en home.
+            Color(0xFF1D4E89)
         } else {
-
-            // en claro uso un azul mas vivo.
             Color(0xFF1976D2)
         }
     }
 
-    // esta funcion me devuelve el color del texto de la tarjeta
-    // "entrenamiento de hoy".
-    //
-    // la separo para asegurar que siempre haya buen contraste
-    // entre texto y fondo.
     fun tarjetaHoyTexto(isDarkMode: Boolean): Color {
         return if (isDarkMode) {
-            Color(0xFFF5F5F5)
+            Color(0xFFF8FBFF)
         } else {
             Color.White
         }
     }
 
-    // esta funcion me devuelve el color de fondo de la tarjeta
-    // "historial".
-    //
-    // igual que antes, lo centralizo aqui para no dejarlo disperso.
     fun tarjetaHistorial(isDarkMode: Boolean): Color {
         return if (isDarkMode) {
 
-            // en oscuro uso un gris azulado suave.
-            Color(0xFF31363F)
+            // aqui uso un morado oscuro elegante,
+            // con mas contraste que antes pero sin llegar al tono de prueba.
+            Color(0xFF4A2F6B)
         } else {
-
-            // en claro uso un tono lila claro.
             Color(0xFFE8DEF8)
         }
     }
 
-    // esta funcion me devuelve el color del texto de la tarjeta
-    // "historial".
     fun tarjetaHistorialTexto(isDarkMode: Boolean): Color {
         return if (isDarkMode) {
-            Color(0xFFF1F1F1)
+            Color(0xFFFAF7FF)
         } else {
             Color(0xFF1D192B)
         }

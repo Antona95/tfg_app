@@ -103,63 +103,77 @@ fun LoginScreen(
         Surface(color = MaterialTheme.colorScheme.background) {
             if (isLandscape) {
                 // en horizontal reparto la pantalla en dos zonas.
-                // Row coloca elementos uno al lado del otro.
-                Row(modifier = Modifier.fillMaxSize()) {
-                    Box(
+                // ahora ya no meto todo el formulario en una sola columna con scroll.
+                //
+                // lo que hago es dividir la pantalla en dos columnas:
+                // - izquierda: imagen + botones principales
+                // - derecha: titulo + campos
+                //
+                // asi consigo que todo entre mejor sin necesidad de hacer scroll.
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Column(
                         modifier = Modifier
-                            // weight reparte el espacio proporcionalmente.
-                            // esta caja ocupa un 40 por ciento aproximadamente.
-                            .weight(0.4f)
-                            .fillMaxHeight()
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center
+                            .weight(0.42f)
+                            .fillMaxHeight(),
+                        verticalArrangement = Arrangement.SpaceEvenly,
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Image(
-                            painter = painterResource(Res.drawable.imagen_inicial),
-                            contentDescription = "logo aplicación",
-                            modifier = Modifier.fillMaxSize(),
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Image(
+                                painter = painterResource(Res.drawable.imagen_inicial),
+                                contentDescription = "logo aplicación",
+                                modifier = Modifier.fillMaxSize(),
 
-                            // Fit intenta meter la imagen entera sin recortarla.
-                            contentScale = ContentScale.Fit
+                                // Fit intenta meter la imagen entera sin recortarla.
+                                contentScale = ContentScale.Fit
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // aqui saco las acciones fuera del formulario completo
+                        // para colocarlas debajo de la imagen y evitar que todo quede apelotonado.
+                        AccionesAuth(
+                            isLoading = isLoading,
+                            onLoginClick = onLoginClick,
+                            onRegistroClick = onRegistroClick,
+                            isRegistering = isRegistering,
+                            onIsRegisteringChange = { isRegistering = it },
+                            nickname = nickname,
+                            password = password,
+                            nombre = nombre,
+                            apellidos = apellidos,
+                            onMostrarErrorValidacionChange = { mostrarErrorValidacion = it },
+                            onMensajeErrorValidacionChange = { mensajeErrorValidacion = it }
                         )
                     }
 
                     Column(
                         modifier = Modifier
-                            // esta columna ocupa el resto del espacio, un 60 por ciento.
-                            .weight(0.6f)
-                            .fillMaxHeight()
-                            .padding(horizontal = 16.dp)
-
-                            // verticalScroll permite hacer scroll si no cabe el contenido.
-                            .verticalScroll(rememberScrollState()),
+                            .weight(0.58f)
+                            .fillMaxHeight(),
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // llamo al formulario y le paso todos los datos y funciones.
-                        //
-                        // esto es importante:
-                        // FormularioAuth no decide nada por si solo,
-                        // solo pinta y usa lo que le manda LoginScreen.
-                        FormularioAuth(
-                            isLoading = isLoading,
-                            onLoginClick = onLoginClick,
-                            onRegistroClick = onRegistroClick,
+                        // aqui dejo solo el titulo y los campos a la derecha.
+                        // de esta forma el registro en horizontal queda más limpio
+                        // y no necesito scroll.
+                        FormularioCamposAuth(
                             mensajeExito = mensajeExito,
                             errorBackend = errorBackend,
                             isRegistering = isRegistering,
-
-                            // este callback sirve para cambiar entre login y registro.
-                            // cuando FormularioAuth lo invoque, realmente cambiara
-                            // la variable isRegistering de arriba.
-                            onIsRegisteringChange = { isRegistering = it },
-
                             nickname = nickname,
-
-                            // onNicknameChange es una funcion que recibe un String.
-                            // se usa para actualizar el estado cuando escribo en el textfield.
                             onNicknameChange = { nickname = it },
-
                             password = password,
                             onPasswordChange = { password = it },
                             nombre = nombre,
@@ -168,13 +182,6 @@ fun LoginScreen(
                             onApellidosChange = { apellidos = it },
                             passwordVisible = passwordVisible,
                             onPasswordVisibleChange = { passwordVisible = it },
-                            mostrarErrorValidacion = mostrarErrorValidacion,
-                            onMostrarErrorValidacionChange = { mostrarErrorValidacion = it },
-                            mensajeErrorValidacion = mensajeErrorValidacion,
-                            onMensajeErrorValidacionChange = { mensajeErrorValidacion = it },
-
-                            // ahora paso tambien el modo oscuro al formulario
-                            // para que el dialogo reutilizable y CamposRegistro reciban este dato.
                             isDarkMode = isDarkMode
                         )
                     }
@@ -269,11 +276,300 @@ fun LoginScreen(
 }
 
 @Composable
+fun FormularioCamposAuth(
+    mensajeExito: String?,
+    errorBackend: String?,
+    isRegistering: Boolean,
+    nickname: String,
+    onNicknameChange: (String) -> Unit,
+    password: String,
+    onPasswordChange: (String) -> Unit,
+    nombre: String,
+    onNombreChange: (String) -> Unit,
+    apellidos: String,
+    onApellidosChange: (String) -> Unit,
+    passwordVisible: Boolean,
+    onPasswordVisibleChange: (Boolean) -> Unit,
+    isDarkMode: Boolean
+) {
+    // este composable lo uso solo para la version horizontal.
+    //
+    // aqui separo unicamente el titulo y los campos del formulario
+    // para poder colocarlos a la derecha sin meter tambien los botones.
+    //
+    // asi consigo que la pantalla de registro horizontal quede repartida
+    // y que no haga falta scroll.
+
+    // aqui preparo una paleta de colores para los campos del login simple.
+    //
+    // antes solo CamposRegistro usaba ColoresApp, pero estos dos campos de login
+    // se quedaban con los colores por defecto de Material.
+    //
+    // con esto dejo registro y login con el mismo criterio visual.
+    val colorTexto = ColoresApp.textoPrincipal(isDarkMode)
+    val colorTextoSecundario = ColoresApp.textoSecundario(isDarkMode)
+
+    // creo unos colores comunes para los OutlinedTextField del login simple.
+    // asi mantengo uniformidad con CamposRegistro.
+    val coloresCamposLogin = OutlinedTextFieldDefaults.colors(
+        focusedTextColor = colorTexto,
+        unfocusedTextColor = colorTexto,
+        focusedBorderColor = colorTextoSecundario,
+        unfocusedBorderColor = colorTextoSecundario.copy(alpha = 0.65f),
+        focusedLabelColor = colorTextoSecundario,
+        unfocusedLabelColor = colorTextoSecundario,
+        cursorColor = colorTexto,
+        focusedLeadingIconColor = colorTextoSecundario,
+        unfocusedLeadingIconColor = colorTextoSecundario,
+        focusedTrailingIconColor = colorTextoSecundario,
+        unfocusedTrailingIconColor = colorTextoSecundario,
+        focusedContainerColor = MaterialTheme.colorScheme.surface,
+        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+        disabledContainerColor = MaterialTheme.colorScheme.surface
+    )
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = if (isRegistering) "Registro de Usuario" else "Inicio de Sesión",
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        if (isRegistering) {
+            // si estoy en modo registro, muestro el componente con todos los campos.
+            CamposRegistro(
+                nombre = nombre,
+                onNombreChange = onNombreChange,
+                apellidos = apellidos,
+                onApellidosChange = onApellidosChange,
+                nickname = nickname,
+                onNicknameChange = onNicknameChange,
+                password = password,
+                onPasswordChange = onPasswordChange,
+                passwordVisible = passwordVisible,
+                onPasswordVisibilityChange = { onPasswordVisibleChange(!passwordVisible) },
+                isDarkMode = isDarkMode
+            )
+        } else {
+            OutlinedTextField(
+                value = nickname,
+                onValueChange = onNicknameChange,
+                label = { Text("Nickname") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Badge,
+                        contentDescription = "nickname"
+                    )
+                },
+                colors = coloresCamposLogin
+            )
+
+            OutlinedTextField(
+                value = password,
+                onValueChange = onPasswordChange,
+                label = { Text("Password") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                visualTransformation = if (passwordVisible) {
+                    VisualTransformation.None
+                } else {
+                    PasswordVisualTransformation()
+                },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = "contraseña"
+                    )
+                },
+                trailingIcon = {
+                    val image =
+                        if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+
+                    IconButton(
+                        onClick = {
+                            onPasswordVisibleChange(!passwordVisible)
+                        }
+                    ) {
+                        Icon(
+                            imageVector = image,
+                            contentDescription = "mostrar contraseña"
+                        )
+                    }
+                },
+                colors = coloresCamposLogin
+            )
+        }
+
+        if (errorBackend != null) {
+            // este error no es de validacion local.
+            // viene del backend o del viewmodel, por ejemplo credenciales incorrectas.
+            Text(
+                text = errorBackend,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
+
+        if (mensajeExito != null) {
+            // este mensaje suele aparecer al registrarse correctamente.
+            Text(
+                text = mensajeExito,
+                color = MaterialTheme.colorScheme.primary,
+                fontSize = 16.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+@Composable
+fun AccionesAuth(
+    isLoading: Boolean,
+    onLoginClick: (String, String) -> Unit,
+    onRegistroClick: (String, String, String, String) -> Unit,
+    isRegistering: Boolean,
+    onIsRegisteringChange: (Boolean) -> Unit,
+    nickname: String,
+    password: String,
+    nombre: String,
+    apellidos: String,
+    onMostrarErrorValidacionChange: (Boolean) -> Unit,
+    onMensajeErrorValidacionChange: (String) -> Unit
+) {
+    // este composable lo uso solo para la version horizontal.
+    //
+    // aqui separo los botones principales del formulario para colocarlos
+    // debajo de la imagen, que es justo el comportamiento que quiero conseguir.
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Button(
+            onClick = {
+                if (isRegistering) {
+                    // si estoy registrando, valido localmente antes de mandar nada.
+                    val error = Validaciones.validarRegistro(nickname, password, nombre, apellidos)
+
+                    if (error != null) {
+                        // si hay error, guardo el mensaje y abro el dialogo.
+                        onMensajeErrorValidacionChange(error)
+                        onMostrarErrorValidacionChange(true)
+                    } else {
+                        // si no hay error, llamo al callback de registro.
+                        // este callback lo definio el padre y normalmente acaba en el viewmodel.
+                        onRegistroClick(nickname, password, nombre, apellidos)
+                    }
+                } else {
+                    // si estoy en login, compruebo que al menos no estén vacios.
+                    if (nickname.isBlank() || password.isBlank()) {
+                        onMensajeErrorValidacionChange(
+                            "Debes rellenar tu Nickname y Password para poder entrar."
+                        )
+                        onMostrarErrorValidacionChange(true)
+                    } else {
+                        // si todo está bien, lanzo el callback de login.
+                        onLoginClick(nickname, password)
+                    }
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+            enabled = !isLoading
+        ) {
+            if (isLoading) {
+                // si isLoading es true, enseño el spinner.
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (isRegistering) {
+                        // en modo registro muestro un pictograma de alta de usuario.
+                        Icon(
+                            imageVector = Icons.Default.PersonAdd,
+                            contentDescription = "crear cuenta"
+                        )
+                    } else {
+                        // en modo login muestro un pictograma de entrar.
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Login,
+                            contentDescription = "entrar"
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Text(if (isRegistering) "CREAR CUENTA" else "ENTRAR")
+                }
+            }
+        }
+
+        TextButton(
+            onClick = {
+                // aqui cambio entre login y registro.
+                onIsRegisteringChange(!isRegistering)
+
+                // y cierro cualquier dialogo de validacion que hubiera abierto.
+                onMostrarErrorValidacionChange(false)
+            },
+            enabled = !isLoading
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                if (isRegistering) {
+                    // si estoy en registro, este boton me devuelve al login.
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "volver al inicio de sesión"
+                    )
+                } else {
+                    // si estoy en login, este boton me lleva a la pantalla de registro.
+                    Icon(
+                        imageVector = Icons.Default.PersonAdd,
+                        contentDescription = "ir a registro"
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Text(
+                    if (isRegistering) {
+                        "Volver al inicio de sesión"
+                    } else {
+                        "No tengo cuenta, quiero registrarme"
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
 fun FormularioAuth(
     isLoading: Boolean,
     onLoginClick: (String, String) -> Unit,
     onRegistroClick: (String, String, String, String) -> Unit,
     mensajeExito: String?,
+
     errorBackend: String?,
     isRegistering: Boolean,
     onIsRegisteringChange: (Boolean) -> Unit,

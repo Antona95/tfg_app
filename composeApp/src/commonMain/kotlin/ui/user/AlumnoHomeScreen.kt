@@ -49,12 +49,39 @@ fun AlumnoHomeScreen(
         // si el ancho es mayor que el alto, considero que la pantalla está en horizontal.
         val isLandscape = maxWidth > maxHeight
 
-        // saco estos colores desde ColoresApp para que todo quede centralizado.
-        val colorTarjetaHoy = ColoresApp.tarjetaHoy(isDarkMode)
-        val colorTextoTarjetaHoy = ColoresApp.tarjetaHoyTexto(isDarkMode)
-        val colorTarjetaHistorial = ColoresApp.tarjetaHistorial(isDarkMode)
-        val colorTextoTarjetaHistorial = ColoresApp.tarjetaHistorialTexto(isDarkMode)
+        // aqui fuerzo colores muy visibles directamente en la pantalla
+        // para comprobar sin ninguna duda si el home esta aplicando cambios.
+        //
+        // no dependo de ColoresApp en esta prueba.
+        // asi, si ahora si cambia, sabré que el problema no era la card,
+        // sino la forma de conectar o percibir esos colores.
+        val colorTarjetaHoy =
+            if (isDarkMode) {
+                androidx.compose.ui.graphics.Color(0xFF0D47A1)
+            } else {
+                ColoresApp.tarjetaHoy(isDarkMode)
+            }
 
+        val colorTextoTarjetaHoy =
+            if (isDarkMode) {
+                androidx.compose.ui.graphics.Color.White
+            } else {
+                ColoresApp.tarjetaHoyTexto(isDarkMode)
+            }
+
+        val colorTarjetaHistorial =
+            if (isDarkMode) {
+                androidx.compose.ui.graphics.Color(0xFF4A148C)
+            } else {
+                ColoresApp.tarjetaHistorial(isDarkMode)
+            }
+
+        val colorTextoTarjetaHistorial =
+            if (isDarkMode) {
+                androidx.compose.ui.graphics.Color.White
+            } else {
+                ColoresApp.tarjetaHistorialTexto(isDarkMode)
+            }
         // scaffold me sirve como estructura base de la pantalla.
         // aquí coloco la barra superior y debajo el contenido principal.
         Scaffold(
@@ -192,8 +219,11 @@ fun AlumnoMenuCard(
 
     // preparo un color algo más suave para el subtítulo.
     val colorSubtitulo =
-        if (isDarkMode) colorTexto.copy(alpha = 0.88f) else colorTexto.copy(alpha = 0.8f)
-
+        if (isDarkMode) {
+            colorTexto.copy(alpha = 0.92f)
+        } else {
+            colorTexto.copy(alpha = 0.8f)
+        }
     Card(
         onClick = onClick,
         modifier = Modifier

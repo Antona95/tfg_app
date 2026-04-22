@@ -37,7 +37,27 @@ class SesionRepository(
     suspend fun obtenerUltimaSesion(idUsuario: String): SesionEntrenamiento? {
         return try {
             val historial = obtenerHistorialSesiones(idUsuario)
-            historial.firstOrNull { !it.finalizada }
+
+            // aqui no busco "la primera pendiente" del historial,
+            // porque eso puede rescatar sesiones antiguas que ya no deben aparecer en hoy.
+            //
+            // lo que hago es coger solo la sesion mas reciente.
+            val ultimaSesion = historial.firstOrNull()
+
+            // si no hay ninguna sesion, devuelvo null.
+            if (ultimaSesion == null) {
+                null
+            }
+            // si la ultima sesion ya esta finalizada,
+            // en la pantalla de hoy no debo mostrar nada.
+            else if (ultimaSesion.finalizada) {
+                null
+            }
+            // si la ultima sesion no esta finalizada,
+            // esa si es la que debo mostrar en hoy.
+            else {
+                ultimaSesion
+            }
         } catch (e: Exception) {
             throw Exception("Fallo de red al buscar la última sesión.")
         }

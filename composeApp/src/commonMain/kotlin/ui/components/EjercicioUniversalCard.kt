@@ -121,14 +121,22 @@ fun EjercicioUniversalCard(
         )
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            // aqui hago que la columna ocupe toda la altura disponible de la tarjeta.
+            //
+            // esto me permite empujar la fila inferior de datos hacia abajo
+            // y conseguir que S, R, Kg queden alineados entre tarjetas del mismo grupo.
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
         ) {
 
             // esta primera fila contiene:
             // - a la izquierda, el nombre del ejercicio
             // - a la derecha, una etiqueta con la letra del bloque
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                // aqui alineo arriba para que, si el nombre ocupa varias lineas,
+                // la etiqueta del bloque no quede visualmente descentrada.
+                verticalAlignment = Alignment.Top
             ) {
                 Text(
                     text = ejercicio.nombre ?: "Sin nombre",
@@ -137,6 +145,8 @@ fun EjercicioUniversalCard(
                     modifier = Modifier.weight(1f),
                     color = colorTexto
                 )
+
+                Spacer(modifier = Modifier.width(8.dp))
 
                 Surface(
                     color = MaterialTheme.colorScheme.primary,
@@ -153,6 +163,15 @@ fun EjercicioUniversalCard(
             }
 
             Spacer(modifier = Modifier.height(12.dp))
+
+            // este spacer con peso es la parte importante de la corrección.
+            //
+            // lo uso para ocupar el espacio sobrante entre el nombre del ejercicio
+            // y la fila final de datos.
+            //
+            // asi, aunque un ejercicio tenga un nombre mas largo que otro,
+            // la fila de S, R y Kg queda a la misma altura en todas las tarjetas.
+            Spacer(modifier = Modifier.weight(1f))
 
             // esta segunda fila muestra los datos cortos del ejercicio:
             // series, repeticiones y peso.
@@ -205,7 +224,12 @@ fun DatoUniversal(
 
     // saco desde ColoresApp el color principal y el secundario.
     val colorValor = ColoresApp.textoPrincipal(isDarkMode)
-    val colorLabel = ColoresApp.textoSecundario(isDarkMode)
+    val colorLabel =
+        if (isDarkMode) {
+            ColoresApp.textoPrincipal(isDarkMode).copy(alpha = 0.78f)
+        } else {
+            ColoresApp.textoSecundario(isDarkMode)
+        }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
