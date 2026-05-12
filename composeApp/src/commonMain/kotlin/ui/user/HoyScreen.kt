@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Hotel
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -204,21 +205,40 @@ fun ContenidoEntreno(
 
                 if (isLandscape) {
 
-                    // si estoy en horizontal, intento colocar los ejercicios del grupo en fila.
+                    // si estoy en horizontal, coloco los ejercicios del grupo en una fila.
+                    //
+                    // uso height(IntrinsicSize.Min) para que la fila adopte
+                    // la altura del ejercicio mas alto del grupo.
+                    //
+                    // asi consigo que todas las tarjetas compartan la misma altura
+                    // y que la zona de series, repeticiones y peso quede alineada.
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(IntrinsicSize.Min),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         for (ejercicio in grupo) {
 
-                            // uso weight para que todas las tarjetas del grupo ocupen un ancho parecido.
-                            Box(modifier = Modifier.weight(1f)) {
+                            // uso weight para repartir el ancho por igual.
+                            //
+                            // ademas uso fillMaxHeight para que cada contenedor
+                            // herede la altura maxima de la fila.
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxHeight()
+                            ) {
                                 EjercicioUniversalCard(
                                     ejercicio = ejercicio,
                                     isDarkMode = isDarkMode,
                                     isLandscape = true,
                                     letraBloque = letraBloque,
-                                    numeroBloque = numeroBloque
+                                    numeroBloque = numeroBloque,
+
+                                    // aqui fuerzo que la card ocupe toda la altura disponible
+                                    // dentro del grupo, igual que ya haciamos en detalle.
+                                    modifier = Modifier.fillMaxHeight()
                                 )
                             }
                         }

@@ -99,4 +99,15 @@ object Validaciones {
         }
         return null // Todo correcto
     }
+
+    // Validación para el Registro de Usuarios
+    fun validarRegistro(nick: String, pass: String, nombre: String, apellidos: String): String? {
+        if (nombre.trim().isBlank()) return "El nombre no puede estar vacío."
+        if (apellidos.trim().isBlank()) return "Los apellidos no pueden estar vacíos."
+        if (nick.trim().isBlank()) return "El nombre de usuario (nickname) no puede estar vacío."
+        if (pass.isBlank()) return "La contraseña no puede estar vacía."
+        if (pass.length < 2) return "La contraseña es muy corta. Debe tener al menos 2 caracteres."
+
+        return null // Todo correcto
+    }
 }
